@@ -1,0 +1,8 @@
+flask
+requests
+numpy
+python-dateutil
+scipy==0.17.0
+py_common_subseq
+scikit-learn[alldeps]
+matplotlib
