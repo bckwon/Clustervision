@@ -11,7 +11,7 @@
 {% include "partials/navigation.html" ignore missing %}
 
 <div class="canvas">
-
+<button id="sample_ajax_button">Ajax Test</button>
 </div>
 
 <script type="text/javascript">
@@ -19,4 +19,18 @@
     var data = JSON.parse({{data|tojson|safe}});
     console.log(data);
 
+    // Ajax Code to Send Data to Server and Receive Outcome from Server.
+    $('#sample_ajax_button').on("click", function(){
+	    $.ajax({
+	        type: "POST",
+	        url: $SCRIPT_ROOT + "/sample_ajax_address",
+	        contentType: "application/json; charset=utf-8",
+	        data: JSON.stringify({"data": data}),
+	        success: function(data) {
+	            var parsed_data = JSON.parse(data);
+	            var data = parsed_data["data"];
+	            console.log(data);
+	        }
+	    });
+    })
 </script>

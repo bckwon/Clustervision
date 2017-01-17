@@ -23,6 +23,12 @@ def index():
 	data = json.dumps({'name': 'sample', 'data': [0,1,2,3]})
 	return render_template('index.html',data=data)
 
+# Sample Ajax Request Handler
+@app.route('/sample_ajax_address', methods=['POST'])
+def sample_ajax_address():
+	data = request.json['data']
+	print(data)
+	return json.dumps({'data': data})
 
 if __name__ == '__main__':
     app.run(debug=True)
