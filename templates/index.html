@@ -1,0 +1,22 @@
+
+<!doctype html>
+<head>
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/bootstrap-theme.min.css')}}">
+<script src="{{ url_for('static', filename='javascript/d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/jquery-2.2.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/bootstrap.min.js') }}"></script>
+<title>Cluster Analysis</title>
+</head>
+{% include "partials/navigation.html" ignore missing %}
+
+<div class="canvas">
+
+</div>
+
+<script type="text/javascript">
+    
+    var data = JSON.parse({{data|tojson|safe}});
+    console.log(data);
+
+</script>
