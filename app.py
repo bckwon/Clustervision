@@ -9,16 +9,20 @@ Documentation: https://ibm.ent.box.com/notes/123647604541
 Created on 01/17/2017
 """
 
+from python import clusterhelpers_db_gs
 import csv
 import datetime
 from flask import Flask, request, redirect, url_for, send_from_directory, render_template
 import json
 import numpy as np
 import os
+import pickle
+import scipy.spatial.distance
 import sklearn
 import sklearn.metrics
 import sklearn.cluster
 import sklearn.datasets
+from tqdm import tqdm, trange
 from werkzeug import secure_filename
 
 
@@ -36,7 +40,7 @@ def index():
 	# return render_template('index.html', data=data)
 
 
-@app.route('/new_session', methods=['POST'])
+@app.route('/new_session', methods=['POST', 'GET'])
 def new_session():
     if not os.path.exists(DB_FILENAME):
         d = {
@@ -51,11 +55,10 @@ def new_session():
             d = json.load(f)
 
     session_id = d['sessions']['num_sessions']
-    d['sessions']['num_sessions'] += 1
     dataset_name = request.args.get('dataset')
 
     # The function compute_all_clusterings modifies the DB, so we need to make sure that
-    # we don't have a copy of the DB open when claling this function.
+    # we don't have a copy of the DB open when calling this function.
     del d
     param_vec = compute_all_clusterings(dataset_name)
     with open(DB_FILENAME) as f:
@@ -67,12 +70,13 @@ def new_session():
         'param_vec': param_vec,
         'L': L_INITIAL
     }
+    d['sessions']['num_sessions'] += 1
 
     with open(DB_FILENAME, 'wb') as f:
         json.dump(d, f)
     return json.dumps(session_id)
 
-@app.route('/clustering', methods=['POST'])
+@app.route('/clustering', methods=['POST', 'GET'])
 def clustering():
     with open(DB_FILENAME) as f:
         d = json.load(f)
@@ -136,9 +140,15 @@ def clustering():
     return json.dumps(clustering_choices)
 
 
+@app.route('/dataset', methods=['POST', 'GET'])
+def dataset():
+    dataset_name = request.args.get('dataset')
+    dataset = dataset_from_name(dataset_name).tolist()
+    return json.dumps(dataset)
+
 def compute_all_clusterings(dataset_name):
     param_vec = []
-    for n_clusters in range(2, 20):
+    for n_clusters in trange(2, 20):
         # KMeans
         params = {
             'alg_name': 'KMeans',
@@ -149,7 +159,7 @@ def compute_all_clusterings(dataset_name):
         param_vec.append(params)
 
         # SpectralClustering
-        for affinity in ['nearest_neighbors', 'rbf']:
+        for affinity in ['nearest_neighbors']:
             params = {
                 'alg_name': 'SpectralClustering',
                 'dataset': dataset_name,
@@ -174,16 +184,26 @@ def compute_clustering(params):
     if clustering_key in d['clusterings'].keys():
         return d['clusterings'][clustering_key]
     model = model_from_params(params)
-    dataset = dataset_from_params(params)
+    dataset = dataset_from_name(params['dataset'])
     labels = model.fit_predict(dataset)
+    sorted_labels = sort_labels(dataset, labels)
 
-    quality = sklearn.metrics.silhouette_score(dataset, labels)
+    quality_silhouette = sklearn.metrics.silhouette_score(dataset, labels)
+    quality_calinski_harabaz = sklearn.metrics.calinski_harabaz_score(dataset, labels)
+    quality_davies_bouldin = clusterhelpers_db_gs.davies_bouldin(dataset, labels)
+
     n_clusters = n_clusters_from_labels(labels)
     clustering = {
-        'quality': quality,
+        'quality': quality_silhouette, # backward compatability
+        'quality_metrics': {
+            'silhouette_score': quality_silhouette,
+            'calinski_harabaz': quality_calinski_harabaz,
+            'davies_bouldin': quality_davies_bouldin,
+        },
         'labels': labels.tolist(),
         'n_clusters': n_clusters,
-        'clustering_parameters': params
+        'clustering_parameters': params,
+        'sorted_labels': sorted_labels
     }
     d['clusterings'][clustering_key] = clustering
 
@@ -206,8 +226,7 @@ def model_from_params(params):
 def n_clusters_from_labels(labels):
     return len(set(labels))
 
-def dataset_from_params(params):
-    dataset_name = params['dataset']
+def dataset_from_name(dataset_name):
     if dataset_name == 'blobs':
          return sklearn.datasets.make_blobs(n_samples=500,
                                             n_features=2,
@@ -216,6 +235,16 @@ def dataset_from_params(params):
                                             center_box=(-10.0, 10.0),
                                             shuffle=True,
                                             random_state=1)[0]
+    elif dataset_name == 'digits':
+        return sklearn.datasets.load_digits(return_X_y=True)[0]
+    elif dataset_name == 'sequence':
+        with open( "sequence_data/cluster_dump.pickle", "rb" )  as f:
+            output = pickle.load(f)
+        patient_id_list = [' '.join(row) for row in output]
+        vectorizer = sklearn.feature_extraction.text.CountVectorizer()
+        pattern_vectors = vectorizer.fit_transform(patient_id_list)
+        pattern_vectors = pattern_vectors.toarray()
+        return pattern_vectors
     else:
         assert False, 'Unknown dataset name'
 
@@ -223,7 +252,6 @@ def clustering_key_from_params(params):
     return ','.join(['%s=%s' % (key, value) for (key, value) in sorted(params.items())])
 
 def clustering_distance(clustering_1, clustering_2):
-    print clustering_1.keys()
     adj_1 = adj_from_labels(clustering_1['labels'])
     adj_2 = adj_from_labels(clustering_2['labels'])
     return np.mean(adj_1 != adj_2)
@@ -232,12 +260,30 @@ def adj_from_labels(labels):
     labels = np.array(labels).flatten()
     return (labels[:, None] == labels[None, :])
 
-# Sample Ajax Request Handler
-# @app.route('/sample_ajax_address', methods=['POST'])
-# def sample_ajax_address():
-# 	data = request.json['data']
-# 	print(data)
-# 	return json.dumps({'data': data})
+def sort_labels(dataset, labels, distance_metric=scipy.spatial.distance.euclidean):
+    '''
+    labels - A list of integers with the same size as the data. Each entry indicates to which
+             clustering the corresponding point should belong.
+    sorted_labels - List of list of integers. The i-th list stores the indices of points belonging
+                    to cluster i. Within this list, points are sorted by their distance from the
+                    cluster centroid, with closest points first. Thus, the first points are the
+                    inliers and the last points are the outliers.
+    '''
+    sorted_labels = []
+    n_clusters = n_clusters_from_labels(labels)
+    for cluster_index in range(n_clusters):
+        distance_vec = []
+        point_indices = [index for (index, cluster_label) in enumerate(labels) if cluster_label == cluster_index]
+        for index_1 in point_indices:
+            pt_1 = dataset[index_1]
+            distance_vec_for_point = []
+            for index_2 in point_indices:
+                pt_2 = dataset[index_2]
+                distance_vec_for_point.append(distance_metric(pt_1, pt_2))
+            distance_vec.append(np.mean(distance_vec_for_point))
+        sorted_point_indices = [index for (distance, index) in sorted(zip(distance_vec, point_indices))]
+        sorted_labels.append(sorted_point_indices)
+    return sorted_labels
 
 if __name__ == '__main__':
     app.run(debug=True)
