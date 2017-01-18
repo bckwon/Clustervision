@@ -31,11 +31,12 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-	data = json.dumps({'name': 'sample', 'data': [0,1,2,3]})
-	return render_template('index.html', data=data)
+	return render_template('index.html', data=[])
+	# data = json.dumps({'name': 'sample', 'data': [0,1,2,3]})
+	# return render_template('index.html', data=data)
 
 
-@app.route('/new_session')
+@app.route('/new_session', methods=['POST'])
 def new_session():
     if not os.path.exists(DB_FILENAME):
         d = {
@@ -71,7 +72,7 @@ def new_session():
         json.dump(d, f)
     return json.dumps(session_id)
 
-@app.route('/clustering')
+@app.route('/clustering', methods=['POST'])
 def clustering():
     with open(DB_FILENAME) as f:
         d = json.load(f)
