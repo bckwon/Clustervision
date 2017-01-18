@@ -19,9 +19,10 @@ import os
 import pickle
 import scipy.spatial.distance
 import sklearn
-import sklearn.metrics
 import sklearn.cluster
 import sklearn.datasets
+import sklearn.manifold
+import sklearn.metrics
 from tqdm import tqdm, trange
 from werkzeug import secure_filename
 
@@ -145,6 +146,25 @@ def dataset():
     dataset_name = request.args.get('dataset')
     dataset = dataset_from_name(dataset_name).tolist()
     return json.dumps(dataset)
+
+@app.route('/embedding', methods=['POST', 'GET'])
+def embedding():
+    dataset_name = request.args.get('dataset')
+    alg_name = request.args.get('method')
+    dataset = dataset_from_name(dataset_name)
+    if alg_name == 'pca':
+        model = sklearn.decomposition.PCA(n_components=2, random_state=0)
+    elif alg_name == 'tsne':
+        model = sklearn.manifold.TSNE(n_components=2, random_state=0)
+    elif alg_name == 'spectral':
+        model = sklearn.manifold.SpectralEmbedding(n_components=2, random_state=0)
+    elif alg_name == 'mds':
+        model = sklearn.manifold.MDS(n_components=2, random_state=0)
+    else:
+        assert False, 'Unknown embedding algorithm'
+
+    dataset_2d = model.fit_transform(dataset)
+    return json.dumps(dataset_2d.tolist())
 
 def compute_all_clusterings(dataset_name):
     param_vec = []
