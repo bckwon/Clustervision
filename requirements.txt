@@ -7,3 +7,4 @@ requests
 scikit-learn[alldeps]
 scipy==0.17.0
 tqdm
+lmdb

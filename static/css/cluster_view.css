@@ -1,0 +1,19 @@
+.canvas_left{
+    position: absolute;
+    width: 33%;
+    left: 0%;
+    top: calc(100px);
+    height: calc(100% - 100px);
+    z-index: 4;
+    overflow-y: scroll;
+}
+
+.canvas_right{
+    position: absolute;
+    width: 66%;
+    left: 33%;
+    top: calc(100px);
+    height: calc(100% - 100px);
+    z-index: 4;
+    overflow-y: scroll;
+}
