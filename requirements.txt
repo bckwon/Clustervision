@@ -1,5 +1,4 @@
 flask
-matplotlib
 numpy
 python-dateutil
 py_common_subseq

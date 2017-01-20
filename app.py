@@ -2,31 +2,26 @@
 
 """
 Cluster Analysis
-Desription: This tool helps users find a good clustering of their data. Clustering can be helpful for summarizing data and making it more interpretable.
+Desription: This tool helps users find a good clustering of their data.
+Clustering can be helpful for summarizing data and making it more interpretable.
 Contributers: BC Kwon, Ben Eysenbach
 Documentation: https://ibm.ent.box.com/notes/123647604541
 
 Created on 01/17/2017
 """
 
-from python import clusterhelpers_db_gs
-import csv
-import datetime
-from flask import Flask, request, redirect, url_for, send_from_directory, render_template
 import json
 import lmdb
 import numpy as np
-import os
-import pickle
-import scipy.spatial.distance
 import sklearn
 import sklearn.cluster
 import sklearn.datasets
 import sklearn.manifold
 import sklearn.metrics
-from tqdm import tqdm, trange
-from werkzeug import secure_filename
 
+from flask import Flask, request, render_template
+from multiprocessing import Pool
+from python import clusterhelpers_db_gs
 
 DB_FILENAME = 'db.lmdb'     # Database filename
 NUM_CHOICES = 3             # How many clusterings to show the user (including the previous best)
@@ -55,25 +50,25 @@ def new_session():
         session = {'dataset': dataset_name,
                    'L': L_INITIAL }
         txn.put('sessions/%d' % session_id, json.dumps(session))
-    dataset_name = request.args.get('dataset')
+
     param_vec = compute_all_clusterings(dataset_name)
-    num_sessions += 1
 
     with env.begin(write=True) as txn:
-        txn.put('num_sessions', str(num_sessions))
         session = json.loads(txn.get('sessions/%d' % session_id))
         session['param_vec'] = param_vec
         txn.put('sessions/%d' % session_id, json.dumps(session))
 
+        num_sessions += 1
+        txn.put('num_sessions', str(num_sessions))
+
     return json.dumps(session_id)
 
 @app.route('/clustering', methods=['POST', 'GET'])
-def clustering():
+def get_clustering():
     env = lmdb.open(DB_FILENAME)
     with env.begin(write=True) as txn:
         session_id = int(request.args.get('session_id'))
         user_choice = request.args.get('user_choice')
-        res = txn.get('sessions/%d' % session_id)
         session = json.loads(txn.get('sessions/%d' % session_id))
         param_vec = session['param_vec']
         L = session['L']
@@ -130,16 +125,22 @@ def clustering():
 
 
 @app.route('/dataset', methods=['POST', 'GET'])
-def dataset():
+def get_dataset():
     dataset_name = request.args.get('dataset')
-    dataset = dataset_from_name(dataset_name).tolist()
-    return json.dumps(dataset)
+    (dataset, description) = dataset_from_name(dataset_name)
+    return json.dumps(dataset.tolist())
+
+@app.route('/description', methods=['POST', 'GET'])
+def get_description():
+    dataset_name = request.args.get('dataset')
+    (dataset, description) = dataset_from_name(dataset_name, include_description=True)
+    return json.dumps(description)
 
 @app.route('/embedding', methods=['POST', 'GET'])
 def embedding():
     dataset_name = request.args.get('dataset')
     alg_name = request.args.get('method')
-    dataset = dataset_from_name(dataset_name)
+    (dataset, description) = dataset_from_name(dataset_name)
     if alg_name == 'pca':
         model = sklearn.decomposition.PCA(n_components=2, random_state=0)
     elif alg_name == 'tsne':
@@ -149,40 +150,48 @@ def embedding():
     elif alg_name == 'mds':
         model = sklearn.manifold.MDS(n_components=2, random_state=0)
     else:
-        assert False, 'Unknown embedding algorithm'
+        assert False, 'Unknown embedding algorithm:%s' % alg_name
 
     dataset_2d = model.fit_transform(dataset)
     return json.dumps(dataset_2d.tolist())
 
 def compute_all_clusterings(dataset_name):
     param_vec = []
-    for n_clusters in trange(2, 4):
+    for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
         params = {
             'alg_name': 'KMeans',
             'dataset': dataset_name,
             'n_clusters': n_clusters,
         }
-        compute_clustering(params)
         param_vec.append(params)
 
         # SpectralClustering
-        for affinity in ['nearest_neighbors']:
-            params = {
-                'alg_name': 'SpectralClustering',
-                'dataset': dataset_name,
-                'n_clusters': n_clusters,
-                'affinity': affinity,
-            }
-            compute_clustering(params)
-            param_vec.append(params)
+        params = {
+            'alg_name': 'SpectralClustering',
+            'dataset': dataset_name,
+            'n_clusters': n_clusters,
+            'affinity': 'nearest_neighbors',
+        }
+        param_vec.append(params)
 
-    # for eps in range(0, 2, 0.3):
-    #     params = {
-    #         'alg_name': 'dbscan',
-    #         'dataset': dataset_name,
-    #         'eps': eps,
-    #     }
+    # DBSCAN
+    params = {
+        'alg_name': 'dbscan',
+        'dataset': dataset_name,
+    }
+    param_vec.append(params)
+
+    # for param in param_vec:
+    #     print param
+    #     start = time.time()
+    #     compute_clustering(param)
+    #     end = time.time()
+    #     print 'Duration: %.3f' % (end - start)
+    #     print
+    pool = Pool()
+    pool.map(compute_clustering, param_vec)
+
     return param_vec
 
 def compute_clustering(params):
@@ -195,7 +204,7 @@ def compute_clustering(params):
             return clustering
 
         model = model_from_params(params)
-        dataset = dataset_from_name(params['dataset'])
+        (dataset, description) = dataset_from_name(params['dataset'])
         labels = model.fit_predict(dataset)
         sorted_labels = sort_labels(dataset, labels)
 
@@ -226,33 +235,94 @@ def model_from_params(params):
         return sklearn.cluster.KMeans(n_clusters=params['n_clusters'])
     elif alg_name == 'SpectralClustering':
         return sklearn.cluster.SpectralClustering(n_clusters=params['n_clusters'], affinity=params['affinity'])
-    # elif alg_name == 'dbscan':
-    #     return sklearn.cluster.DBSCAN(eps=params['eps'], min_samples=params['min_samples'])
+    elif alg_name == 'dbscan':
+        return sklearn.cluster.DBSCAN(min_samples=1)
     else:
         assert False, 'Unknown clustering algorithn name'
 
 def n_clusters_from_labels(labels):
     return len(set(labels))
 
-def dataset_from_name(dataset_name):
+def dataset_from_name(dataset_name, include_description=False):
     if dataset_name == 'blobs':
-         return sklearn.datasets.make_blobs(n_samples=500,
-                                            n_features=2,
-                                            centers=4,
-                                            cluster_std=1,
-                                            center_box=(-10.0, 10.0),
-                                            shuffle=True,
-                                            random_state=1)[0]
+        (dataset, labels) = sklearn.datasets.make_blobs(n_samples=500,
+                                                        n_features=2,
+                                                        centers=4,
+                                                        cluster_std=1,
+                                                        center_box=(-10.0, 10.0),
+                                                        shuffle=True,
+                                                        random_state=1)
+        if include_description:
+            descriptions = [{'label': l, 'x': x, 'y': y} for ((x, y), l) in zip(dataset, labels)]
+        else:
+            descriptions = None
+        return (dataset, descriptions)
+
     elif dataset_name == 'digits':
-        return sklearn.datasets.load_digits(return_X_y=True)[0]
+        (dataset, labels) = sklearn.datasets.load_digits(return_X_y=True)
+        if include_descriptions:
+            descriptions = []
+            for (img, l) in zip(dataset, labels):
+                brightness = img.mean()
+                contrast = img.std()
+                d = {
+                    'label': l,
+                    'brightness': brightness,
+                    'contrast': contrast
+                }
+                descriptions.append(d)
+        else:
+            descriptions = None
+        return (dataset, descriptions)
     elif dataset_name == 'sequence':
-        with open( "sequence_data/cluster_dump.pickle", "rb" )  as f:
-            output = pickle.load(f)
-        patient_id_list = [' '.join(row) for row in output]
-        vectorizer = sklearn.feature_extraction.text.CountVectorizer()
-        pattern_vectors = vectorizer.fit_transform(patient_id_list)
-        pattern_vectors = pattern_vectors.toarray()
-        return pattern_vectors
+        dataset = np.load('data/sequence_data/sequence_data.npy')
+        if include_description:
+            with open('data/sequence_data/patient_vec.json') as f:
+                descriptions = json.load(f)
+        else:
+            descriptions = None
+        return (dataset, descriptions)
+    elif dataset_name == 'cars':
+        data = np.genfromtxt('data/cars_data/cars.data')
+        # Remove rows with nan values
+        good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
+        data = data[good_rows]
+        if include_descriptions:
+            descriptions = []
+            col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower', 'weight', 'acceleration', 'year', 'origin']
+            for row in data:
+                d = {}
+                for (key, value) in zip(row[:-1], col_names[:-1]): # Don't include origin because we don't know what it means
+                    d[key] = value
+                descriptions.append(d)
+        else:
+            descriptions = None
+
+        data -= data.mean(axis=0)[None, :]
+        data /= data.std(axis=0)[None, :]
+        return (data, descriptions)
+
+    elif dataset_name == 'cameras':
+        data = np.genfromtxt('data/cameras_data/camera.csv', skip_header=2, delimiter=';', usecols=range(1, 13))
+        # Remove rows with nan values
+        good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
+        data = data[good_rows]
+        if include_descriptions:
+            descriptions = []
+            col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution', 'Effective pixels',
+                         'Zoom wide (W)', 'Zoom tele (T)', 'Normal focus range', 'Macro focus range',
+                         'Storage included', 'Weight (inc. batteries)', 'Dimensions', 'Price']
+            for row in data:
+                d = {}
+                for (key, value) in zip(row, col_names):
+                    d[key] = value
+                descriptions.append(d)
+        else:
+            descriptions = None
+
+        data -= data.mean(axis=0)[None, :]
+        data /= data.std(axis=0)[None, :]
+        return (data, descriptions)
     else:
         assert False, 'Unknown dataset name'
 
@@ -270,7 +340,7 @@ def adj_from_labels(labels):
     labels = np.array(labels).flatten()
     return (labels[:, None] == labels[None, :])
 
-def sort_labels(dataset, labels, distance_metric=scipy.spatial.distance.euclidean):
+def sort_labels(dataset, labels):
     '''
     labels - A list of integers with the same size as the data. Each entry indicates to which
              clustering the corresponding point should belong.
@@ -282,15 +352,9 @@ def sort_labels(dataset, labels, distance_metric=scipy.spatial.distance.euclidea
     sorted_labels = []
     n_clusters = n_clusters_from_labels(labels)
     for cluster_index in range(n_clusters):
-        distance_vec = []
-        point_indices = [index for (index, cluster_label) in enumerate(labels) if cluster_label == cluster_index]
-        for index_1 in point_indices:
-            pt_1 = dataset[index_1]
-            distance_vec_for_point = []
-            for index_2 in point_indices:
-                pt_2 = dataset[index_2]
-                distance_vec_for_point.append(distance_metric(pt_1, pt_2))
-            distance_vec.append(np.mean(distance_vec_for_point))
+        center = dataset[labels == cluster_index].mean(0)
+        distance_vec = np.linalg.norm(dataset[labels == cluster_index] - center[None, :], axis=1)
+        point_indices = np.where(labels == cluster_index)[0]
         sorted_point_indices = [index for (distance, index) in sorted(zip(distance_vec, point_indices))]
         sorted_labels.append(sorted_point_indices)
     return sorted_labels
