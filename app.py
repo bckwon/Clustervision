@@ -25,7 +25,7 @@ from multiprocessing import Pool
 from python import clusterhelpers_db_gs
 
 DB_FILENAME = 'db.lmdb'     # Database filename
-NUM_CHOICES = 3             # How many clusterings to show the user (including the previous best)
+NUM_CHOICES = 10             # How many clusterings to show the user (including the previous best)
 L_INITIAL = 0.5             # Initial value for MMR parameter lambda
 L_INCREMENT = 0.1           # L increases by this amount after each round.
 
@@ -156,7 +156,9 @@ def embedding():
     dataset_2d = model.fit_transform(dataset)
     return json.dumps(dataset_2d.tolist())
 
+# @app.route('/compute_all_clusterings', methods=['POST', 'GET'])
 def compute_all_clusterings(dataset_name):
+    # dataset_name = request.args.get('dataset')
     param_vec = []
     for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
