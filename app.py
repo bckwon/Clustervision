@@ -212,21 +212,17 @@ def compute_clustering(params):
 
         # All quality scores should be in the range [0, 1]
         quality_silhouette = 0.5 * (1 + sklearn.metrics.silhouette_score(dataset, labels))
+        quality_silhouette_samples = (0.5 * (1 + sklearn.metrics.silhouette_samples(dataset, labels))).tolist()
         quality_calinski_harabaz = sklearn.metrics.calinski_harabaz_score(dataset, labels)
         quality_davies_bouldin = -1.0 * clusterhelpers_db_gs.davies_bouldin(dataset, labels)
         (quality_cohesion, quality_separation) = compute_dispersion(dataset, labels)
-
-        # assert 0 <= quality_silhouette <= 1
-        # assert 0 <= quality_calinski_harabaz <= 1
-        # assert 0 <= quality_davies_bouldin <= 1
-        # assert 0 <= quality_cohesion <= 1
-        # assert 0 <= quality_separation <= 1
 
         n_clusters = n_clusters_from_labels(labels)
         clustering = {
             'quality': quality_silhouette, # backward compatability
             'quality_metrics': {
                 'silhouette_score': quality_silhouette,
+                'silhouette_samples': quality_silhouette_samples,
                 'calinski_harabaz': quality_calinski_harabaz,
                 'davies_bouldin': quality_davies_bouldin,
                 'cohesion': quality_cohesion,
