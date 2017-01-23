@@ -18,6 +18,7 @@ import sklearn.cluster
 import sklearn.datasets
 import sklearn.manifold
 import sklearn.metrics
+import sklearn.preprocessing
 
 from flask import Flask, request, render_template
 from multiprocessing import Pool
@@ -190,7 +191,8 @@ def compute_all_clusterings(dataset_name):
     #     print 'Duration: %.3f' % (end - start)
     #     print
     pool = Pool()
-    pool.map(compute_clustering, param_vec)
+    # pool.map(compute_clustering, param_vec)
+    map(compute_clustering, param_vec)
 
     return param_vec
 
@@ -208,9 +210,17 @@ def compute_clustering(params):
         labels = model.fit_predict(dataset)
         sorted_labels = sort_labels(dataset, labels)
 
-        quality_silhouette = sklearn.metrics.silhouette_score(dataset, labels)
+        # All quality scores should be in the range [0, 1]
+        quality_silhouette = 0.5 * (1 + sklearn.metrics.silhouette_score(dataset, labels))
         quality_calinski_harabaz = sklearn.metrics.calinski_harabaz_score(dataset, labels)
-        quality_davies_bouldin = clusterhelpers_db_gs.davies_bouldin(dataset, labels)
+        quality_davies_bouldin = -1.0 * clusterhelpers_db_gs.davies_bouldin(dataset, labels)
+        (quality_cohesion, quality_separation) = compute_dispersion(dataset, labels)
+
+        # assert 0 <= quality_silhouette <= 1
+        # assert 0 <= quality_calinski_harabaz <= 1
+        # assert 0 <= quality_davies_bouldin <= 1
+        # assert 0 <= quality_cohesion <= 1
+        # assert 0 <= quality_separation <= 1
 
         n_clusters = n_clusters_from_labels(labels)
         clustering = {
@@ -219,6 +229,8 @@ def compute_clustering(params):
                 'silhouette_score': quality_silhouette,
                 'calinski_harabaz': quality_calinski_harabaz,
                 'davies_bouldin': quality_davies_bouldin,
+                'cohesion': quality_cohesion,
+                'separation': quality_separation
             },
             'labels': labels.tolist(),
             'n_clusters': n_clusters,
@@ -228,6 +240,30 @@ def compute_clustering(params):
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
 
         return clustering
+
+def compute_dispersion(dataset, labels):
+    le = sklearn.preprocessing.LabelEncoder()
+    labels = le.fit_transform(labels)
+
+    n_samples, _ = dataset.shape
+    n_labels = len(le.classes_)
+
+    extra_disp, intra_disp = 0., 0.
+    mean = np.mean(dataset, axis=0)
+    for k in range(n_labels):
+        cluster_k = dataset[labels == k]
+        mean_k = np.mean(cluster_k, axis=0)
+        extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
+        intra_disp += np.sum((cluster_k - mean_k) ** 2)
+
+    extra_disp /= n_samples
+    intra_disp /= n_samples
+
+    var = np.var(dataset)
+    extra_disp /= var
+    intra_disp /= var
+
+    return (intra_disp, extra_disp)
 
 def model_from_params(params):
     alg_name = params['alg_name']
