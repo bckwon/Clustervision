@@ -215,7 +215,7 @@ def compute_clustering(params):
         quality_silhouette_samples = (0.5 * (1 + sklearn.metrics.silhouette_samples(dataset, labels))).tolist()
         quality_calinski_harabaz = sklearn.metrics.calinski_harabaz_score(dataset, labels)
         quality_davies_bouldin = -1.0 * clusterhelpers_db_gs.davies_bouldin(dataset, labels)
-        (quality_cohesion, quality_separation) = compute_dispersion(dataset, labels)
+        (quality_neg_cohesion, quality_separation) = compute_dispersion(dataset, labels)
 
         n_clusters = n_clusters_from_labels(labels)
         clustering = {
@@ -225,7 +225,7 @@ def compute_clustering(params):
                 'silhouette_samples': quality_silhouette_samples,
                 'calinski_harabaz': quality_calinski_harabaz,
                 'davies_bouldin': quality_davies_bouldin,
-                'cohesion': quality_cohesion,
+                'neg_cohesion': quality_neg_cohesion,
                 'separation': quality_separation
             },
             'labels': labels.tolist(),
@@ -258,8 +258,11 @@ def compute_dispersion(dataset, labels):
     var = np.var(dataset)
     extra_disp /= var
     intra_disp /= var
+    separation = extra_disp
+    cohesion = intra_disp
+    neg_cohesion = -1.0 * cohesion
 
-    return (intra_disp, extra_disp)
+    return (neg_cohesion, separation)
 
 def model_from_params(params):
     alg_name = params['alg_name']
