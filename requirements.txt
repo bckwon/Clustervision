@@ -4,6 +4,6 @@ python-dateutil
 py_common_subseq
 requests
 scikit-learn[alldeps]
-scipy==0.17.0
+scipy
 tqdm
 lmdb
