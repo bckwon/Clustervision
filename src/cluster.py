@@ -10,11 +10,12 @@ Documentation: https://ibm.ent.box.com/notes/123647604541
 Created on 01/17/2017
 """
 
-import clusterhelpers_db_gs
 import config
+import clusterhelpers_db_gs
 import json
 import lmdb
 import numpy as np
+import quality_metrics
 import sklearn
 import sklearn.cluster
 import sklearn.datasets
@@ -59,7 +60,6 @@ def compute_all_clusterings(dataset_name):
     #     print 'Duration: %.3f' % (end - start)
     #     print
     pool = Pool()
-    # pool.map(compute_clustering, param_vec)
     map(compute_clustering, param_vec)
 
     return param_vec
@@ -79,22 +79,33 @@ def compute_clustering(params):
         sorted_labels = sort_labels(dataset, labels)
 
         # All quality scores should be in the range [0, 1]
-        quality_silhouette = 0.5 * (1 + sklearn.metrics.silhouette_score(dataset, labels))
-        quality_silhouette_samples = (0.5 * (1 + sklearn.metrics.silhouette_samples(dataset, labels))).tolist()
-        quality_calinski_harabaz = sklearn.metrics.calinski_harabaz_score(dataset, labels)
-        quality_davies_bouldin = -1.0 * clusterhelpers_db_gs.davies_bouldin(dataset, labels)
-        (quality_neg_cohesion, quality_separation) = compute_dispersion(dataset, labels)
+        quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
+        quality_silhouette_clusters = quality_metrics.silhouette_score(dataset, labels)
+        quality_silhouette_samples = quality_metrics.silhouette_clusters(dataset, labels)
+
+        quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
+
+        quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(dataset, labels)
+
+        quality_neg_cohesion = quality_metrics.neg_cohesion(dataset, labels)
+        quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(dataset, labels)
+
+        quality_separation = quality_metrics.separation_score(dataset, labels)
+        quality_separation_clusters = quality_metrics.separation_clusters(dataset, labels)
 
         n_clusters = n_clusters_from_labels(labels)
         clustering = {
             'quality': quality_silhouette, # backward compatability
             'quality_metrics': {
                 'silhouette_score': quality_silhouette,
+                'silhouette_clusters': quality_silhouette_clusters,
                 'silhouette_samples': quality_silhouette_samples,
                 'calinski_harabaz': quality_calinski_harabaz,
-                'davies_bouldin': quality_davies_bouldin,
-                'neg_cohesion': quality_neg_cohesion,
-                'separation': quality_separation
+                'davies_bouldin': quality_neg_davies_bouldin,
+                'cohesion': quality_neg_cohesion,
+                'cohesion_clusters': quality_neg_cohesion_clusters,
+                'separation': quality_separation,
+                'separation_clusters': quality_separation_clusters
             },
             'labels': labels.tolist(),
             'n_clusters': n_clusters,
@@ -102,35 +113,7 @@ def compute_clustering(params):
             'sorted_labels': sorted_labels
         }
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
-
-        return clustering
-
-def compute_dispersion(dataset, labels):
-    le = sklearn.preprocessing.LabelEncoder()
-    labels = le.fit_transform(labels)
-
-    n_samples, _ = dataset.shape
-    n_labels = len(le.classes_)
-
-    extra_disp, intra_disp = 0., 0.
-    mean = np.mean(dataset, axis=0)
-    for k in range(n_labels):
-        cluster_k = dataset[labels == k]
-        mean_k = np.mean(cluster_k, axis=0)
-        extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
-        intra_disp += np.sum((cluster_k - mean_k) ** 2)
-
-    extra_disp /= n_samples
-    intra_disp /= n_samples
-
-    var = np.var(dataset)
-    extra_disp /= var
-    intra_disp /= var
-    separation = extra_disp
-    cohesion = intra_disp
-    neg_cohesion = -1.0 * cohesion
-
-    return (neg_cohesion, separation)
+    return clustering
 
 def model_from_params(params):
     alg_name = params['alg_name']
@@ -258,7 +241,7 @@ def sort_labels(dataset, labels):
         center = dataset[labels == cluster_index].mean(0)
         distance_vec = np.linalg.norm(dataset[labels == cluster_index] - center[None, :], axis=1)
         point_indices = np.where(labels == cluster_index)[0]
-        sorted_point_indices = [index for (distance, index) in sorted(zip(distance_vec, point_indices))]
+        sorted_point_indices = [(index, distance) for (distance, index) in sorted(zip(distance_vec, point_indices))]
         sorted_labels.append(sorted_point_indices)
     return sorted_labels
 
