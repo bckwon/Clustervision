@@ -7,3 +7,4 @@ scikit-learn[alldeps]
 scipy
 tqdm
 lmdb
+networkx

@@ -13,6 +13,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.x_scale = d3.scale.linear().range([0, width-2*margin.x]);
 	_self.y_scale = d3.scale.linear().range([0, height-2*margin.y]);
 	_self.radius = 20;
+	_self.data = data;
 	_self.data_embedding = data["embedding"];
 	_self.data_attributes = data["data_attributes"];
 	_self.clustering = data["clustering"];
@@ -51,8 +52,10 @@ function Projection(canvas, data, screen_width, screen_height){
 
 Projection.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
-	_self.color = category_adam.domain(argument["sorted_labels"].map(function(d,i){return i;}));
-	_self.labels = argument["labels"];
+	_self.cls_argument = argument[0];
+	_self.cls_index = argument[1];
+	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
+	_self.labels = _self.cls_argument["labels"];
 	_self.color_by_new_index();
 };
 
@@ -81,6 +84,19 @@ Projection.prototype.draw = function(){
 						.style("fill-opacity", .25)
 						.style("fill", function(d,i){
 							return _self.color(_self.clustering[0]["labels"][i]);
+						})
+						.on("mouseenter", function(d,i){
+							console.log(_self.cls_index);
+							console.log(i);
+							console.log(_self.data);
+						})
+						.on("mouseleave", function(d,i){
+							
+						})
+						.on("click", function(d,i){
+							d3.selectAll("circle.circ").style("stroke", "none").style("stroke-width", 1);
 						});
+
+
 
 }

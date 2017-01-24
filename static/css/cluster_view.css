@@ -1,4 +1,42 @@
-.canvas_top{
+.canvas_main{
+    position: absolute;
+    width: 100%;
+    left: 0%;
+    top: calc(100px);
+    height: calc(100% - 100px);
+    z-index: 4;
+    overflow-y: fixed;
+    overflow-x: fixed;
+}
+
+.canvas_left{
+    position: absolute;
+    width: 25%;
+    left: 0%;
+    height: 100%;
+    z-index: 4;
+    overflow-y: scroll;
+}
+
+.canvas_middle{
+    position: absolute;
+    width: 50%;
+    left: 25%;
+    height: 100%;
+    z-index: 4;
+    overflow-y: scroll;
+}
+
+.canvas_right{
+    position: absolute;
+    width: 25%;
+    left: 75%;
+    height: 100%;
+    z-index: 4;
+    overflow-y: scroll;
+}
+
+/*.canvas_top{
     position: absolute;
     width: 100%;
     left: 0%;
@@ -35,7 +73,7 @@
     height: 100%;
     z-index: 4;
     overflow-y: scroll;
-}
+}*/
 
 .x.axis path{
     fill: none;

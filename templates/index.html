@@ -7,8 +7,10 @@
 <script src="{{ url_for('static', filename='javascript/d3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/jquery-2.2.0.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/underscore-min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/colors.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/shorty.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/clustering_result.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/quality_chart.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/cluster_list.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/cluster_view.js') }}"></script>
@@ -25,13 +27,22 @@
 <button id="dataset">Retrieve and visualize data</button>
 <button id="all_clustering">Compute all clusterings</button>
 
-<div class="canvas_top">
+<!-- <div class="canvas_top">
 </div>
 <div class="canvas_bottom">
 <div class="canvas_left">
 </div>
 <div class="canvas_right">
 </div>
+</div> -->
+
+<div class = "canvas_main">
+	<div class="canvas_left">
+	</div>	
+	<div class="canvas_middle">
+	</div>
+	<div class="canvas_right">
+	</div>
 </div>
 
 
@@ -69,9 +80,11 @@
 	        // data: JSON.stringify({"data": data}),
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
+	            console.log(parsed_data);
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
-	            var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
-	            var CL = new ClusterList(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
+	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
+	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
+	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*2/3));
 	            session["clustering"] = parsed_data;
 	        }
 	    });
@@ -99,8 +112,7 @@
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            session["data_attributes"] = parsed_data;
-	            var proj = new Projection(".canvas_right", session, screen_width/2.5, screen_height/2);
-
+	            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
 	        }
 	    });
     });
