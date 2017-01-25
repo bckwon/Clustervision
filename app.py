@@ -26,7 +26,7 @@ from src import cluster, config, permute_clustering, quality_metrics
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/', methods=['POST', 'GET'])
 def index():
 	return render_template('index.html', data=[])
 

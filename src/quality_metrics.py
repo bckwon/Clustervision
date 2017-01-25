@@ -30,7 +30,6 @@ def neg_cohesion(X, labels):
     for k in range(n_labels):
         cluster_k = X[labels == k]
         mean_k = np.mean(cluster_k, axis=0)
-        # extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
         cohesion += np.sum((cluster_k - mean_k) ** 2)
 
     cohesion /= n_samples
@@ -80,6 +79,8 @@ def normalize_clustering_vec(clustering_vec):
     max_dict = dict()
     for clustering in clustering_vec:
         for (quality_metric_name, quality_score) in clustering['quality_metrics'].items():
+            if 'silhouette_score' == quality_metric_name:
+                print quality_metric_name, quality_score
             try:
                 min_score = min(quality_score)
                 max_score = max(quality_score)

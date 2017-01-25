@@ -41,19 +41,36 @@
     var chosen_dr_method = "pca";
     var session = {};
 
-    start();
+    $('.dataset_item').on("click", function(element){
+    	console.log(element);
+    	chosen_dataset=$(this).attr("name");
+    	console.log(chosen_dataset);
+    	remove_all();
+    	session = {};
+    	start(false);
+    })
 
-    function start(){
-    	
-    	$.ajax({
-	        type: "POST",
-	        url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
-	        contentType: "application/json; charset=utf-8",
-	        success: function(data) {
-	            var parsed_data = JSON.parse(data);
-                chosen_session_id = parsed_data;
-	        }
-	    });
+
+    function remove_all(){
+    	d3.select(".canvas_left").selectAll("*").remove();
+    	d3.select(".canvas_middle").selectAll("*").remove();
+    	d3.select(".canvas_right").selectAll("*").remove();
+    }
+
+    start(true);
+
+    function start(new_session){
+    	if(new_session){
+	    	$.ajax({
+		        type: "POST",
+		        url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
+		        contentType: "application/json; charset=utf-8",
+		        success: function(data) {
+		            var parsed_data = JSON.parse(data);
+                    chosen_session_id = parsed_data;
+		        }
+		    });
+    	}
 
     	$.ajax({
 	        type: "POST",
@@ -64,7 +81,7 @@
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
 	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
-	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*2/3));
+	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
 	            session["clustering"] = parsed_data;
 	        }
 	    });
@@ -103,4 +120,23 @@
 	    });
     }
 
+<<<<<<< HEAD
 </script>
+=======
+    d3.selection.prototype.moveToFront = function() {  
+      return this.each(function(){
+        this.parentNode.appendChild(this);
+      });
+    };
+    
+    d3.selection.prototype.moveToBack = function() {  
+        return this.each(function() { 
+            var firstChild = this.parentNode.firstChild; 
+            if (firstChild) { 
+                this.parentNode.insertBefore(this, firstChild); 
+            } 
+        });
+    };
+
+</script>
+>>>>>>> c50278bdcf5439c7a5688960e92e4a8a40b5e1f2
