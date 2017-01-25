@@ -22,13 +22,13 @@ import sklearn.preprocessing
 
 from flask import Flask, request, render_template
 from multiprocessing import Pool
-from src import cluster, config, permute_clustering, quality_metrics
+from src import cluster, config, permute_clustering, quality_metrics, superpoints
 
 app = Flask(__name__)
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
-	return render_template('index.html', data=[])
+    return render_template('index.html', data=[])
 
 @app.route('/new_session', methods=['POST', 'GET'])
 def new_session():
@@ -153,6 +153,17 @@ def embedding():
 
     dataset_2d = model.fit_transform(dataset)
     return json.dumps(dataset_2d.tolist())
+
+@app.route('/superpoint', methods=['POST', 'GET'])
+def superpoint():
+    clustering_id = request.args.get('clustering_id')
+    clustering_id = int(clustering_id)
+    max_dist = request.args.get('max_dist', None)
+    if max_dist is not None:
+        max_dist = float(max_dist)
+    d = superpoints.find_superpoints(clustering_id, max_dist=max_dist)
+    return json.dumps(d)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
