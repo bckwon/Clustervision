@@ -26,7 +26,6 @@ import sklearn.preprocessing
 from multiprocessing import Pool
 
 def compute_all_clusterings(dataset_name):
-    print 'compute_all_clusterings'
     param_vec = []
     for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
@@ -111,7 +110,8 @@ def compute_clustering(params):
             'labels': labels.tolist(),
             'n_clusters': n_clusters,
             'clustering_parameters': params,
-            'sorted_labels': sorted_labels
+            'sorted_labels': sorted_labels,
+            'clustering_id': clustering_key
         }
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
@@ -216,7 +216,6 @@ def dataset_from_name(dataset_name, include_description=False):
 def clustering_key_from_params(params):
     key_str = ','.join(['%s=%s' % (key, value) for (key, value) in sorted(params.items())])
     key_int = abs(hash(key_str))
-    print key_str, key_int
     return key_int
 
 def clustering_distance(clustering_1, clustering_2):
