@@ -68,12 +68,12 @@ function QualityChart(canvas, data, screen_width, screen_height){
 						var y = _self.y(d[_self.parameters[1]]);
 						return "translate("+x+","+y+")";
 					})
-					.on("click", function(d){
+					.on("click", function(d,i){
 						d3.selectAll(".clustering_circle").style("stroke", "none").style("stroke-width", 1);
 						d3.select(this).select("circle").style("stroke", "black").style("stroke-width", 5);
 						console.log(d);
-						_s.listenerMap['quality_chart_listener_for_cluster_list'].fire(d);
-						_s.listenerMap['quality_chart_listener_for_embedding'].fire(d);
+						_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
+						_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 					});
 
 	_self.circle = _self.circle_g.append("circle")

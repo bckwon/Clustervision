@@ -22,7 +22,7 @@ import sklearn.preprocessing
 
 from flask import Flask, request, render_template
 from multiprocessing import Pool
-from src import clusterhelpers_db_gs, cluster, config, permute_clustering
+from src import cluster, config, permute_clustering, quality_metrics
 
 app = Flask(__name__)
 
@@ -44,7 +44,7 @@ def new_session():
 
         dataset_name = request.args.get('dataset')
         session = {'dataset': dataset_name,
-                   'L': config.L_INITIAL }
+                   'L': config.L_INITIAL}
         txn.put('sessions/%d' % session_id, json.dumps(session))
 
     param_vec = cluster.compute_all_clusterings(dataset_name)
@@ -119,7 +119,8 @@ def get_clustering():
 
     # Permute the clusterings so adjacent clusterings are similar
     permuted_clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
-    return json.dumps(permuted_clustering_choices)
+    normalized_clustering_choices = quality_metrics.normalize_clustering_vec(permuted_clustering_choices)
+    return json.dumps(normalized_clustering_choices)
 
 
 @app.route('/dataset', methods=['POST', 'GET'])

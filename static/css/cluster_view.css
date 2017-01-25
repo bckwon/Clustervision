@@ -2,8 +2,8 @@
     position: absolute;
     width: 100%;
     left: 0%;
-    top: calc(100px);
-    height: calc(100% - 100px);
+    top: calc(50px);
+    height: calc(100% - 50px);
     z-index: 4;
     overflow-y: fixed;
     overflow-x: fixed;

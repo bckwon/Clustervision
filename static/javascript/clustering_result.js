@@ -35,12 +35,15 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 							})
 							.style("cursor", "pointer")
 							.on("click", function(d,i){
+								d3.selectAll(".clustering").style("stroke", "black");
+								d3.select(this).selectAll(".clustering").style("stroke", "orange");
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 							});
 
 
 	_self.rect = _self.list_space.append("rect")
+					.attr("class", "clustering")
 					.attr("width", _self.width)
 					.attr("height", _self.rect_size*(_self.num_params+.5))
 					.attr("x", -_self.rect_size)
@@ -49,24 +52,25 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 					.style("stroke", "black")
 					.style("stroke-width", "2.5px")
 					.style("cursor", "pointer")
-					.on("click", function(d,i){
-						_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
-						_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-					});
+					// .on("click", function(d,i){
+					// 	_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
+					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
+					// });
 
 	_self.circ_g = _self.list_space.append("g")
 					.attr("transform", "translate("+(-_self.rect_size)+","+(-_self.rect_size)+")");
 
 	_self.circ = _self.circ_g.append("circle")
+					.attr("class", "clustering")
 					.attr("r", _self.rect_size*.75)
 					.style("fill", "white")
 					.style("stroke", "black")
 					.style("stroke-width", "2.5px")
 					.style("cursor", "pointer")
-					.on("click", function(d,i){
-						_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
-						_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-					});
+					// .on("click", function(d,i){
+					// 	_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
+					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
+					// });
 
 
 	_self.circ_label = _self.circ_g.append("text")
@@ -102,9 +106,9 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 					.style("fill", "black")
 					.style("stroke", "black")
 					.style("cursor", "pointer")
-					.on("click", function(d,i){
-						_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
-						_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-					});
+					// .on("click", function(d,i){
+					// 	_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
+					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
+					// });
 
 }

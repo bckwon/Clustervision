@@ -21,21 +21,6 @@
 
 {% include "partials/navigation.html" ignore missing %}
 
-<button id="initialize_session">Initialize Session with Blob</button>
-<button id="clustering">Run "Clustering" with session id = 0 and user choice = 0</button>
-<button id="embedding">Retrieve and visualize embeddings</button>
-<button id="dataset">Retrieve and visualize data</button>
-<button id="all_clustering">Compute all clusterings</button>
-
-<!-- <div class="canvas_top">
-</div>
-<div class="canvas_bottom">
-<div class="canvas_left">
-</div>
-<div class="canvas_right">
-</div>
-</div> -->
-
 <div class = "canvas_main">
 	<div class="canvas_left">
 	</div>	
@@ -47,9 +32,6 @@
 
 
 <script type="text/javascript">
-    
-    // var data = JSON.parse({{data|tojson|safe}});
-    // console.log(data);
 
 	var screen_width = window.screen.availWidth;
 	var screen_height = window.screen.availHeight;
@@ -59,25 +41,23 @@
     var chosen_dr_method = "pca";
     var session = {};
 
-    // Ajax Code to Send Data to Server and Receive Outcome from Server.
-    $('#initialize_session').on("click", function(){
-	    $.ajax({
+    start();
+
+    function start(){
+    	
+    	$.ajax({
 	        type: "POST",
 	        url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
 	        contentType: "application/json; charset=utf-8",
-	        // data: JSON.stringify({"data": data}),
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	        }
 	    });
-    });
 
-    $('#clustering').on("click", function(){
-	    $.ajax({
+    	$.ajax({
 	        type: "POST",
-	        url: $SCRIPT_ROOT + "/clustering?session_id="+chosen_session_id+"&user_choice="+chosen_user_choice,
+	        url: $SCRIPT_ROOT + "/clustering?session_id="+chosen_session_id,
 	        contentType: "application/json; charset=utf-8",
-	        // data: JSON.stringify({"data": data}),
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            console.log(parsed_data);
@@ -88,33 +68,40 @@
 	            session["clustering"] = parsed_data;
 	        }
 	    });
-    });
 
-    $('#embedding').on("click", function(){
 	    $.ajax({
 	        type: "GET",
 	        url: $SCRIPT_ROOT + "/embedding?dataset="+chosen_dataset+"&method="+chosen_dr_method,
 	        contentType: "application/json; charset=utf-8",
-	        // data: JSON.stringify({"data": data}),
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            session["embedding"] = parsed_data;
 	        }
 	    });
-    });
 
-    $('#dataset').on("click", function(){
+	    $.ajax({
+	        type: "GET",
+	        url: $SCRIPT_ROOT + "/description?dataset="+chosen_dataset,
+	        contentType: "application/json; charset=utf-8",
+	        success: function(data) {
+	            var parsed_data = JSON.parse(data);
+	            console.log(parsed_data);
+	            session["data_description"] = parsed_data;
+	            // session["data_attributes"] = parsed_data;
+	            // var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
+	        }
+	    });
+
 	    $.ajax({
 	        type: "GET",
 	        url: $SCRIPT_ROOT + "/dataset?dataset="+chosen_dataset+"&method="+chosen_dr_method,
 	        contentType: "application/json; charset=utf-8",
-	        // data: JSON.stringify({"data": data}),
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            session["data_attributes"] = parsed_data;
 	            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
 	        }
 	    });
-    });
+    }
 
 </script>
