@@ -57,6 +57,7 @@ def new_session():
         num_sessions += 1
         txn.put('num_sessions', str(num_sessions))
 
+    print("Session ID: ", session_id)
     return json.dumps(session_id)
 
 @app.route('/clustering', methods=['POST', 'GET'])

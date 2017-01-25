@@ -41,15 +41,19 @@
     var chosen_dr_method = "pca";
     var session = {};
 
-    $('.dataset_item').on("click", function(element){
-    	console.log(element);
-    	chosen_dataset=$(this).attr("name");
-    	console.log(chosen_dataset);
-    	remove_all();
-    	session = {};
-    	start(false);
-    })
+    $('.dataset_item').on("click", toggle_dataset);
 
+    
+    function toggle_dataset(element){
+    	chosen_dataset=$(this).attr("name");
+    	remove_all();
+    	session = 0;
+    	session = {};
+    	console.log(chosen_dataset);
+    	console.log("begin: ", session);
+    	start(true);
+    	console.log("end: ", session);
+    }
 
     function remove_all(){
     	d3.select(".canvas_left").selectAll("*").remove();
@@ -60,6 +64,7 @@
     start(true);
 
     function start(new_session){
+
     	if(new_session){
 	    	$.ajax({
 		        type: "POST",
@@ -83,6 +88,8 @@
 	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
 	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
 	            session["clustering"] = parsed_data;
+	            console.log(parsed_data[0]["clustering_parameters"]["dataset"]);
+	            console.log(session["clustering"][0]["clustering_parameters"]["dataset"]);
 	        }
 	    });
 
@@ -118,6 +125,8 @@
 	            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
 	        }
 	    });
+
+	    console.log("the end of Start func: ", session);
     }
 
     d3.selection.prototype.moveToFront = function() {  
