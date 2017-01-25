@@ -65,7 +65,7 @@ Projection.prototype.clusterListHandler = function(argument) {
 	var _self = this;
 	_self.circ.style("fill", function(d,i){
 		if(argument == i){
-			d3.select(this).moveToFront();
+			d3.select(this.parentNode).moveToFront();
 			return "red";
 		}else{
 			return _self.color(_self.clustering[0]["labels"][i]);
@@ -129,9 +129,15 @@ Projection.prototype.draw = function(){
 							d3.select(this).moveToFront();
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
+							_self.circ.style("fill", function(d,i){
+								return _self.color(_self.clustering[0]["labels"][i]);
+							});
+							d3.select(this).style("fill", "red");
 						})
 						.on("mouseleave", function(d,i){
-							
+							_self.circ.style("fill", function(d,i){
+								return _self.color(_self.clustering[0]["labels"][i]);
+							})
 						})
 						.on("click", function(d,i){
 							d3.select(this).moveToFront();

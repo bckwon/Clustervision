@@ -146,7 +146,7 @@ def dataset_from_name(dataset_name, include_description=False):
 
     elif dataset_name == 'digits':
         (dataset, labels) = sklearn.datasets.load_digits(return_X_y=True)
-        if include_descriptions:
+        if include_description:
             descriptions = []
             for (img, l) in zip(dataset, labels):
                 brightness = img.mean()
@@ -173,7 +173,7 @@ def dataset_from_name(dataset_name, include_description=False):
         # Remove rows with nan values
         good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
         data = data[good_rows]
-        if include_descriptions:
+        if include_description:
             descriptions = []
             col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower', 'weight', 'acceleration', 'year', 'origin']
             for row in data:
@@ -193,7 +193,7 @@ def dataset_from_name(dataset_name, include_description=False):
         # Remove rows with nan values
         good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
         data = data[good_rows]
-        if include_descriptions:
+        if include_description:
             descriptions = []
             col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution', 'Effective pixels',
                          'Zoom wide (W)', 'Zoom tele (T)', 'Normal focus range', 'Macro focus range',

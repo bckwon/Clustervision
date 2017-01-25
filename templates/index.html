@@ -41,18 +41,34 @@
     var chosen_dr_method = "pca";
     var session = {};
 
-    start();
+    $('.dataset_item').on("click", function(element){
+    	console.log(element);
+    	chosen_dataset=$(this).attr("name");
+    	console.log(chosen_dataset);
+    	remove_all();
+    	session = {};
+    	start(false);
+    })
 
-    function start(){
-    	
-    	$.ajax({
-	        type: "POST",
-	        url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
-	        contentType: "application/json; charset=utf-8",
-	        success: function(data) {
-	            var parsed_data = JSON.parse(data);
-	        }
-	    });
+    function remove_all(){
+    	d3.select(".canvas_left").selectAll("*").remove();
+    	d3.select(".canvas_middle").selectAll("*").remove();
+    	d3.select(".canvas_right").selectAll("*").remove();
+    }
+
+    start(true);
+
+    function start(new_session){
+    	if(new_session){
+	    	$.ajax({
+		        type: "POST",
+		        url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
+		        contentType: "application/json; charset=utf-8",
+		        success: function(data) {
+		            var parsed_data = JSON.parse(data);
+		        }
+		    });
+    	}
 
     	$.ajax({
 	        type: "POST",
