@@ -26,6 +26,7 @@ import sklearn.preprocessing
 from multiprocessing import Pool
 
 def compute_all_clusterings(dataset_name):
+    print 'compute_all_clusterings'
     param_vec = []
     for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
@@ -52,6 +53,8 @@ def compute_all_clusterings(dataset_name):
     }
     param_vec.append(params)
 
+    # HACK TODO
+    param_vec = param_vec[:1]
     # for param in param_vec:
     #     print param
     #     start = time.time()
@@ -59,7 +62,8 @@ def compute_all_clusterings(dataset_name):
     #     end = time.time()
     #     print 'Duration: %.3f' % (end - start)
     #     print
-    pool = Pool()
+
+    # pool = Pool()
     map(compute_clustering, param_vec)
 
     return param_vec
@@ -78,10 +82,9 @@ def compute_clustering(params):
         labels = model.fit_predict(dataset)
         sorted_labels = sort_labels(dataset, labels)
 
-        # All quality scores should be in the range [0, 1]
         quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
-        quality_silhouette_clusters = quality_metrics.silhouette_score(dataset, labels)
-        quality_silhouette_samples = quality_metrics.silhouette_clusters(dataset, labels)
+        quality_silhouette_clusters = quality_metrics.silhouette_clusters(dataset, labels)
+        quality_silhouette_samples = quality_metrics.silhouette_samples(dataset, labels)
 
         quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
 
@@ -146,7 +149,7 @@ def dataset_from_name(dataset_name, include_description=False):
 
     elif dataset_name == 'digits':
         (dataset, labels) = sklearn.datasets.load_digits(return_X_y=True)
-        if include_descriptions:
+        if include_description:
             descriptions = []
             for (img, l) in zip(dataset, labels):
                 brightness = img.mean()
@@ -173,7 +176,7 @@ def dataset_from_name(dataset_name, include_description=False):
         # Remove rows with nan values
         good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
         data = data[good_rows]
-        if include_descriptions:
+        if include_description:
             descriptions = []
             col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower', 'weight', 'acceleration', 'year', 'origin']
             for row in data:
@@ -193,7 +196,7 @@ def dataset_from_name(dataset_name, include_description=False):
         # Remove rows with nan values
         good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
         data = data[good_rows]
-        if include_descriptions:
+        if include_description:
             descriptions = []
             col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution', 'Effective pixels',
                          'Zoom wide (W)', 'Zoom tele (T)', 'Normal focus range', 'Macro focus range',
@@ -215,6 +218,7 @@ def dataset_from_name(dataset_name, include_description=False):
 def clustering_key_from_params(params):
     key_str = ','.join(['%s=%s' % (key, value) for (key, value) in sorted(params.items())])
     key_int = abs(hash(key_str))
+    print key_str, key_int
     return key_int
 
 def clustering_distance(clustering_1, clustering_2):

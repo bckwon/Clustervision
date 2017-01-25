@@ -97,7 +97,7 @@ def get_clustering():
         # Step 2: Run MMR to choose clusterings to show the user.
         param_choices = [query_params]
         clustering_choices = [query_clustering]
-        while len(param_choices) < config.NUM_CHOICES:
+        while len(param_choices) < min(len(param_vec), config.NUM_CHOICES):
             best_score = float('-inf')
             for params in param_vec:
                 if params not in param_choices:
@@ -118,9 +118,9 @@ def get_clustering():
         txn.put('sessions/%d' % session_id, json.dumps(session))
 
     # Permute the clusterings so adjacent clusterings are similar
-    permuted_clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
-    normalized_clustering_choices = quality_metrics.normalize_clustering_vec(permuted_clustering_choices)
-    return json.dumps(normalized_clustering_choices)
+    clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
+    # clustering_choices = quality_metrics.normalize_clustering_vec(clustering_choices)
+    return json.dumps(clustering_choices)
 
 
 @app.route('/dataset', methods=['POST', 'GET'])
