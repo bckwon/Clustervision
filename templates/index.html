@@ -63,7 +63,7 @@
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
 	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
-	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*2/3));
+	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
 	            session["clustering"] = parsed_data;
 	        }
 	    });
@@ -101,5 +101,20 @@
 	        }
 	    });
     }
+
+    d3.selection.prototype.moveToFront = function() {  
+      return this.each(function(){
+        this.parentNode.appendChild(this);
+      });
+    };
+    
+    d3.selection.prototype.moveToBack = function() {  
+        return this.each(function() { 
+            var firstChild = this.parentNode.firstChild; 
+            if (firstChild) { 
+                this.parentNode.insertBefore(this, firstChild); 
+            } 
+        });
+    };
 
 </script>
