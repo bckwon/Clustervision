@@ -53,8 +53,6 @@ def compute_all_clusterings(dataset_name):
     }
     param_vec.append(params)
 
-    # HACK TODO
-    param_vec = param_vec[:1]
     # for param in param_vec:
     #     print param
     #     start = time.time()
