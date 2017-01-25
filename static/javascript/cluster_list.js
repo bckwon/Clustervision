@@ -8,8 +8,9 @@ function ClusterList(canvas, data, screen_width, screen_height){
 	_self.rect_size = 20;
 	_self.width = screen_width-2*_self.margin;
 	_self.height = screen_height-2*_self.margin;
-	_self.parameters = ["n_clusters", "other_measure_1", "other_measure_2"];
-	_self.num_params = _self.parameters.length;
+	_self.parameters = ["n_clusters"];
+	_self.quality_metrics = ["cohesion_clusters", "separation_clusters", "silhouette_samples"];
+	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
 	_self.radius = _self.rect_size/2;
 	_self.default = 0;
 	
@@ -51,6 +52,7 @@ ClusterList.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
 	_self.cls_argument = argument[0];
 	_self.cl_index = argument[1];
+	console.log(argument);
 	_self.display_data = _self.cls_argument["sorted_labels"].map(function(d){return {"size": d.length, "array": d};});
 	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.rect_scale = d3.scale.linear().domain([0, _self.cls_argument["labels"].length]).range([0, _self.width-_self.rect_size]);
@@ -100,7 +102,19 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 					.text("Cluster " + cluster_num)
 					.style("font-size", "200%");
 
-	var cluster_measures = _self.parameters.map(function(d){return {"name": d, "value": data["clustering"][clustering_index]["sorted_labels"][cluster_num].length};});
+	var cluster_measures = _self.parameters.map(function(d){
+		return {"name": d, "value": data["clustering"][clustering_index]["sorted_labels"][cluster_num].length};});
+
+	var measures = _self.quality_metrics.map(function(d){
+		var value = data["clustering"][clustering_index]["quality_metrics"][d][cluster_num];
+		if(isInt(value)){
+			value = parseFloat(value);
+		}else if(isFloat(value)){
+			value = parseFloat(value).toFixed(3);
+		}
+		return {"name": d, "value": value};});
+
+	var cluster_measures = cluster_measures.concat(measures);
 
 	_self.cluster_measures = _self.cluster_space.selectAll("text.measures")
 						.data(cluster_measures).enter()
@@ -153,9 +167,6 @@ ClusterList.prototype.draw_data_point = function(data_item_index, clustering_ind
 
 ClusterList.prototype.draw = function() {
 	var _self = this;
-
-	console.log(_self.cls_argument);
-	console.log(_self.cl_index);
 
 	d3.select(_self.canvas).selectAll("*").remove();
 
@@ -220,3 +231,13 @@ ClusterList.prototype.draw = function() {
 	// 			            .style("alignment-baseline", "central")
 	// 			            .text(function(d){return d["size"]});
 };
+
+function isInt(n){
+	var n = parseFloat(n);
+    return Number(n) === n && n % 1 === 0;
+}
+
+function isFloat(n){
+	var n = parseFloat(n);
+    return Number(n) === n && n % 1 !== 0;
+}

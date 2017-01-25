@@ -18,7 +18,6 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.data_attributes = data["data_attributes"];
 	_self.clustering = data["clustering"];
 	var color_domain = d3.extent(_self.clustering[0]["labels"]);
-	console.log(color_domain);
 	_self.color = category_adam.domain(color_domain);
 
 	_self.svg = d3.select(canvas).append("svg")
@@ -43,7 +42,6 @@ function Projection(canvas, data, screen_width, screen_height){
 				.style("stroke", "white")
 				.style("fill", "white");
 
-	// _self.draw();
 	// new listener
     _self.quality_chart_listener = new _s.Listener("quality_chart_listener_for_embedding");
     _self.quality_chart_listener.subscribe($.proxy(_self.qualityChartHandler, _self));
@@ -51,7 +49,6 @@ function Projection(canvas, data, screen_width, screen_height){
 
 Projection.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
-	console.log(argument);
 	_self.cls_argument = argument[0];
 	_self.cls_index = argument[1];
 	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));

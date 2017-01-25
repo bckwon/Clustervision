@@ -6,7 +6,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 	_self.rect_size = 15;
 
 	_self.parameters = ["n_clusters"];
-	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_samples");
+	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_samples", "separation_clusters", "cohesion_clusters");
 	_self.radius = 7.5;
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
 
@@ -81,8 +81,22 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 
 	_self.list_desc = _self.list_space.selectAll("g.list_desc")
 							.data(function(d){
-								var array = _self.parameters.map(function(e){return {"name": e, "value": d[e]};});
-								array = array.concat(_self.quality_metrics.map(function(e){return {"name":e, "value":d["quality_metrics"][e]};}));
+								var array = _self.parameters.map(function(e){
+									var value = 0;
+									if(isInt(d[e])){
+										value = d[e];
+									}else if(isFloat(d[e])){
+										value = parseFloat(d[e]).toFixed(3);
+									}
+									return {"name": e, "value": value};});
+								array = array.concat(_self.quality_metrics.map(function(e){
+									var value = 0;
+									if(isInt(d["quality_metrics"][e])){
+										value = d["quality_metrics"][e];
+									}else if(isFloat(d["quality_metrics"][e])){
+										value = parseFloat(d["quality_metrics"][e]).toFixed(3);
+									}
+									return {"name":e, "value":value};}));
 								return array;
 							}).enter()
 						.append("g").attr("class", "list_desc")
@@ -111,4 +125,14 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 					// });
 
+}
+
+function isInt(n){
+	var n = parseFloat(n);
+    return Number(n) === n && n % 1 === 0;
+}
+
+function isFloat(n){
+	var n = parseFloat(n);
+    return Number(n) === n && n % 1 !== 0;
 }

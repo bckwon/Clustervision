@@ -60,7 +60,6 @@
 	        contentType: "application/json; charset=utf-8",
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
-	            console.log(parsed_data);
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
 	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
@@ -85,7 +84,6 @@
 	        contentType: "application/json; charset=utf-8",
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
-	            console.log(parsed_data);
 	            session["data_description"] = parsed_data;
 	            // session["data_attributes"] = parsed_data;
 	            // var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
