@@ -26,12 +26,12 @@ import sklearn.preprocessing
 from multiprocessing import Pool
 
 def compute_all_clusterings(dataset_name):
+    print 'compute all clustering'
     param_vec = []
     for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
         params = {
             'alg_name': 'KMeans',
-            'dataset': dataset_name,
             'n_clusters': n_clusters,
         }
         param_vec.append(params)
@@ -39,18 +39,25 @@ def compute_all_clusterings(dataset_name):
         # SpectralClustering
         params = {
             'alg_name': 'SpectralClustering',
-            'dataset': dataset_name,
             'n_clusters': n_clusters,
             'affinity': 'nearest_neighbors',
         }
         param_vec.append(params)
 
     # DBSCAN
-    params = {
-        'alg_name': 'dbscan',
-        'dataset': dataset_name,
-    }
+    # params = {
+    #     'alg_name': 'dbscan',
+    # }
     param_vec.append(params)
+    new_param_vec = []
+    for param in param_vec:
+        param['dataset'] = dataset_name
+        for random_seed in range(config.NUM_RANDOM_WEIGHTINGS):
+            new_param = {key: value for (key, value) in param.items()}
+            new_param['random_seed'] = random_seed
+            new_param_vec.append(new_param)
+    print 'Num new params:', len(new_param_vec)
+    param_vec = param_vec + new_param_vec
 
     # for param in param_vec:
     #     print param
@@ -60,12 +67,20 @@ def compute_all_clusterings(dataset_name):
     #     print 'Duration: %.3f' % (end - start)
     #     print
 
-    # pool = Pool()
-    map(compute_clustering, param_vec)
+    if config.PARELLEL:
+        pool = Pool()
+        pool.map(compute_clustering, param_vec)
+    else:
+        map(compute_clustering, param_vec)
 
     return param_vec
 
 def compute_clustering(params):
+    '''
+    random weights:
+        When using random weightings, only the clustering algorithm sees the perturbed dataset. The quality metrics still use the original dataset
+    '''
+    print 'Computing:', params['random_seed'] if 'random_seed' in params else None, params['alg_name']
     env = lmdb.open(config.DB_FILENAME)
     with env.begin(write=True) as txn:
         clustering_key = clustering_key_from_params(params)
@@ -76,7 +91,14 @@ def compute_clustering(params):
 
         model = model_from_params(params)
         (dataset, description) = dataset_from_name(params['dataset'])
-        labels = model.fit_predict(dataset)
+        if 'random_seed' in params:
+            np.random.seed(params['random_seed'])
+            alpha = config.RANDOM_WEIGHTING_ALPHA
+            weights = np.random.dirichlet(alpha * np.ones(dataset.shape[1]))
+            labels = model.fit_predict(dataset * weights[None, :])
+        else:
+            labels = model.fit_predict(dataset)
+
         sorted_labels = sort_labels(dataset, labels)
 
         quality_silhouette = quality_metrics.silhouette_score(dataset, labels)

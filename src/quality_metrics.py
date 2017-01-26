@@ -3,10 +3,21 @@ import sklearn.metrics
 import clusterhelpers_db_gs
 
 def silhouette_score(X, labels):
-    return sklearn.metrics.silhouette_score(X, labels)
+    n_labels = len(set(labels))
+    n_samples = X.shape[0]
+    if 2 <= n_labels  and n_labels <= n_samples - 1:
+        return sklearn.metrics.silhouette_score(X, labels)
+    else:
+        return -1
 
 def silhouette_samples(X, labels):
-    return sklearn.metrics.silhouette_samples(X, labels).tolist()
+    n_labels = len(set(labels))
+    n_samples = X.shape[0]
+    if 2 <= n_labels  and n_labels <= n_samples - 1:
+        return sklearn.metrics.silhouette_samples(X, labels).tolist()
+    else:
+        return [-1 for _ in labels]
+
 
 def silhouette_clusters(X, labels):
     sample_scores = silhouette_samples(X, labels)
@@ -16,7 +27,12 @@ def neg_davies_bouldin(X, labels):
     return -1.0 * clusterhelpers_db_gs.davies_bouldin(X, labels)
 
 def calinski_harabaz_score(X, labels):
-    return sklearn.metrics.calinski_harabaz_score(X, labels)
+    n_labels = len(set(labels))
+    n_samples = X.shape[0]
+    if 2 <= n_labels  and n_labels <= n_samples - 1:
+        return sklearn.metrics.calinski_harabaz_score(X, labels)
+    else:
+        return float('-inf')
 
 def neg_cohesion(X, labels):
     le = sklearn.preprocessing.LabelEncoder()
