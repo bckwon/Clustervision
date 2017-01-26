@@ -179,7 +179,7 @@ def dataset_from_name(dataset_name, include_description=False):
             col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower', 'weight', 'acceleration', 'year', 'origin']
             for row in data:
                 d = {}
-                for (key, value) in zip(row[:-1], col_names[:-1]): # Don't include origin because we don't know what it means
+                for (key, value) in zip(col_names[:-1], row[:-1]): # Don't include origin because we don't know what it means
                     d[key] = value
                 descriptions.append(d)
         else:

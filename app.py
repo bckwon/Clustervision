@@ -107,7 +107,7 @@ def get_clustering():
                     quality = clustering['quality']
                     dist_to_closest_clustering = min([cluster.clustering_distance(clustering, other_clustering) for other_clustering in clustering_choices])
                     score = L * quality + (1. - L) * dist_to_closest_clustering
-                    if score > best_score:
+                    if score > best_score and dist_to_closest_clustering > config.MIN_CLUSTERING_DIST:
                         best_score = score
                         best_params = params
                         best_clustering = clustering
