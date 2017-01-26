@@ -67,6 +67,8 @@ Projection.prototype.clusterListHandler = function(argument) {
 	_self.circ.style("fill", function(d,i){
 		if(argument == i){
 			d3.select(this.parentNode).moveToFront();
+			var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
+			_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
 			return "red";
 		}else{
 			return _self.color(_self.clustering[_self.cls_index]["labels"][i]);

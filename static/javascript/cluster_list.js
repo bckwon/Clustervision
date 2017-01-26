@@ -65,7 +65,7 @@ ClusterList.prototype.projectionDataPointHandler = function(argument) {
 	var clustering_index = argument[1];
 	var cluster_num = argument[2];
 	var data = argument[3];
-	
+
 	_self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
 
 };
@@ -186,7 +186,10 @@ ClusterList.prototype.draw_data_point = function(data_item_index, clustering_ind
 	var _self = this;
 
 	var data_point = data["data_description"][data_item_index];
-	var data_point_keys = Object.keys(data_point);
+	var data_point_keys = Object.keys(data_point).sort();
+
+	console.log(data_point);
+	console.log(data_point_keys);
 
 	_self.data_point_space.selectAll("*").remove();
 
