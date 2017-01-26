@@ -49,10 +49,7 @@
     	remove_all();
     	session = 0;
     	session = {};
-    	console.log(chosen_dataset);
-    	console.log("begin: ", session);
     	start(true);
-    	console.log("end: ", session);
     }
 
     function remove_all(){
@@ -63,20 +60,22 @@
 
     start(true);
 
-    function start(new_session){
+    function fetch_session() {
+        $.ajax({
+            type: "POST",
+            url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
+            contentType: "application/json; charset=utf-8",
+            success: function(data) {
+                var parsed_data = JSON.parse(data);
+                chosen_session_id = parsed_data;
+                console.log('Sessiod ID for dataset', chosen_dataset, 'is', chosen_session_id);
+                fetch_clustering();
+            }
+        });
+    }
 
-    	if(new_session){
-	    	$.ajax({
-		        type: "POST",
-		        url: $SCRIPT_ROOT + "/new_session?dataset="+chosen_dataset,
-		        contentType: "application/json; charset=utf-8",
-		        success: function(data) {
-		            var parsed_data = JSON.parse(data);
-                    chosen_session_id = parsed_data;
-		        }
-		    });
-    	}
-
+    function fetch_clustering() {
+        console.log('Fetching a new clustering with session_id:', chosen_session_id);
     	$.ajax({
 	        type: "POST",
 	        url: $SCRIPT_ROOT + "/clustering?session_id="+chosen_session_id,
@@ -88,33 +87,17 @@
 	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
 	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
 	            session["clustering"] = parsed_data;
-	            console.log(parsed_data[0]["clustering_parameters"]["dataset"]);
-	            console.log(session["clustering"][0]["clustering_parameters"]["dataset"]);
+                for (var i = 0; i < session['clustering'].length; i++) {
+                    clustering = session['clustering'][i];
+                    console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
+                }
+                fetch_dataset();
 	        }
 	    });
-
-	    $.ajax({
-	        type: "GET",
-	        url: $SCRIPT_ROOT + "/embedding?dataset="+chosen_dataset+"&method="+chosen_dr_method,
-	        contentType: "application/json; charset=utf-8",
-	        success: function(data) {
-	            var parsed_data = JSON.parse(data);
-	            session["embedding"] = parsed_data;
-	        }
-	    });
-
-	    $.ajax({
-	        type: "GET",
-	        url: $SCRIPT_ROOT + "/description?dataset="+chosen_dataset,
-	        contentType: "application/json; charset=utf-8",
-	        success: function(data) {
-	            var parsed_data = JSON.parse(data);
-	            session["data_description"] = parsed_data;
-	            // session["data_attributes"] = parsed_data;
-	            // var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
-	        }
-	    });
-
+    }
+    
+    function fetch_dataset() {
+        console.log('Fetching dataset:', chosen_dataset);
 	    $.ajax({
 	        type: "GET",
 	        url: $SCRIPT_ROOT + "/dataset?dataset="+chosen_dataset+"&method="+chosen_dr_method,
@@ -125,8 +108,16 @@
 	            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
 	        }
 	    });
+    }
 
-	    console.log("the end of Start func: ", session);
+    function start(new_session){
+
+    	if(new_session){
+            fetch_session();
+    	} else {
+            fetch_clustering();
+        }
+        // fetch_dataset();
     }
 
     d3.selection.prototype.moveToFront = function() {  
