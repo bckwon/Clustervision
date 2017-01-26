@@ -35,6 +35,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 							})
 							.style("cursor", "pointer")
 							.on("click", function(d,i){
+                                console.log('click!');
 								d3.selectAll(".clustering").style("stroke", "black");
 								d3.select(this).selectAll(".clustering").style("stroke", "orange");
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);

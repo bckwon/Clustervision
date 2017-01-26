@@ -105,19 +105,42 @@
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            session["data_attributes"] = parsed_data;
-	            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
 	        }
 	    });
+    }
+    function fetch_embedding() {
+        $.ajax({
+            type: "GET",
+            url: $SCRIPT_ROOT + "/embedding?dataset="+chosen_dataset+"&method="+chosen_dr_method,
+            contentType: "application/json; charset=utf-8",
+            success: function(data) {
+                var parsed_data = JSON.parse(data);
+                session["embedding"] = parsed_data;
+            }
+        });
+    }
+
+    function load_projection() {
+        if ((session['embedding'] == null) || (session['data_attributes'] == null) || (session['clustering'] == null)) {
+            window.setTimeout('load_projection();', 100);
+        } else {
+            console.log('embedding:', session['embedding']);
+            console.log('data_attributes:', session['data_attributes']);
+            console.log('clustering:', session['clustering']);
+            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
+        }
     }
 
     function start(new_session){
 
-    	if(new_session){
+    	if(new_session) {
             fetch_session();
     	} else {
             fetch_clustering();
         }
-        // fetch_dataset();
+        fetch_dataset();
+        fetch_embedding();
+        load_projection();
     }
 
     d3.selection.prototype.moveToFront = function() {  

@@ -52,7 +52,6 @@ ClusterList.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
 	_self.cls_argument = argument[0];
 	_self.cl_index = argument[1];
-	console.log(argument);
 	_self.display_data = _self.cls_argument["sorted_labels"].map(function(d){return {"size": d.length, "array": d};});
 	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.rect_scale = d3.scale.linear().domain([0, _self.cls_argument["labels"].length]).range([0, _self.width-_self.rect_size]);
