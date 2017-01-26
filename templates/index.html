@@ -105,9 +105,24 @@
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            session["data_attributes"] = parsed_data;
+                fetch_description();
 	        }
 	    });
     }
+
+    function fetch_description(){
+        $.ajax({
+            type: "GET",
+            url: $SCRIPT_ROOT + "/description?dataset="+chosen_dataset,
+            contentType: "application/json; charset=utf-8",
+            success: function(data) {
+                var parsed_data = JSON.parse(data);
+                session["data_description"] = parsed_data;
+                fetch_embedding();
+            }
+        });
+    }
+
     function fetch_embedding() {
         $.ajax({
             type: "GET",
@@ -116,6 +131,7 @@
             success: function(data) {
                 var parsed_data = JSON.parse(data);
                 session["embedding"] = parsed_data;
+                load_projection();
             }
         });
     }
@@ -138,9 +154,7 @@
     	} else {
             fetch_clustering();
         }
-        fetch_dataset();
-        fetch_embedding();
-        load_projection();
+        // fetch_dataset();
     }
 
     d3.selection.prototype.moveToFront = function() {  
