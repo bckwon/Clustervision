@@ -6,6 +6,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	var width = screen_width;
 	var height = screen_height;
 	var margin = {x:20, y:50};
+	_self.cls_index = 0; // default
 	_self.margin = margin;
 	_self.width = width;
 	_self.height = height;
@@ -17,7 +18,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.data_embedding = data["embedding"];
 	_self.data_attributes = data["data_attributes"];
 	_self.clustering = data["clustering"];
-	var color_domain = d3.extent(_self.clustering[0]["labels"]);
+	var color_domain = d3.extent(_self.clustering[_self.cls_index]["labels"]);
 	_self.color = category_adam.domain(color_domain);
 
 	_self.svg = d3.select(canvas).append("svg")
@@ -68,7 +69,7 @@ Projection.prototype.clusterListHandler = function(argument) {
 			d3.select(this.parentNode).moveToFront();
 			return "red";
 		}else{
-			return _self.color(_self.clustering[0]["labels"][i]);
+			return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 		}
 	})
 };
@@ -123,20 +124,20 @@ Projection.prototype.draw = function(){
 						.style("cursor", "pointer")
 						.style("fill-opacity", .25)
 						.style("fill", function(d,i){
-							return _self.color(_self.clustering[0]["labels"][i]);
+							return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 						})
 						.on("mouseenter", function(d,i){
 							d3.select(this).moveToFront();
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
 							_self.circ.style("fill", function(d,i){
-								return _self.color(_self.clustering[0]["labels"][i]);
+								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							});
 							d3.select(this).style("fill", "red");
 						})
 						.on("mouseleave", function(d,i){
 							_self.circ.style("fill", function(d,i){
-								return _self.color(_self.clustering[0]["labels"][i]);
+								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							})
 						})
 						.on("click", function(d,i){
