@@ -52,6 +52,7 @@ def compute_all_clusterings(dataset_name):
     new_param_vec = []
     for param in param_vec:
         param['dataset'] = dataset_name
+        param['random_seed'] = None
         for random_seed in range(config.NUM_RANDOM_WEIGHTINGS):
             new_param = {key: value for (key, value) in param.items()}
             new_param['random_seed'] = random_seed
@@ -91,7 +92,7 @@ def compute_clustering(params):
 
         model = model_from_params(params)
         (dataset, description) = dataset_from_name(params['dataset'])
-        if 'random_seed' in params:
+        if params['random_seed'] is not None:
             np.random.seed(params['random_seed'])
             alpha = config.RANDOM_WEIGHTING_ALPHA
             weights = np.random.dirichlet(alpha * np.ones(dataset.shape[1]))
@@ -238,6 +239,7 @@ def dataset_from_name(dataset_name, include_description=False):
 def clustering_key_from_params(params):
     key_str = ','.join(['%s=%s' % (key, value) for (key, value) in sorted(params.items())])
     key_int = abs(hash(key_str))
+    key_int = key_int % (10**config.KEY_NUM_DIGITS)
     return key_int
 
 def clustering_distance(clustering_1, clustering_2):

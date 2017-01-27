@@ -121,6 +121,7 @@ def get_clustering():
     # Permute the clusterings so adjacent clusterings are similar
     clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
     # clustering_choices = quality_metrics.normalize_clustering_vec(clustering_choices)
+    
     return json.dumps(clustering_choices)
 
 
