@@ -29,6 +29,7 @@ def find_superpoints(clustering_id, max_dist=None):
         if len(subset_indices) == 1:
             d['superpoint'].append(subset_indices[0])
             d['size'].append(1)
+            d['children'].extend(subset_indices)
         else:
             pdist = scipy.spatial.distance.pdist(dataset_subset)
             Z = scipy.cluster.hierarchy.linkage(pdist, method='average', metric='euclidean')
@@ -41,6 +42,8 @@ def find_superpoints(clustering_id, max_dist=None):
             center_indices = subset_indices[indices]
             d['superpoint'].extend(center_indices)
 
-            weights = np.array([np.sum(y == tmp_cluster_index) for tmp_cluster_index in range(num_clusters)])
+            weights = [np.sum(y == tmp_cluster_index) for tmp_cluster_index in range(num_clusters)]
+            children = [subset_indices[y == temp_cluster_index].tolist() for temp_cluster_index in range(num_clusters)]
             d['size'].extend(weights)
+            d['children'].extend(children)
     return d

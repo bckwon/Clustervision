@@ -26,7 +26,6 @@ import sklearn.preprocessing
 from multiprocessing import Pool
 
 def compute_all_clusterings(dataset_name):
-    print 'compute all clustering'
     param_vec = []
     for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
@@ -57,7 +56,6 @@ def compute_all_clusterings(dataset_name):
             new_param = {key: value for (key, value) in param.items()}
             new_param['random_seed'] = random_seed
             new_param_vec.append(new_param)
-    print 'Num new params:', len(new_param_vec)
     param_vec = param_vec + new_param_vec
 
     # for param in param_vec:
@@ -81,7 +79,6 @@ def compute_clustering(params):
     random weights:
         When using random weightings, only the clustering algorithm sees the perturbed dataset. The quality metrics still use the original dataset
     '''
-    print 'Computing:', params['random_seed'] if 'random_seed' in params else None, params['alg_name']
     env = lmdb.open(config.DB_FILENAME)
     with env.begin(write=True) as txn:
         clustering_key = clustering_key_from_params(params)
