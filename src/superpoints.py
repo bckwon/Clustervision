@@ -11,6 +11,15 @@ def find_superpoints(clustering_id, max_dist=None):
     if max_dist is None:
         max_dist = 1.0
 
+    key = 'superpoints/%d_%f' % (clustering_id, max_dist)
+
+    env = lmdb.open(config.DB_FILENAME)
+    with env.begin(write=True) as txn:
+        d = txn.get(key)
+        if d is not None:
+            d = json.loads(d)
+            return d
+
     env = lmdb.open(config.DB_FILENAME)
     with env.begin(write=True) as txn:
         clustering = txn.get('clusterings/%d' % clustering_id)
@@ -46,4 +55,9 @@ def find_superpoints(clustering_id, max_dist=None):
             children = [subset_indices[y == temp_cluster_index].tolist() for temp_cluster_index in range(num_clusters)]
             d['size'].extend(weights)
             d['children'].extend(children)
+
+    with env.begin(write=True) as txn:
+        txn.put(key, json.dumps(d))
+
     return d
+
