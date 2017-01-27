@@ -113,6 +113,8 @@ def compute_clustering(params):
         quality_separation = quality_metrics.separation_score(dataset, labels)
         quality_separation_clusters = quality_metrics.separation_clusters(dataset, labels)
 
+        quality_min_max_dist = quality_metrics.min_max_dist(dataset, labels)
+
         n_clusters = n_clusters_from_labels(labels)
         clustering = {
             'quality': quality_silhouette, # backward compatability
@@ -125,7 +127,8 @@ def compute_clustering(params):
                 'cohesion': quality_neg_cohesion,
                 'cohesion_clusters': quality_neg_cohesion_clusters,
                 'separation': quality_separation,
-                'separation_clusters': quality_separation_clusters
+                'separation_clusters': quality_separation_clusters,
+                'min_max_dist': quality_min_max_dist
             },
             'labels': labels.tolist(),
             'n_clusters': n_clusters,

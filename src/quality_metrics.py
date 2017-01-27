@@ -90,6 +90,20 @@ def separation_clusters(X, labels):
 
     return separation_vec
 
+def min_max_dist(X, labels):
+    '''Minimum and maximum distance between two points belonging to the same cluster'''
+    min_vec = []
+    max_vec = []
+    for cluster_index in sorted(set(labels)):
+        X_subset = X[labels == cluster_index]
+        pdist = sklearn.metrics.pairwise_distances(X_subset)
+        max_vec.append(pdist.max())
+        n = X_subset.shape[0]
+        # Handle the zeros on the diagonal
+        pdist[range(n), range(n)] = float('inf')
+        min_vec.append(pdist.min())
+    return (min(min_vec), max(max_vec))
+
 def normalize_clustering_vec(clustering_vec):
     min_dict = dict()
     max_dict = dict()
