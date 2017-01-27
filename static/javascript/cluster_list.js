@@ -188,9 +188,6 @@ ClusterList.prototype.draw_data_point = function(data_item_index, clustering_ind
 	var data_point = data["data_description"][data_item_index];
 	var data_point_keys = Object.keys(data_point).sort();
 
-	console.log(data_point);
-	console.log(data_point_keys);
-
 	_self.data_point_space.selectAll("*").remove();
 
 	_self.datapoint_rect = _self.data_point_space.append("rect")

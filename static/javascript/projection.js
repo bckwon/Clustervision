@@ -28,25 +28,22 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.zoom_input_slider = d3.select("input.zoom_input_slider#zoom_input")
                                 .attr("value", 1)
                                 .attr("min", 1)
-                                .attr("max", 100)
-                                .attr("step", 10)
+                                .attr("max", 3)
+                                .attr("step", .1)
                                 .on("input", function(d){
                                 	var distance = parseFloat(d3.select(this).property("value"));
+                                	console.log("clustering_id: " + _self.clustering[_self.cls_index]['clustering_id']);
+                                	console.log("max_dist: " + distance);
                             		$.ajax({
 							            type: "GET",
 							            url: $SCRIPT_ROOT + "/superpoint?clustering_id="+_self.clustering[_self.cls_index]['clustering_id']+"&max_dist="+distance,
 							            contentType: "application/json; charset=utf-8",
 							            success: function(data) {
 							                var parsed_data = JSON.parse(data);
-							                // Once we get new data as following:
-							                // {
-											// "superpoint": [3, 67, 347],
-											// "size": [1, 3, ...],
-											// NotImplementedYet:  "distance_min_max": [min, max],
-											// NotImplementedYet: "children":[[1,2,3],[67]]
-											// }
-											// We hide (display: none) all elements by index except for those found in superpoint.
-											// We adjust the size by "size".
+							                console.log(parsed_data);
+							                _self.superpoints = parsed_data;
+							                _self.draw_superpoints(parsed_data);
+							                
 
 							            }
 							        });
@@ -82,6 +79,28 @@ function Projection(canvas, data, screen_width, screen_height){
     _self.cluster_list_listener_for_data_point = new _s.Listener("cluster_list_listener_for_data_point");
     _self.cluster_list_listener_for_data_point.subscribe($.proxy(_self.clusterListHandler, _self));
 }
+
+Projection.prototype.draw_superpoints = function() {
+	var _self = this;
+	_self.circle_size_scale = d3.scale.linear().domain([0, _self.data_embedding.length]).range([_self.radius, _self.radius*10]);
+
+	console.log(_self.superpoints);
+
+	_self.circ.transition().duration(250).style("display", function(d,i){
+		if(_self.superpoints["superpoint"].indexOf(i) > -1){
+			return "inherit";
+		}else{
+			return "none";
+		}
+	}).attr("r", function(d,i){
+		if(_self.superpoints["superpoint"].indexOf(i) > -1){
+			var index = _self.superpoints["superpoint"].indexOf(i);
+			return _self.circle_size_scale(_self.superpoints["size"][index]);
+		}else{
+			return _self.radius;
+		}
+	});
+};
 
 Projection.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
