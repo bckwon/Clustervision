@@ -97,7 +97,11 @@ def min_max_dist(X, labels):
     for cluster_index in sorted(set(labels)):
         X_subset = X[labels == cluster_index]
         pdist = sklearn.metrics.pairwise_distances(X_subset)
-        max_vec.append(pdist.max())
+        values = pdist.flatten()
+        if len(values) > 1:
+            max_vec.append(sorted(values)[-2])
+        else:
+            max_vec.append(values[0])
         n = X_subset.shape[0]
         # Handle the zeros on the diagonal
         pdist[range(n), range(n)] = float('inf')
