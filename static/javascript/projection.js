@@ -5,7 +5,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	var _self = this;
 	var width = screen_width;
 	var height = screen_height;
-	var margin = {x:20, y:50};
+	var margin = {x:20, y:80};
 	_self.cls_index = 0; // default
 	_self.margin = margin;
 	_self.width = width;
@@ -20,6 +20,37 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.clustering = data["clustering"];
 	var color_domain = d3.extent(_self.clustering[_self.cls_index]["labels"]);
 	_self.color = category_adam.domain(color_domain);
+
+	_self.btn_group = d3.select(canvas).append("div").attr("class", "superpoint_scale").style("position", "fixed").style("background", "white").style("width", "100%");
+
+	addInputButton(".superpoint_scale", "SuperPoint Scale: ");
+
+	_self.zoom_input_slider = d3.select("input.zoom_input_slider#zoom_input")
+                                .attr("value", 1)
+                                .attr("min", 1)
+                                .attr("max", 100)
+                                .attr("step", 10)
+                                .on("input", function(d){
+                                	var distance = parseFloat(d3.select(this).property("value"));
+                            		$.ajax({
+							            type: "GET",
+							            url: $SCRIPT_ROOT + "/superpoint?clustering_id="+_self.clustering[_self.cls_index]['clustering_id']+"&max_dist="+distance,
+							            contentType: "application/json; charset=utf-8",
+							            success: function(data) {
+							                var parsed_data = JSON.parse(data);
+							                // Once we get new data as following:
+							                // {
+											// "superpoint": [3, 67, 347],
+											// "size": [1, 3, ...],
+											// NotImplementedYet:  "distance_min_max": [min, max],
+											// NotImplementedYet: "children":[[1,2,3],[67]]
+											// }
+											// We hide (display: none) all elements by index except for those found in superpoint.
+											// We adjust the size by "size".
+
+							            }
+							        });
+                                });
 
 	_self.svg = d3.select(canvas).append("svg")
 					.attr("width", _self.width)
@@ -150,7 +181,6 @@ Projection.prototype.draw = function(){
 							d3.selectAll("circle.data_item_circ").style("opacity", .1).style("stroke", "none");
 							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", 1).style("stroke", COLOR_DARKGRAY);
 						});
-
-
-
 }
+
+

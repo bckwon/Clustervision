@@ -172,4 +172,18 @@
         });
     };
 
+    function addInputButton(div, inputname, float){
+        var float = float || "left";
+        var btngroup = d3.select(div)
+            .append("div").attr("class", "btn-group").style("float", float);
+        var text = btngroup.append("span").style("float", float).text(inputname + ":  ");
+        var input = btngroup.append("span").style("float", float).append("input")
+                    .attr("class", "zoom_input_slider")
+                    .attr("id", "zoom_input")
+                    .attr("type", "range")
+                    .style("margin-top", 3)
+                    .style("display", "inline-block")
+                    .style("vertical-align", "middle");
+    }
+
 </script>
