@@ -26,10 +26,10 @@ function Projection(canvas, data, screen_width, screen_height){
 	addInputButton(".superpoint_scale", "SuperPoint Scale: ");
 
 	_self.zoom_input_slider = d3.select("input.zoom_input_slider#zoom_input")
-                                .attr("value", 1)
-                                .attr("min", 1)
-                                .attr("max", 3)
-                                .attr("step", .1)
+                                .attr("value", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
+                                .attr("min", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
+                                .attr("max", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1])
+                                .attr("step", (_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1]-_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])/20)
                                 .on("input", function(d){
                                 	var distance = parseFloat(d3.select(this).property("value"));
                                 	console.log("clustering_id: " + _self.clustering[_self.cls_index]['clustering_id']);
@@ -108,6 +108,12 @@ Projection.prototype.qualityChartHandler = function(argument) {
 	_self.cls_index = argument[1];
 	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.labels = _self.cls_argument["labels"];
+	_self.zoom_input_slider
+        .attr("value", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
+        .attr("min", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
+        .attr("max", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1])
+        .attr("step", (_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1]-_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])/20);
+    $('#zoom_input').val(0);
 	_self.draw();
 	_self.color_by_new_index();
 };
