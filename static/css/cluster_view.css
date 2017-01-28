@@ -75,6 +75,10 @@
     overflow-y: scroll;
 }*/
 
+.dataset_title{
+    color: blue;
+}
+
 .x.axis path{
     fill: none;
     stroke: black;

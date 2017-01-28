@@ -13,7 +13,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.canvas = canvas;
 	_self.x_scale = d3.scale.linear().range([0, width-2*margin.x]);
 	_self.y_scale = d3.scale.linear().range([0, height-2*margin.y]);
-	_self.radius = 20;
+	_self.radius = CIRCLE_RADIUS;
 	_self.data = data;
 	_self.data_embedding = data["embedding"];
 	_self.data_attributes = data["data_attributes"];
@@ -32,21 +32,7 @@ function Projection(canvas, data, screen_width, screen_height){
                                 .attr("step", (_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1]-_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])/20)
                                 .on("input", function(d){
                                 	var distance = parseFloat(d3.select(this).property("value"));
-                                	console.log("clustering_id: " + _self.clustering[_self.cls_index]['clustering_id']);
-                                	console.log("max_dist: " + distance);
-                            		$.ajax({
-							            type: "GET",
-							            url: $SCRIPT_ROOT + "/superpoint?clustering_id="+_self.clustering[_self.cls_index]['clustering_id']+"&max_dist="+distance,
-							            contentType: "application/json; charset=utf-8",
-							            success: function(data) {
-							                var parsed_data = JSON.parse(data);
-							                console.log(parsed_data);
-							                _self.superpoints = parsed_data;
-							                _self.draw_superpoints(parsed_data);
-							                
-
-							            }
-							        });
+                                	_self.request_superpoints(distance);
                                 });
 
 	_self.svg = d3.select(canvas).append("svg")
@@ -80,11 +66,23 @@ function Projection(canvas, data, screen_width, screen_height){
     _self.cluster_list_listener_for_data_point.subscribe($.proxy(_self.clusterListHandler, _self));
 }
 
+Projection.prototype.request_superpoints = function(distance) {
+	var _self = this;
+	$.ajax({
+	    type: "GET",
+	    url: $SCRIPT_ROOT + "/superpoint?clustering_id="+_self.clustering[_self.cls_index]['clustering_id']+"&max_dist="+distance,
+	    contentType: "application/json; charset=utf-8",
+	    success: function(data) {
+	        var parsed_data = JSON.parse(data);
+	        _self.superpoints = parsed_data;
+	        _self.draw_superpoints(parsed_data);
+	    }
+	});
+};
+
 Projection.prototype.draw_superpoints = function() {
 	var _self = this;
-	_self.circle_size_scale = d3.scale.linear().domain([0, _self.data_embedding.length]).range([_self.radius, _self.radius*10]);
-
-	console.log(_self.superpoints);
+	_self.circle_size_scale = d3.scale.linear().domain([0, _self.data_embedding.length]).range(SUPERPOINT_CIRCLE_RADIUS_SCALE_RANGE_MIN_MAX);
 
 	_self.circ.transition().duration(250).style("display", function(d,i){
 		if(_self.superpoints["superpoint"].indexOf(i) > -1){
@@ -108,12 +106,15 @@ Projection.prototype.qualityChartHandler = function(argument) {
 	_self.cls_index = argument[1];
 	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.labels = _self.cls_argument["labels"];
-	_self.zoom_input_slider
-        .attr("value", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
-        .attr("min", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
-        .attr("max", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1])
-        .attr("step", (_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1]-_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])/20);
-    $('#zoom_input').val(0);
+
+	var distance = $('#zoom_input').val();
+	_self.request_superpoints(distance);
+	// _self.zoom_input_slider
+ //        .attr("value", $('#zoom_input').attr("value"))
+ //        .attr("min", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
+ //        .attr("max", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1])
+ //        .attr("step", (_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1]-_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])/20);
+
 	_self.draw();
 	_self.color_by_new_index();
 };
@@ -145,6 +146,18 @@ Projection.prototype.draw = function(){
 
 	_self.y_scale.domain(d3.extent(_self.data_embedding, function(d){return d[1];})).nice();
 	_self.x_scale.domain(d3.extent(_self.data_embedding, function(d){return d[0];})).nice();
+
+	_self.bg_rect = _self.svg.append("rect")
+						.attr("x", -_self.margin.x)
+						.attr("y", -_self.margin.y)
+						.attr("width", _self.width+_self.margin.x*2)
+						.attr("height", _self.height+_self.margin.y*2)
+						.style("opacity", 0)
+						.on("click", function(){
+							_self.circ.style("fill", function(d,i){
+								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
+							}).style("opacity", SELECTED_CIRCLE_OPACITY);
+						});
 
 	_self.title_box = _self.svg.append("rect")
 						.attr("x", 0)
@@ -180,7 +193,7 @@ Projection.prototype.draw = function(){
 							return cluster_label;
 						})
 						.style("cursor", "pointer")
-						.style("fill-opacity", .25)
+						.style("fill-opacity", DESELECTED_CIRCLE_OPACITY)
 						.style("fill", function(d,i){
 							return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 						})
@@ -203,8 +216,8 @@ Projection.prototype.draw = function(){
 							d3.selectAll("circle.data_item_circ").style("stroke", "none").style("stroke-width", 1);
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data]);
-							d3.selectAll("circle.data_item_circ").style("opacity", .1).style("stroke", "none");
-							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", 1).style("stroke", COLOR_DARKGRAY);
+							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
+							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", SELECTED_CIRCLE_OPACITY);
 						});
 }
 

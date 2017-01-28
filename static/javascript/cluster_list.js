@@ -56,6 +56,7 @@ ClusterList.prototype.qualityChartHandler = function(argument) {
 	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.rect_scale = d3.scale.linear().domain([0, _self.cls_argument["labels"].length]).range([0, _self.width-_self.rect_size]);
 	// _self.draw();
+	_self.reset_view();
 };
 
 ClusterList.prototype.projectionDataPointHandler = function(argument) {
@@ -80,6 +81,12 @@ ClusterList.prototype.projectionClusterHandler = function(argument) {
 
 	_self.draw_cluster(data_item_index, clustering_index, cluster_num, data);
 
+};
+
+ClusterList.prototype.reset_view = function() {
+	var _self = this;
+	_self.cluster_space.selectAll("*").remove();
+	_self.data_point_space.selectAll("*").remove();
 };
 
 ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index, cluster_num, data) {
