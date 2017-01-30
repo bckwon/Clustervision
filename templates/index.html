@@ -11,12 +11,14 @@
 <script src="{{ url_for('static', filename='javascript/visual_parameters.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/colors.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/shorty.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/clustering_result.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/clustering_stripes.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/quality_chart.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/cluster_list.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/cluster_view.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/projection.js') }}"></script>
-
+<script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
 <title>Cluster Analysis</title>
 </head>
 
@@ -71,7 +73,7 @@
             success: function(data) {
                 var parsed_data = JSON.parse(data);
                 chosen_session_id = parsed_data;
-                console.log('Sessiod ID for dataset', chosen_dataset, 'is', chosen_session_id);
+                // console.log('Sessiod ID for dataset', chosen_dataset, 'is', chosen_session_id);
                 fetch_clustering();
             }
         });
@@ -87,12 +89,13 @@
 	            var parsed_data = JSON.parse(data);
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
-	            var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
+	            // var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
+                var CR = new ClusteringStripes(".canvas_left", parsed_data, screen_width/4.5, (screen_height*8/10));
 	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
 	            session["clustering"] = parsed_data;
                 for (var i = 0; i < session['clustering'].length; i++) {
                     clustering = session['clustering'][i];
-                    console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
+                    // console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
                 }
                 fetch_dataset();
 	        }
@@ -143,9 +146,9 @@
         if ((session['embedding'] == null) || (session['data_attributes'] == null) || (session['clustering'] == null)) {
             window.setTimeout('load_projection();', 100);
         } else {
-            console.log('embedding:', session['embedding']);
-            console.log('data_attributes:', session['data_attributes']);
-            console.log('clustering:', session['clustering']);
+            // console.log('embedding:', session['embedding']);
+            // console.log('data_attributes:', session['data_attributes']);
+            // console.log('clustering:', session['clustering']);
             var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
         }
     }
