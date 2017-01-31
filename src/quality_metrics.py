@@ -42,7 +42,6 @@ def neg_cohesion(X, labels):
     n_labels = len(le.classes_)
 
     cohesion = 0
-    mean = np.mean(X, axis=0)
     for k in range(n_labels):
         cluster_k = X[labels == k]
         mean_k = np.mean(cluster_k, axis=0)
@@ -113,7 +112,7 @@ def normalize_clustering_vec(clustering_vec):
     max_dict = dict()
     for clustering in clustering_vec:
         for (quality_metric_name, quality_score) in clustering['quality_metrics'].items():
-            if 'silhouette_score' == quality_metric_name:
+            if quality_metric_name == 'silhouette_score':
                 print quality_metric_name, quality_score
             try:
                 min_score = min(quality_score)
@@ -121,18 +120,20 @@ def normalize_clustering_vec(clustering_vec):
             except TypeError:
                 min_score = quality_score
                 max_score = quality_score
-            min_dict[quality_metric_name] = min([min_dict.get(quality_metric_name, float('inf')), min_score])
-            max_dict[quality_metric_name] = max([max_dict.get(quality_metric_name, float('-inf')), max_score])
+            min_value = min([min_dict.get(quality_metric_name, float('inf')), min_score])
+            max_value = max([max_dict.get(quality_metric_name, float('-inf')), max_score])
+            min_dict[quality_metric_name] = min_value
+            max_dict[quality_metric_name] = max_value
 
     for clustering in clustering_vec:
         for (quality_metric_name, quality_score) in clustering['quality_metrics'].items():
             min_score = float(min_dict[quality_metric_name])
             max_score = float(max_dict[quality_metric_name])
             try:
-                quality_score = [(score - min_score) / (max_score - min_score) for score in quality_score]
+                quality_score = [(score - min_score) / (max_score - min_score)
+                                 for score in quality_score]
             except TypeError:
                 quality_score = (quality_score - min_score) / (max_score - min_score)
             clustering['quality_metrics'][quality_metric_name] = quality_score
 
     return clustering_vec
-

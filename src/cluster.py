@@ -22,7 +22,9 @@ import sklearn.datasets
 import sklearn.manifold
 import sklearn.metrics
 import sklearn.preprocessing
+import string
 
+from tqdm import tqdm
 from multiprocessing import Pool
 
 def compute_all_clusterings(dataset_name):
@@ -70,16 +72,18 @@ def compute_all_clusterings(dataset_name):
         pool = Pool()
         pool.map(compute_clustering, param_vec)
     else:
-        map(compute_clustering, param_vec)
+        for params in tqdm(param_vec):
+            compute_clustering(params)
 
     return param_vec
 
 def compute_clustering(params):
     '''
     random weights:
-        When using random weightings, only the clustering algorithm sees the perturbed dataset. The quality metrics still use the original dataset
+        When using random weightings, only the clustering algorithm sees the perturbed
+        dataset. The quality metrics still use the original dataset.
     '''
-    env = lmdb.open(config.DB_FILENAME)
+    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
     with env.begin(write=True) as txn:
         clustering_key = clustering_key_from_params(params)
         clustering = txn.get('clusterings/%d' % clustering_key)
@@ -144,7 +148,8 @@ def model_from_params(params):
     if alg_name == 'KMeans':
         return sklearn.cluster.KMeans(n_clusters=params['n_clusters'])
     elif alg_name == 'SpectralClustering':
-        return sklearn.cluster.SpectralClustering(n_clusters=params['n_clusters'], affinity=params['affinity'])
+        return sklearn.cluster.SpectralClustering(n_clusters=params['n_clusters'],
+                                                  affinity=params['affinity'])
     elif alg_name == 'dbscan':
         return sklearn.cluster.DBSCAN(min_samples=1)
     else:
@@ -184,14 +189,14 @@ def dataset_from_name(dataset_name, include_description=False):
         else:
             descriptions = None
         return (dataset, descriptions)
-    elif dataset_name == 'sequence':
-        dataset = np.load('data/sequence_data/sequence_data.npy')
-        if include_description:
-            with open('data/sequence_data/patient_vec.json') as f:
-                descriptions = json.load(f)
-        else:
-            descriptions = None
-        return (dataset, descriptions)
+    # elif dataset_name == 'sequence':
+    #     dataset = np.load('data/sequence_data/sequence_data.npy')
+    #     if include_description:
+    #         with open('data/sequence_data/patient_vec.json') as f:
+    #             descriptions = json.load(f)
+    #     else:
+    #         descriptions = None
+    #     return (dataset, descriptions)
     elif dataset_name == 'cars':
         data = np.genfromtxt('data/cars_data/cars.data')
         # Remove rows with nan values
@@ -199,10 +204,12 @@ def dataset_from_name(dataset_name, include_description=False):
         data = data[good_rows]
         if include_description:
             descriptions = []
-            col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower', 'weight', 'acceleration', 'year', 'origin']
+            col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower',\
+                         'weight', 'acceleration', 'year', 'origin']
             for row in data:
                 d = {}
-                for (key, value) in zip(col_names[:-1], row[:-1]): # Don't include origin because we don't know what it means
+                # Don't include origin because we don't know what it means
+                for (key, value) in zip(col_names[:-1], row[:-1]):
                     d[key] = value
                 descriptions.append(d)
         else:
@@ -213,15 +220,17 @@ def dataset_from_name(dataset_name, include_description=False):
         return (data, descriptions)
 
     elif dataset_name == 'cameras':
-        data = np.genfromtxt('data/cameras_data/camera.csv', skip_header=2, delimiter=';', usecols=range(1, 13))
+        data = np.genfromtxt('data/cameras_data/camera.csv', skip_header=2,
+                             delimiter=';', usecols=range(1, 13))
         # Remove rows with nan values
         good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
         data = data[good_rows]
         if include_description:
             descriptions = []
-            col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution', 'Effective pixels',
-                         'Zoom wide (W)', 'Zoom tele (T)', 'Normal focus range', 'Macro focus range',
-                         'Storage included', 'Weight (inc. batteries)', 'Dimensions', 'Price']
+            col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution',
+                         'Effective pixels', 'Zoom wide (W)', 'Zoom tele (T)',
+                         'Normal focus range', 'Macro focus range', 'Storage included',
+                         'Weight (inc. batteries)', 'Dimensions', 'Price']
             for row in data:
                 d = {}
                 for (key, value) in zip(row, col_names):
@@ -233,6 +242,35 @@ def dataset_from_name(dataset_name, include_description=False):
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
         return (data, descriptions)
+    elif dataset_name == 'universities':
+        # data = np.genfromtxt('data/universities_data/college_rank_2013.csv', dtype=None, skip_header=1, delimiter=',')
+        with open('data/universities_data/college_rank_2013.csv') as f:
+            line_vec = f.readlines()
+        header = line_vec[0].strip().split(',')
+        descriptions = []
+        data = []
+        for line in line_vec[1:]:
+            if '"' in line:
+                name = line.split('"')[1]
+            else:
+                name = line.split(',')[0]
+            line = line.split('"')[-1] # Remove the university name if in quotes
+            tokens = line.split(',')[1:] # Remove the university name
+            tokens = map(float, tokens)
+            assert len(tokens) == 11
+
+            data.append(tokens[1:]) # Ignore the university same in the first column
+            d = dict()
+            d[header[0]] = sanitize_string(name)
+            for (col_name, col_value) in zip(header[1:], tokens):
+                d[col_name] = col_value
+            descriptions.append(d)
+
+        data = np.array(data)
+        data -= data.mean(axis=0)[None, :]
+        data /= data.std(axis=0)[None, :]
+        return (data, descriptions)
+
     else:
         assert False, 'Unknown dataset name'
 
@@ -241,6 +279,15 @@ def clustering_key_from_params(params):
     key_int = abs(hash(key_str))
     key_int = key_int % (10**config.KEY_NUM_DIGITS)
     return key_int
+
+def sanitize_string(dirty_str):
+    clean_str = ''
+    for char in dirty_str:
+        if char in string.printable:
+            clean_str += char
+        else:
+            clean_str += ' '
+    return clean_str
 
 def clustering_distance(clustering_1, clustering_2):
     adj_1 = adj_from_labels(clustering_1['labels'])
@@ -266,9 +313,11 @@ def sort_labels(dataset, labels):
         center = dataset[labels == cluster_index].mean(0)
         distance_vec = np.linalg.norm(dataset[labels == cluster_index] - center[None, :], axis=1)
         point_indices = np.where(labels == cluster_index)[0]
-        sorted_point_indices = [(index, distance) for (distance, index) in sorted(zip(distance_vec, point_indices))]
+        sorted_point_indices = [(index, distance) for (distance, index)
+                                in sorted(zip(distance_vec, point_indices))]
         sorted_labels.append(sorted_point_indices)
     return sorted_labels
 
 if __name__ == '__main__':
-    pass
+    (dataset, description) = dataset_from_name('universities')
+    print dataset

@@ -12,7 +12,6 @@ Created on 01/17/2017
 
 import json
 import lmdb
-import numpy as np
 import sklearn
 import sklearn.cluster
 import sklearn.datasets
@@ -22,7 +21,7 @@ import sklearn.preprocessing
 
 from flask import Flask, request, render_template
 from multiprocessing import Pool
-from src import cluster, config, permute_clustering, quality_metrics, superpoints
+from src import cluster, config, constraints, permute_clustering, superpoints
 
 app = Flask(__name__)
 
@@ -32,7 +31,7 @@ def index():
 
 @app.route('/new_session', methods=['POST', 'GET'])
 def new_session():
-    env = lmdb.open(config.DB_FILENAME)
+    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
     with env.begin(write=True) as txn:
         num_sessions = txn.get('num_sessions')
         if num_sessions is None:
@@ -57,25 +56,50 @@ def new_session():
         num_sessions += 1
         txn.put('num_sessions', str(num_sessions))
 
-    print("Session ID: ", session_id)
     return json.dumps(session_id)
 
 @app.route('/clustering', methods=['POST', 'GET'])
 def get_clustering():
-    env = lmdb.open(config.DB_FILENAME)
+    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
+    same_cluster = constraints.parse_constraint(request.args.get('same_cluster'))
+    diff_cluster = constraints.parse_constraint(request.args.get('diff_cluster'))
+
     with env.begin(write=True) as txn:
         session_id = int(request.args.get('session_id'))
         user_choice = request.args.get('user_choice')
         session = json.loads(txn.get('sessions/%d' % session_id))
         param_vec = session['param_vec']
-        L = session['L']
+
+        # If L is given in the request, use that value.
+        # Otherwise, use the value stored in the session
+        L = request.args.get('lambda', session['L'])
+
         if 'choices' in session.keys():
             prev_choices = session['choices'][-1]
         else:
             prev_choices = []
 
         # Step 1: Find the query
-        if user_choice is None or len(prev_choices) == 0:
+        query_params = None
+        query_clustering = None
+        # If the user provides a choice, check if that choice is valid (corresponds
+        # to one of the previous clusterings). Also, check that that choice
+        # satisfies the user constraints
+        if user_choice is not None and len(prev_choices) > 0:
+            user_choice = int(user_choice)
+            # In subsequent rounds, the frontend returns the index of the user's choice,
+            # and we look up the corresponding parameters.
+            query_params = prev_choices[user_choice]
+            clustering_key = cluster.clustering_key_from_params(query_params)
+            query_clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
+            if not constraints.satisfies_constraints(query_clustering, same_cluster, diff_cluster):
+                query_params = None
+                query_clustering = None
+
+        # If no user choice is provided, find the query clustering by finding the
+        # clustering with the highest quality that satisfies the user constraints.
+        if query_params is None:
+            assert query_clustering is None
             # In the first round, the user's choice is not specified.
             # We use the global best clustering as the query
             best_quality = float('-inf')
@@ -83,7 +107,8 @@ def get_clustering():
                 clustering_key = cluster.clustering_key_from_params(params)
                 clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
                 quality = clustering['quality']
-                if quality > best_quality:
+                if quality > best_quality and \
+                   constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
                     query_params = params
                     query_clustering = clustering
                     best_quality = quality
@@ -95,6 +120,10 @@ def get_clustering():
             clustering_key = cluster.clustering_key_from_params(query_params)
             query_clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
 
+        if query_params is None or query_clustering is None:
+            print 'Error: no clustering satisfied these constraints'
+            return json.dumps([])
+
         # Step 2: Run MMR to choose clusterings to show the user.
         param_choices = [query_params]
         clustering_choices = [query_clustering]
@@ -105,9 +134,12 @@ def get_clustering():
                     clustering_key = cluster.clustering_key_from_params(params)
                     clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
                     quality = clustering['quality']
-                    dist_to_closest_clustering = min([cluster.clustering_distance(clustering, other_clustering) for other_clustering in clustering_choices])
+                    dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
+                                    for other_clustering in clustering_choices])
+                    dist_to_closest_clustering = dist_vec
                     score = L * quality + (1. - L) * dist_to_closest_clustering
-                    if score > best_score and dist_to_closest_clustering > config.MIN_CLUSTERING_DIST:
+                    if score > best_score and \
+                       dist_to_closest_clustering > config.MIN_CLUSTERING_DIST:
                         best_score = score
                         best_params = params
                         best_clustering = clustering
@@ -121,7 +153,7 @@ def get_clustering():
     # Permute the clusterings so adjacent clusterings are similar
     clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
     # clustering_choices = quality_metrics.normalize_clustering_vec(clustering_choices)
-    
+
     return json.dumps(clustering_choices)
 
 

@@ -8,7 +8,7 @@ function ClusterList(canvas, data, screen_width, screen_height){
 	_self.rect_size = 20;
 	_self.width = screen_width-2*_self.margin;
 	_self.height = screen_height-2*_self.margin;
-	_self.parameters = ["n_clusters"];
+	_self.parameters = ["n_points"];
 	_self.quality_metrics = ["cohesion_clusters", "separation_clusters", "silhouette_samples"];
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
 	_self.radius = _self.rect_size/2;
