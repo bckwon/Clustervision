@@ -1,3 +1,4 @@
 *.pyc
 db.lmdb/*
 .DS_Store
+*.yml
