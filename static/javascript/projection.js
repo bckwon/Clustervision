@@ -21,9 +21,11 @@ function Projection(canvas, data, screen_width, screen_height){
 	var color_domain = d3.extent(_self.clustering[_self.cls_index]["labels"]);
 	_self.color = category_adam.domain(color_domain);
 
+	d3.select(canvas).selectAll("*").remove();
+
 	_self.btn_group = d3.select(canvas).append("div").attr("class", "superpoint_scale").style("position", "fixed").style("background", "white").style("width", "100%");
 
-	addInputButton(".superpoint_scale", "SuperPoint Scale: ");
+	addInputButton(".superpoint_scale", "SuperPoint Scale: ", "left", "zoom_input_slider", "zoom_input");
 
 	_self.zoom_input_slider = d3.select("input.zoom_input_slider#zoom_input")
                                 .attr("value", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])

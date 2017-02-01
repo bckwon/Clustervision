@@ -25,7 +25,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 
 	_self.asterplots = [];
 
-	d3.select(canvas).selectAll("*").remove();
+	d3.select(canvas).selectAll("svg").remove();
 
 	_self.svg = d3.select(canvas).append("svg")
 				.attr("width", screen_width)

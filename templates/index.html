@@ -41,12 +41,36 @@
     var chosen_dataset = "blobs";
     var chosen_session_id = 0;
     var chosen_user_choice = 0;
+    var chosen_lambda = 0.5;
     var chosen_dr_method = "tsne";
     var session = {};
 
     $('.dataset_item').on("click", toggle_dataset);
 
+
+    var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
+
+    addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
+    d3.select("span.lambda_input_slider_text#lambda_input_text")
+    .style("color", "blue")
+    .text(chosen_lambda);
+
+    var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
+                                .attr("value", chosen_lambda)
+                                .attr("min", 0)
+                                .attr("max", 1)
+                                .attr("step", .05)
+                                .on("input", function(d){
+                                    chosen_lambda = parseFloat(d3.select(this).property("value"));
+                                    d3.select("span.lambda_input_slider_text#lambda_input_text")
+                                    .text(chosen_lambda);
+                                    console.log(chosen_lambda);
+                                });
     
+    $('body').on("click", "#Rerun", function(){
+        start(true);
+    })
+
     function toggle_dataset(element){
     	chosen_dataset=$(this).attr("name");
     	remove_all();
@@ -63,6 +87,7 @@
     }
 
     start(true);
+
     $('#dataset_dropdown_link').html('Current Dataset: <span class="dataset_title">' + chosen_dataset+'</span><span class="caret"></span>');
 
     function fetch_session() {
@@ -82,9 +107,13 @@
     function fetch_clustering() {
         console.log('Fetching a new clustering with session_id:', chosen_session_id);
     	$.ajax({
-	        type: "POST",
-	        url: $SCRIPT_ROOT + "/clustering?session_id="+chosen_session_id,
+	        type: "GET",
+	        url: $SCRIPT_ROOT + "/clustering",
 	        contentType: "application/json; charset=utf-8",
+            data:{
+                "session_id": chosen_session_id,
+                "lambda": chosen_lambda,
+            },
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
@@ -178,18 +207,41 @@
         });
     };
 
-    function addInputButton(div, inputname, float){
+    function addInputButton(div, inputname, float, inputclass, inputid, labelbool){
         var float = float || "left";
+        var labelbool = labelbool || false;
         var btngroup = d3.select(div)
-            .append("div").attr("class", "btn-group").style("float", float);
+            .append("div").attr("class", "btn-group")
+            .attr("id", "btn-group_"+inputclass)
+            .style("float", float);
         var text = btngroup.append("span").style("float", float).text(inputname + ":  ");
         var input = btngroup.append("span").style("float", float).append("input")
-                    .attr("class", "zoom_input_slider")
-                    .attr("id", "zoom_input")
+                    .attr("class", inputclass)
+                    .attr("id", inputid)
                     .attr("type", "range")
                     .style("margin-top", 3)
                     .style("display", "inline-block")
                     .style("vertical-align", "middle");
+        if(labelbool){
+            addButton("#btn-group_"+inputclass, "Rerun", "btn btn-default btn-xs");
+            var input_label = btngroup.append("span").style("float", float)
+                            .attr("class", inputclass +"_text")
+                            .attr("id", inputid+"_text");
+        }
+    }
+
+    function addButton(div, btnname, btntype, float, disabled, id){
+        var btntype = btntype || "btn btn-primary btn-xs";
+        var float = float || "left";
+        var disabled = disabled || false;
+        var id = id || btnname;
+        var btngroup = d3.select(div)
+            .append("div").attr("class", "btn-group").style("float", float);
+        var button = btngroup.append("button").attr("id", id).attr("class", btntype);
+        button.text(btnname);
+        if(disabled){
+            button.attr("disabled", disabled);
+        }
     }
 
 </script>

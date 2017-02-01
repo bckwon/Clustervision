@@ -14,7 +14,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 	_self.width = screen_width-2*_self.margin;
 	_self.height = screen_height-2*_self.margin;
 
-	d3.select(canvas).selectAll("*").remove();
+	d3.select(canvas).selectAll("svg").remove();
 
 	_self.svg = d3.select(canvas).append("svg")
 				.attr("width", screen_width)

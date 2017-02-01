@@ -72,7 +72,9 @@ def get_clustering():
 
         # If L is given in the request, use that value.
         # Otherwise, use the value stored in the session
-        L = request.args.get('lambda', session['L'])
+        print("my L value !!! : " + str(request.args.get('lambda')))
+        L = float(request.args.get('lambda', session['L']))
+
 
         if 'choices' in session.keys():
             prev_choices = session['choices'][-1]
