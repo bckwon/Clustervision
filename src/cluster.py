@@ -271,6 +271,18 @@ def dataset_from_name(dataset_name, include_description=False):
         data /= data.std(axis=0)[None, :]
         return (data, descriptions)
 
+    elif dataset_name == 'enron':
+        with open('data/enron_data/enron.json') as f:
+            descriptions = json.load(f)
+        data = np.load('data/enron_data/enron.npy').astype(float)
+        std = data.std(axis=0)
+        data = data[:, std != 0]
+
+        data -= data.mean(axis=0)[None, :]
+        data /= data.std(axis=0)[None, :]
+        return (data, descriptions)
+
+
     else:
         assert False, 'Unknown dataset name'
 
@@ -319,5 +331,5 @@ def sort_labels(dataset, labels):
     return sorted_labels
 
 if __name__ == '__main__':
-    (dataset, description) = dataset_from_name('universities')
+    (dataset, description) = dataset_from_name('enron')
     print dataset

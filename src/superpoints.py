@@ -15,11 +15,11 @@ def find_superpoints(clustering_id, max_dist=None):
 
     env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
 
-    with env.begin(write=True) as txn:
-        d = txn.get(key)
-        if d is not None:
-            d = json.loads(d)
-            return d
+    # with env.begin(write=True) as txn:
+    #     d = txn.get(key)
+    #     if d is not None:
+    #         d = json.loads(d)
+    #         return d
 
     with env.begin(write=True) as txn:
         clustering = txn.get('clusterings/%d' % clustering_id)
@@ -42,18 +42,26 @@ def find_superpoints(clustering_id, max_dist=None):
         else:
             pdist = scipy.spatial.distance.pdist(dataset_subset)
             Z = scipy.cluster.hierarchy.linkage(pdist, method='average', metric='euclidean')
-            y = scipy.cluster.hierarchy.fcluster(Z, max_dist, criterion='distance') - 1
 
+            # Subtract epsilon from the maximum distance to handle identical points.
+            # If there are identical points, using max_dist=0 will still cluster these
+            # points together.
+
+            y = scipy.cluster.hierarchy.fcluster(Z, max_dist - 1e-8, criterion='distance') - 1
             num_clusters = len(set(y))
+            assert range(num_clusters) == sorted(set(y))
+
             centers = np.array([dataset_subset[y == label].mean(axis=0) for label in range(num_clusters)])
             indices = sklearn.metrics.pairwise_distances_argmin(centers, dataset_subset)
 
             center_indices = subset_indices[indices]
             d['superpoint'].extend(center_indices)
 
-            weights = [np.sum(y == tmp_cluster_index) for tmp_cluster_index in range(num_clusters)]
-            children = [subset_indices[y == temp_cluster_index].tolist() for temp_cluster_index in range(num_clusters)]
-            d['size'].extend(weights)
+            children = [subset_indices[y == label].tolist() for label in range(num_clusters)]
+            sizes = map(len, children)
+
+
+            d['size'].extend(sizes)
             d['children'].extend(children)
 
     with env.begin(write=True) as txn:
