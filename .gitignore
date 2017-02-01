@@ -4,3 +4,4 @@ db.lmdb/*
 data/enron_data/enron.json
 data/enron_data/enron.npy
 data/enron_data/maildir/*
+*.yml
