@@ -67,12 +67,14 @@ def get_clustering():
     with env.begin(write=True) as txn:
         session_id = int(request.args.get('session_id'))
         user_choice = request.args.get('user_choice')
+        print(user_choice)
         session = json.loads(txn.get('sessions/%d' % session_id))
         param_vec = session['param_vec']
 
         # If L is given in the request, use that value.
         # Otherwise, use the value stored in the session
-        L = request.args.get('lambda', session['L'])
+        L = float(request.args.get('lambda', session['L']))
+
 
         if 'choices' in session.keys():
             prev_choices = session['choices'][-1]
