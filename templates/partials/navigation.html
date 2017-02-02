@@ -5,7 +5,7 @@
         <li><a href="#" class="navbar-brand">Cluster Analysis</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li class="dropdown">
+        <li class="dropdown" id = "dataset_dropdown_list">
           <a href="#" id = "dataset_dropdown_link" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dataset<span class="caret"></span></a>
           <ul class="dropdown-menu">
             <li><a href="#" class="dataset_item" name="blobs">blobs</a></li>
@@ -14,6 +14,15 @@
             <li><a href="#" class="dataset_item" name="cameras">cameras</a></li>
             <li><a href="#" class="dataset_item" name="cars">cars</a></li>
             <li><a href="#" class="dataset_item" name="universities">universities</a></li>
+          </ul>
+        </li>
+        <li class="dropdown" id = "drt_list">
+          <a href="#" id = "drt_dropdown_link" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dimensionality Reduction Techniques<span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#" class="drt_item" name="pca">PCA</a></li>
+            <li><a href="#" class="drt_item" name="tsne">t-SNE</a></li>
+            <li><a href="#" class="drt_item" name="mds">MDS</a></li>
+            <li><a href="#" class="drt_item" name="spectral">Spectral</a></li>
           </ul>
         </li>
       </ul>

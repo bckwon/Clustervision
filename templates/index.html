@@ -50,6 +50,7 @@
     var diff_cluster = [];
 
     $('.dataset_item').on("click", toggle_dataset);
+    $('.drt_item').on("click", toggle_drt);
 
 
     $('body').on("click", "#Rerun", function(){
@@ -77,6 +78,13 @@
         $('#dataset_dropdown_link').html('Current Dataset: <span class="dataset_title">' + chosen_dataset+'</span><span class="caret"></span>');
     }
 
+
+    function toggle_drt(element){
+        chosen_dr_method=$(this).attr("name");
+        fetch_embedding();
+        $('#drt_dropdown_link').html('Dimensionality Reduction Technique: <span class="drt_title">'+chosen_dr_method+'</span><span class="caret"></span>');
+    }
+
     function remove_all(){
     	d3.select(".canvas_left").selectAll("*").remove();
     	d3.select(".canvas_middle").selectAll("*").remove();
@@ -86,6 +94,7 @@
     start(true);
 
     $('#dataset_dropdown_link').html('Current Dataset: <span class="dataset_title">' + chosen_dataset+'</span><span class="caret"></span>');
+    $('#drt_dropdown_link').html('Dimensionality Reduction Technique: <span class="drt_title">'+chosen_dr_method+'</span><span class="caret"></span>');
 
     function fetch_session() {
         $.ajax({
