@@ -42,7 +42,7 @@
 	var screen_height = window.screen.availHeight;
     var chosen_dataset = "blobs";
     var chosen_session_id = 0;
-    var chosen_user_choice = 0;
+    var chosen_user_choice = null;
     var chosen_lambda = 0.5;
     var chosen_dr_method = "tsne";
     var session = {};
@@ -52,28 +52,8 @@
     $('.dataset_item').on("click", toggle_dataset);
 
 
-    var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
-
-    addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
-    d3.select("span.lambda_input_slider_text#lambda_input_text")
-    .style("color", "blue")
-    .text(chosen_lambda);
-
-    var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
-                                .attr("value", chosen_lambda)
-                                .attr("min", 0)
-                                .attr("max", 1)
-                                .attr("step", .05)
-                                .on("input", function(d){
-                                    chosen_lambda = parseFloat(d3.select(this).property("value"));
-                                    d3.select("span.lambda_input_slider_text#lambda_input_text")
-                                    .text(chosen_lambda);
-                                    console.log(chosen_lambda);
-                                });
-    
-    $('#lambda_input').val(chosen_lambda);
-
     $('body').on("click", "#Rerun", function(){
+        remove_all();
         start(true);
     });
 
@@ -136,6 +116,7 @@
             },
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
+                console.log(chosen_user_choice);
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
 	            // var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
@@ -200,10 +181,14 @@
             // console.log('clustering:', session['clustering']);
             var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
         }
+        // initialize values:
+        same_cluster = [];
+        diff_cluster = [];
+        chosen_user_choice = null;
     }
 
     function start(new_session){
-
+        setup_slider();
     	if(new_session) {
             fetch_session();
     	} else {
@@ -262,6 +247,30 @@
         if(disabled){
             button.attr("disabled", disabled);
         }
+    }
+
+    function setup_slider(){
+
+        var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
+
+        addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
+        d3.select("span.lambda_input_slider_text#lambda_input_text")
+        .style("color", "blue")
+        .text(chosen_lambda);
+
+        var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
+                                    .attr("value", chosen_lambda)
+                                    .attr("min", 0)
+                                    .attr("max", 1)
+                                    .attr("step", .05)
+                                    .on("input", function(d){
+                                        chosen_lambda = parseFloat(d3.select(this).property("value"));
+                                        d3.select("span.lambda_input_slider_text#lambda_input_text")
+                                        .text(chosen_lambda);
+                                        console.log(chosen_lambda);
+                                    });
+
+        $('#lambda_input').val(chosen_lambda);
     }
 
 </script>
