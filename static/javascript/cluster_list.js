@@ -26,7 +26,8 @@ function ClusterList(canvas, data, screen_width, screen_height){
 		"position": "absolute",
 		"width": (_self.screen_width)+"px",
 		"height": (_self.screen_height/2)+"px",
-		"border": "2.5px solid black",
+		"border": "2.5px black",
+		"border-style": "hidden",
 		"margin": "10px 0px 0px 10px"
 	});
 	d3.select(_self.canvas).append("div").attr("class", "bottom_right").style({
@@ -37,7 +38,8 @@ function ClusterList(canvas, data, screen_width, screen_height){
 		"height": (_self.screen_height/2)+"px",
 		"overflow-x": "hidden",
 		"overflow-y": "scroll",
-		"border": "2.5px solid black",
+		"border": "2.5px black",
+		"border-style": "hidden",
 		"margin": "10px 0px 0px 10px"
 	});
 
@@ -93,14 +95,17 @@ ClusterList.prototype.qualityChartHandler = function(argument) {
 
 ClusterList.prototype.projectionDataPointHandler = function(argument) {
 	var _self = this;
-	
-	var data_item_index = argument[0];
-	var clustering_index = argument[1];
-	var cluster_num = argument[2];
-	var data = argument[3];
+	if(argument.length == 4){
+		var data_item_index = argument[0];
+		var clustering_index = argument[1];
+		var cluster_num = argument[2];
+		var data = argument[3];
 
-	// _self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
-	_self.draw_data_point_in_html(data_item_index, clustering_index, cluster_num, data);
+		// _self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
+		_self.draw_data_point_in_html(data_item_index, clustering_index, cluster_num, data);
+	}else{
+		_self.reset_view();
+	}
 };
 
 ClusterList.prototype.projectionClusterHandler = function(argument) {
@@ -119,13 +124,15 @@ ClusterList.prototype.reset_view = function() {
 	var _self = this;
 	_self.cluster_space.selectAll("*").remove();
 	_self.data_point_space.selectAll("*").remove();
+	d3.select(".top_right").style("border-style", "none");
+	d3.select(".bottom_right").style("border-style", "none");
 };
 
 ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index, cluster_num, data) {
 	var _self = this;
 
 	_self.cluster_space.selectAll("*").remove();
-
+	d3.select(".top_right").style("border-style", "solid");
 	// _self.cluster_rect = _self.cluster_space.append("rect")
 	// 				.attr("width", _self.width)
 	// 				.attr("height", _self.rect_size*(_self.num_params+ 5 + 6))
@@ -228,7 +235,7 @@ ClusterList.prototype.draw_data_point_in_html = function(data_item_index, cluste
 	var data_point_keys = Object.keys(data_point).sort();
 
 	_self.data_point_space.selectAll("*").remove();
-
+	d3.select(".bottom_right").style("border-style", "solid");
 	// _self.datapoint_rect = _self.data_point_space.append("rect")
 	// 				.attr("width", _self.width)
 	// 				.attr("height", _self.rect_size*(data_point_keys.length+5))

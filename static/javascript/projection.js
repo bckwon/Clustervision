@@ -173,6 +173,8 @@ Projection.prototype.draw = function(){
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							}).style("opacity", SELECTED_CIRCLE_OPACITY);
+							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
+							_s.listenerMap['projection_listener_for_data_point'].fire([]);
 						});
 
 	_self.title_box = _self.svg.append("rect")
