@@ -14,6 +14,19 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 	_self.width = screen_width-2*_self.margin;
 	_self.height = screen_height-2*_self.margin;
 
+	//  Context Menu
+    _self.context_menu = [
+        {
+            title: 'Choose it as a seeder',
+            action: function(elm, d, i) {
+            	console.log(elm);
+            	console.log(d);
+                console.log(i);
+            },
+            disabled: false 
+        }
+    ];
+
 	d3.select(canvas).selectAll("svg").remove();
 
 	_self.svg = d3.select(canvas).append("svg")
@@ -39,7 +52,8 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 								d3.select(this).selectAll(".clustering").style("stroke", "orange");
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-							});
+							})
+							.on("contextmenu", d3.contextMenu(_self.context_menu));
 
 
 	_self.rect = _self.list_space.append("rect")

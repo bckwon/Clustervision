@@ -35,6 +35,27 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 			.append("g")
 				.attr("transform", "translate("+_self.margin+","+_self.margin+")");
 
+		//  Context Menu
+    _self.context_menu = [
+        {
+            title: 'Choose it as a seeder',
+            action: function(elm, d, i) {
+            	window.chosen_user_choice = i;
+            	d3.selectAll("rect.user_choice").remove();
+            	d3.select(elm).append("rect")
+            		.attr("class", "user_choice")
+            		.attr("x", -_self.rect_size*1.5)
+            		.attr("width",_self.width+_self.rect_size*3.5)
+            		.attr("height",_self.rect_size)
+            		.style("fill", "none")
+            		.style("stroke", "#e34a33")
+            		.style("stroke-width", 2.5);
+            },
+            disabled: false 
+        }
+    ];
+
+
 	_self.list_space = _self.svg.selectAll("g.list_space")
 							.data(_self.data).enter()
 						.append("g")
@@ -64,6 +85,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 							.on("mouseleave", function(d,i){
 								d3.selectAll(".pop").remove();
 							})
+							.on("contextmenu", d3.contextMenu(_self.context_menu));
 
 
 	_self.rect = _self.list_space.append("rect")
