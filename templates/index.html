@@ -14,6 +14,7 @@
 <script src="{{ url_for('static', filename='javascript/colors.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/shorty.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/parallel_coordinates.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/clustering_result.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/clustering_stripes.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/quality_chart.js') }}"></script>
@@ -55,7 +56,7 @@
 
     $('body').on("click", "#Rerun", function(){
         remove_all();
-        start(true);
+        start(false);
     });
 
     same_diff_cluster_listener = new _s.Listener("same_diff_cluster_listener");

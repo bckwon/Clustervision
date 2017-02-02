@@ -166,8 +166,8 @@ Projection.prototype.draw = function(){
 	_self.bg_rect = _self.svg.append("rect")
 						.attr("x", -_self.margin.x)
 						.attr("y", -_self.margin.y)
-						.attr("width", _self.width+_self.margin.x*2)
-						.attr("height", _self.height+_self.margin.y*2)
+						.attr("width", _self.width)
+						.attr("height", _self.height)
 						.style("opacity", 0)
 						.on("click", function(){
 							_self.circ.style("fill", function(d,i){
