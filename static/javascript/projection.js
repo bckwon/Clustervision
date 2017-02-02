@@ -141,6 +141,20 @@ Projection.prototype.color_by_new_index = function(){
 		return _self.color(_self.labels[i]);
 	});
 }
+
+Projection.prototype.stroke_by_same_separate = function(){
+	var _self = this;
+	_self.circ.style("stroke", function(d,i){
+		if(_self.together.indexOf(i)>-1){
+			return "#31a354";
+		}else if(_self.separate.indexOf(i)>-1){
+			return "#dd1c77";
+		}else{
+			return "none";
+		}
+	});
+}
+
 Projection.prototype.draw = function(){
 	var _self = this;
 
@@ -187,6 +201,41 @@ Projection.prototype.draw = function(){
 							return "translate("+x+","+y+")";
 						}});
 
+	_self.together = [];
+	_self.separate = [];
+
+	//  Context Menu
+    _self.context_menu = [
+        {
+            title: 'IN a same cluster',
+            action: function(elm, d, i) {
+            	console.log(elm);
+            	console.log(d);
+            	console.log(i);
+            	if(_self.together.indexOf(i)<0){
+            		_self.together.push(i);
+            	}
+            	_self.stroke_by_same_separate();
+            	_s.listenerMap['same_diff_cluster_listener'].fire([_self.together,_self.separate])
+            },
+            disabled: false 
+        },
+        {
+            title: 'NOT in a same cluster',
+            action: function(elm, d, i) {
+            	console.log(elm);
+            	console.log(d);
+            	console.log(i);
+            	if(_self.separate.indexOf(i)<0){
+            		_self.separate.push(i);
+            	}
+            	_self.stroke_by_same_separate();
+            	_s.listenerMap['same_diff_cluster_listener'].fire([_self.together,_self.separate])
+            },
+            disabled: false 
+        }
+    ];
+
 	_self.circ = _self.circ_g.append("circle")
 						.attr("class", "data_item_circ")
 						.attr("r", _self.radius)
@@ -215,12 +264,14 @@ Projection.prototype.draw = function(){
 						})
 						.on("click", function(d,i){
 							d3.select(this).moveToFront();
-							d3.selectAll("circle.data_item_circ").style("stroke", "none").style("stroke-width", 1);
+							// d3.selectAll("circle.data_item_circ").style("stroke", "none").style("stroke-width", 1);
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data]);
-							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
+							// d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
+							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY);
 							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", SELECTED_CIRCLE_OPACITY);
-						});
+						})
+						.on("contextmenu", d3.contextMenu(_self.context_menu));
 }
 
 

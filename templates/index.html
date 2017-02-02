@@ -46,6 +46,8 @@
     var chosen_lambda = 0.5;
     var chosen_dr_method = "tsne";
     var session = {};
+    var same_cluster = [];
+    var diff_cluster = [];
 
     $('.dataset_item').on("click", toggle_dataset);
 
@@ -73,7 +75,18 @@
 
     $('body').on("click", "#Rerun", function(){
         start(true);
-    })
+    });
+
+    same_diff_cluster_listener = new _s.Listener("same_diff_cluster_listener");
+    same_diff_cluster_listener.subscribe(update_same_diff_clusters);
+
+    function update_same_diff_clusters(same_diff_arrays){
+        same_cluster = [same_diff_arrays[0]];
+        diff_cluster = [same_diff_arrays[1]];
+        console.log("Updated!");
+        console.log(same_cluster);
+        console.log(diff_cluster);
+    }
 
     function toggle_dataset(element){
     	chosen_dataset=$(this).attr("name");
@@ -117,7 +130,9 @@
             data:{
                 "session_id": chosen_session_id,
                 "lambda": chosen_lambda,
-                "user_choice": chosen_user_choice
+                "user_choice": chosen_user_choice,
+                "same_cluster": same_cluster,
+                "diff_cluster": diff_cluster
             },
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
