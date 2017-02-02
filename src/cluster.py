@@ -233,7 +233,7 @@ def dataset_from_name(dataset_name, include_description=False):
                          'Weight (inc. batteries)', 'Dimensions', 'Price']
             for row in data:
                 d = {}
-                for (key, value) in zip(row, col_names):
+                for (key, value) in zip(col_names, row):
                     d[key] = value
                 descriptions.append(d)
         else:
