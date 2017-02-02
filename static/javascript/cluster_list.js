@@ -19,22 +19,54 @@ function ClusterList(canvas, data, screen_width, screen_height){
 	_self.rect_scale = d3.scale.linear().domain([0, _self.data[0]["labels"].length]).range([0, _self.width-_self.rect_size]);
 
 	d3.select(_self.canvas).selectAll("*").remove();
+	// Partition into two divs
+	d3.select(_self.canvas).append("div").attr("class", "top_right").style({
+		"top": "0px",
+		"left": "0px",
+		"position": "absolute",
+		"width": (_self.screen_width)+"px",
+		"height": (_self.screen_height/2)+"px",
+		"border": "2.5px solid black",
+		"margin": "10px 0px 0px 10px"
+	});
+	d3.select(_self.canvas).append("div").attr("class", "bottom_right").style({
+		"top": (_self.screen_height/2) + "px",
+		"left": "0px",
+		"position": "absolute",
+		"width": (_self.screen_width)+"px",
+		"height": (_self.screen_height/2)+"px",
+		"overflow-x": "hidden",
+		"overflow-y": "scroll",
+		"border": "2.5px solid black",
+		"margin": "10px 0px 0px 10px"
+	});
 
-	_self.svg = d3.select(_self.canvas).append("svg")
+	_self.svg_top_right = d3.select(".top_right").append("svg")
 				.attr("width", _self.screen_width)
-				.attr("height", _self.screen_height)
+				.attr("height", _self.screen_height/2)
 			.append("g")
 				.attr("transform", "translate("+_self.margin+","+_self.margin+")");
 
-	_self.cluster_space = _self.svg
+	// _self.svg_bottom_right = d3.select(".bottom_right").append("svg")
+	// 			.attr("width", _self.screen_width)
+	// 			.attr("height", _self.screen_height/2)
+	// 		.append("g")
+	// 			.attr("transform", "translate("+_self.margin+","+_self.margin+")");
+
+	_self.cluster_space = _self.svg_top_right
 				.append("g")
 					.attr("class", "cluster_space")
 					.attr("transform", "translate("+10+","+10+")");
 
-	_self.data_point_space = _self.svg
-						.append("g")
-							.attr("class", "data_point_space")
-							.attr("transform", "translate("+10+","+(_self.height/2+10)+")");
+	// _self.data_point_space = _self.svg_bottom_right
+	// 					.append("g")
+	// 						.attr("class", "data_point_space")
+	// 						.attr("transform", "translate("+10+","+10+")");
+
+	_self.data_point_space = d3.select(".bottom_right")
+						.append("div")
+							.style("margin-left", "10px")
+							.style("margin-top", "10px");
 
 	// new listener
     _self.quality_chart_listener = new _s.Listener("quality_chart_listener_for_cluster_list");
@@ -67,8 +99,8 @@ ClusterList.prototype.projectionDataPointHandler = function(argument) {
 	var cluster_num = argument[2];
 	var data = argument[3];
 
-	_self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
-
+	// _self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
+	_self.draw_data_point_in_html(data_item_index, clustering_index, cluster_num, data);
 };
 
 ClusterList.prototype.projectionClusterHandler = function(argument) {
@@ -94,14 +126,14 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 	_self.cluster_space.selectAll("*").remove();
 
-	_self.cluster_rect = _self.cluster_space.append("rect")
-					.attr("width", _self.width)
-					.attr("height", _self.rect_size*(_self.num_params+ 5 + 6))
-					.attr("x", -_self.rect_size)
-					.attr("y", -_self.rect_size)
-					.style("fill", "none")
-					.style("stroke", "black")
-					.style("stroke-width", "2.5px")
+	// _self.cluster_rect = _self.cluster_space.append("rect")
+	// 				.attr("width", _self.width)
+	// 				.attr("height", _self.rect_size*(_self.num_params+ 5 + 6))
+	// 				.attr("x", -_self.rect_size)
+	// 				.attr("y", -_self.rect_size)
+	// 				.style("fill", "none")
+	// 				.style("stroke", "black")
+	// 				.style("stroke-width", "2.5px")
 	
 	_self.cluster_title = _self.cluster_space.append("text")
 					.attr("dy", _self.rect_size*2)
@@ -186,6 +218,38 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 							d3.selectAll("rect.sample_items").style("stroke", "black").style("stroke-width", "1px");
 							_s.listenerMap['cluster_list_listener_for_data_point'].fire();
 						});
+
+};
+
+ClusterList.prototype.draw_data_point_in_html = function(data_item_index, clustering_index, cluster_num, data) {
+	var _self = this;
+
+	var data_point = data["data_description"][data_item_index];
+	var data_point_keys = Object.keys(data_point).sort();
+
+	_self.data_point_space.selectAll("*").remove();
+
+	// _self.datapoint_rect = _self.data_point_space.append("rect")
+	// 				.attr("width", _self.width)
+	// 				.attr("height", _self.rect_size*(data_point_keys.length+5))
+	// 				.attr("x", -_self.rect_size)
+	// 				.attr("y", -_self.rect_size)
+	// 				.style("fill", "none")
+	// 				.style("stroke", "black")
+	// 				.style("stroke-width", "2.5px")
+	
+	_self.cluster_title = _self.data_point_space.append("div")
+					.text("Data Point " + data_item_index)
+					.style("font-size", "200%");
+
+	var data_point_measures = data_point_keys.map(function(d){return {"name": d, "value": data_point[d]};});
+
+	_self.data_point_measures = _self.data_point_space.selectAll("div.data_point_measures")
+						.data(data_point_measures).enter()
+					.append("div")
+						.attr("class", "data_point_measures")
+						.style("color", "blue")
+						.text(function(d){return d["name"]+ ": " + d["value"];});
 
 };
 
