@@ -19,7 +19,8 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.data_attributes = data["data_attributes"];
 	_self.clustering = data["clustering"];
 	var color_domain = d3.extent(_self.clustering[_self.cls_index]["labels"]);
-	_self.color = category_adam.domain(color_domain);
+	_self.color = d3.scale.ordinal()
+    .range(COLOR_RANGE.slice()).domain(color_domain);
 
 	d3.select(canvas).selectAll("*").remove();
 
@@ -118,7 +119,8 @@ Projection.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
 	_self.cls_argument = argument[0];
 	_self.cls_index = argument[1];
-	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
+	_self.color = d3.scale.ordinal()
+    .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.labels = _self.cls_argument["labels"];
 
 	var distance = $('#zoom_input').val();

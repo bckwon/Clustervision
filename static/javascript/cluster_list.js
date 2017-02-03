@@ -15,7 +15,8 @@ function ClusterList(canvas, data, screen_width, screen_height){
 	_self.default = 0;
 	
 	_self.display_data = _self.data[0]["sorted_labels"].map(function(d){return {"size": d.length, "array": d};});
-	_self.color = category_adam.domain(_self.data[0]["sorted_labels"].map(function(d,i){return i;}));
+	_self.color = d3.scale.ordinal()
+    .range(COLOR_RANGE.slice()).domain(_self.data[0]["sorted_labels"].map(function(d,i){return i;}));
 	_self.rect_scale = d3.scale.linear().domain([0, _self.data[0]["labels"].length]).range([0, _self.width-_self.rect_size]);
 
 	d3.select(_self.canvas).selectAll("*").remove();
@@ -87,7 +88,8 @@ ClusterList.prototype.qualityChartHandler = function(argument) {
 	_self.cls_argument = argument[0];
 	_self.cl_index = argument[1];
 	_self.display_data = _self.cls_argument["sorted_labels"].map(function(d){return {"size": d.length, "array": d};});
-	_self.color = category_adam.domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
+	_self.color = d3.scale.ordinal()
+    .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
 	_self.rect_scale = d3.scale.linear().domain([0, _self.cls_argument["labels"].length]).range([0, _self.width-_self.rect_size]);
 	// _self.draw();
 	_self.reset_view();
