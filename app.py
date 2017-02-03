@@ -52,21 +52,23 @@ def new_session():
 
 @app.route('/clustering', methods=['POST', 'GET'])
 def get_clustering():
-    same_cluster = constraints.parse_constraint(request.args.get('same_cluster'))
-    diff_cluster = constraints.parse_constraint(request.args.get('diff_cluster'))
+    same_cluster = constraints.parse_constraint(str(request.json['constraints']['same_cluster']))
+    diff_cluster = constraints.parse_constraint(str(request.json['constraints']['diff_cluster']))
     print 'Same cluster:', same_cluster
     print 'Diff cluster:', diff_cluster
 
     # with env.begin(write=True) as txn:
-    session_id = int(request.args.get('session_id'))
-    user_choice = request.args.get('user_choice')
+    session_id = int(request.json['session_id'])
+    user_choice = request.json['user_choice']
     session = cluster.load_session(session_id)
 
     param_vec = session['param_vec']
 
     # If L is given in the request, use that value.
     # Otherwise, use the value stored in the session
-    L = float(request.args.get('lambda', session['L']))
+    L = float(request.json['lambda'])
+    if L is None:
+        L = float(session['L'])
 
     if 'choices' in session.keys():
         prev_choices = session['choices'][-1]
