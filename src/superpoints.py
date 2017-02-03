@@ -15,11 +15,11 @@ def find_superpoints(clustering_id, max_dist=None):
 
     env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
 
-    # with env.begin(write=True) as txn:
-    #     d = txn.get(key)
-    #     if d is not None:
-    #         d = json.loads(d)
-    #         return d
+    with env.begin(write=True) as txn:
+        d = txn.get(key)
+        if d is not None:
+            d = json.loads(d)
+            return d
 
     with env.begin(write=True) as txn:
         clustering = txn.get('clusterings/%d' % clustering_id)

@@ -1,4 +1,7 @@
 flask
+lmdb
+multiprocessing
+networkx
 numpy
 python-dateutil
 py_common_subseq
@@ -6,6 +9,3 @@ requests
 scikit-learn[alldeps]
 scipy
 tqdm
-lmdb
-networkx
-multiprocessing

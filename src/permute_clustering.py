@@ -70,4 +70,4 @@ def permute_clustering(a, b, sorted_labels=None):
 if __name__ == '__main__':
     a = [0, 0, 0, 1, 1]
     b = [1, 1, 1, 2, 3]
-    permute_clustering(a, b)
+    print permute_clustering(a, b)

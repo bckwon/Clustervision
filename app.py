@@ -12,6 +12,7 @@ Created on 01/17/2017
 
 import json
 import lmdb
+import numpy as np
 import sklearn
 import sklearn.cluster
 import sklearn.datasets
@@ -31,126 +32,118 @@ def index():
 
 @app.route('/new_session', methods=['POST', 'GET'])
 def new_session():
-    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
-    with env.begin(write=True) as txn:
-        num_sessions = txn.get('num_sessions')
-        if num_sessions is None:
-            num_sessions = 0
-        else:
-            num_sessions = int(num_sessions)
-        session_id = num_sessions
+    num_sessions = cluster.load_num_sessions()
+    session_id = num_sessions
+    num_sessions += 1
 
-
-        dataset_name = request.args.get('dataset')
-        session = {'dataset': dataset_name,
-                   'L': config.L_INITIAL}
-        txn.put('sessions/%d' % session_id, json.dumps(session))
+    dataset_name = request.args.get('dataset')
+    session = {'dataset': dataset_name,
+               'L': config.L_INITIAL}
+    cluster.save_session(session_id, session)
 
     param_vec = cluster.compute_all_clusterings(dataset_name)
 
-    with env.begin(write=True) as txn:
-        session = json.loads(txn.get('sessions/%d' % session_id))
-        session['param_vec'] = param_vec
-        txn.put('sessions/%d' % session_id, json.dumps(session))
-
-        num_sessions += 1
-        txn.put('num_sessions', str(num_sessions))
+    session = cluster.load_session(session_id)
+    session['param_vec'] = param_vec
+    cluster.save_session(session_id, session)
+    cluster.save_num_sessions(num_sessions)
 
     return json.dumps(session_id)
 
 @app.route('/clustering', methods=['POST', 'GET'])
 def get_clustering():
-    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
     same_cluster = constraints.parse_constraint(request.args.get('same_cluster'))
     diff_cluster = constraints.parse_constraint(request.args.get('diff_cluster'))
+    print 'Same cluster:', same_cluster
+    print 'Diff cluster:', diff_cluster
 
-    with env.begin(write=True) as txn:
-        session_id = int(request.args.get('session_id'))
-        user_choice = request.args.get('user_choice')
-        print(user_choice)
-        session = json.loads(txn.get('sessions/%d' % session_id))
-        param_vec = session['param_vec']
+    # with env.begin(write=True) as txn:
+    session_id = int(request.args.get('session_id'))
+    user_choice = request.args.get('user_choice')
+    session = cluster.load_session(session_id)
 
-        # If L is given in the request, use that value.
-        # Otherwise, use the value stored in the session
-        L = float(request.args.get('lambda', session['L']))
+    param_vec = session['param_vec']
 
+    # If L is given in the request, use that value.
+    # Otherwise, use the value stored in the session
+    L = float(request.args.get('lambda', session['L']))
 
-        if 'choices' in session.keys():
-            prev_choices = session['choices'][-1]
-        else:
-            prev_choices = []
+    if 'choices' in session.keys():
+        prev_choices = session['choices'][-1]
+    else:
+        print 'ERROR: no choices'
+        prev_choices = []
 
-        # Step 1: Find the query
-        query_params = None
-        query_clustering = None
-        # If the user provides a choice, check if that choice is valid (corresponds
-        # to one of the previous clusterings). Also, check that that choice
-        # satisfies the user constraints
-        if user_choice is not None and len(prev_choices) > 0:
-            user_choice = int(user_choice)
-            # In subsequent rounds, the frontend returns the index of the user's choice,
-            # and we look up the corresponding parameters.
-            query_params = prev_choices[user_choice]
-            clustering_key = cluster.clustering_key_from_params(query_params)
-            query_clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
-            if not constraints.satisfies_constraints(query_clustering, same_cluster, diff_cluster):
-                query_params = None
-                query_clustering = None
+    # Step 1: Find the query
+    query_params = None
+    query_clustering = None
+    # If the user provides a choice, check if that choice is valid (corresponds
+    # to one of the previous clusterings). Also, check that that choice
+    # satisfies the user constraints
 
-        # If no user choice is provided, find the query clustering by finding the
-        # clustering with the highest quality that satisfies the user constraints.
-        if query_params is None:
-            assert query_clustering is None
-            # In the first round, the user's choice is not specified.
-            # We use the global best clustering as the query
-            best_quality = float('-inf')
-            for params in param_vec:
-                clustering_key = cluster.clustering_key_from_params(params)
-                clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
+    if user_choice is not None and len(prev_choices) > 0:
+        user_choice = int(user_choice)
+        # In subsequent rounds, the frontend returns the index of the user's choice,
+        # and we look up the corresponding parameters.
+        query_params = prev_choices[user_choice]
+        query_clustering = cluster.load_clustering(query_params)
+        if not constraints.satisfies_constraints(query_clustering, same_cluster, diff_cluster):
+            print 'Does not satisfy constraints'
+            query_params = None
+            query_clustering = None
+
+    # If no user choice is provided, find the query clustering by finding the
+    # clustering with the highest quality that satisfies the user constraints.
+    if query_params is None:
+        assert query_clustering is None
+        # In the first round, the user's choice is not specified.
+        # We use the global best clustering as the query
+        best_quality = float('-inf')
+        for params in param_vec:
+            clustering = cluster.load_clustering(params)
+
+            quality = clustering['quality']
+            if quality > best_quality and \
+               constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
+                query_params = params
+                query_clustering = clustering
+                best_quality = quality
+    else:
+        user_choice = int(user_choice)
+        # In subsequent rounds, the frontend returns the index of the user's choice,
+        # and we look up the corresponding parameters.
+        query_params = prev_choices[user_choice]
+        query_clustering = cluster.load_clustering(query_params)
+
+    if query_params is None or query_clustering is None:
+        print 'Error: no clustering satisfied these constraints'
+        return json.dumps([])
+
+    # Step 2: Run MMR to choose clusterings to show the user.
+    param_choices = [query_params]
+    clustering_choices = [query_clustering]
+    while len(param_choices) < min(len(param_vec), config.NUM_CHOICES):
+        best_score = float('-inf')
+        for params in param_vec:
+            if params not in param_choices:
+                clustering = cluster.load_clustering(params)
+
                 quality = clustering['quality']
-                if quality > best_quality and \
-                   constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
-                    query_params = params
-                    query_clustering = clustering
-                    best_quality = quality
-        else:
-            user_choice = int(user_choice)
-            # In subsequent rounds, the frontend returns the index of the user's choice,
-            # and we look up the corresponding parameters.
-            query_params = prev_choices[user_choice]
-            clustering_key = cluster.clustering_key_from_params(query_params)
-            query_clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
+                dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
+                                for other_clustering in clustering_choices])
+                dist_to_closest_clustering = dist_vec
+                score = L * quality + (1. - L) * dist_to_closest_clustering
+                if score > best_score and \
+                   dist_to_closest_clustering > config.MIN_CLUSTERING_DIST:
+                    best_score = score
+                    best_params = params
+                    best_clustering = clustering
+        param_choices.append(best_params)
+        clustering_choices.append(best_clustering)
 
-        if query_params is None or query_clustering is None:
-            print 'Error: no clustering satisfied these constraints'
-            return json.dumps([])
-
-        # Step 2: Run MMR to choose clusterings to show the user.
-        param_choices = [query_params]
-        clustering_choices = [query_clustering]
-        while len(param_choices) < min(len(param_vec), config.NUM_CHOICES):
-            best_score = float('-inf')
-            for params in param_vec:
-                if params not in param_choices:
-                    clustering_key = cluster.clustering_key_from_params(params)
-                    clustering = json.loads(txn.get('clusterings/%d' % clustering_key))
-                    quality = clustering['quality']
-                    dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
-                                    for other_clustering in clustering_choices])
-                    dist_to_closest_clustering = dist_vec
-                    score = L * quality + (1. - L) * dist_to_closest_clustering
-                    if score > best_score and \
-                       dist_to_closest_clustering > config.MIN_CLUSTERING_DIST:
-                        best_score = score
-                        best_params = params
-                        best_clustering = clustering
-            param_choices.append(best_params)
-            clustering_choices.append(best_clustering)
-
-        session['choices'] = session.get('choices', []) + [param_choices]
-        session['L'] += config.L_INCREMENT
-        txn.put('sessions/%d' % session_id, json.dumps(session))
+    session['choices'] = session.get('choices', []) + [param_choices]
+    session['L'] += config.L_INCREMENT
+    cluster.save_session(session_id, session)
 
     # Permute the clusterings so adjacent clusterings are similar
     clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
@@ -165,30 +158,48 @@ def get_dataset():
     (dataset, description) = cluster.dataset_from_name(dataset_name)
     return json.dumps(dataset.tolist())
 
+def is_float(num):
+    return isinstance(num, (np.floating, float))
+
 @app.route('/description', methods=['POST', 'GET'])
 def get_description():
     dataset_name = request.args.get('dataset')
     (dataset, description) = cluster.dataset_from_name(dataset_name, include_description=True)
-    return json.dumps(description)
+    rounded_description = []
+    for d in description:
+        rounded_d = {key: '%.1f' % value if is_float(value) else value for (key, value) in d.items()}
+        rounded_description.append(rounded_d)
+    return json.dumps(rounded_description)
 
 @app.route('/embedding', methods=['POST', 'GET'])
 def embedding():
     dataset_name = request.args.get('dataset')
     alg_name = request.args.get('method')
-    (dataset, description) = cluster.dataset_from_name(dataset_name)
-    if alg_name == 'pca':
-        model = sklearn.decomposition.PCA(n_components=2, random_state=0)
-    elif alg_name == 'tsne':
-        model = sklearn.manifold.TSNE(n_components=2, random_state=0)
-    elif alg_name == 'spectral':
-        model = sklearn.manifold.SpectralEmbedding(n_components=2, random_state=0)
-    elif alg_name == 'mds':
-        model = sklearn.manifold.MDS(n_components=2, random_state=0)
-    else:
-        assert False, 'Unknown embedding algorithm:%s' % alg_name
+    key = 'embedding/%s_%s' % (dataset_name, alg_name)
+    key = str(key)
 
-    dataset_2d = model.fit_transform(dataset)
-    return json.dumps(dataset_2d.tolist())
+    env = cluster.get_env()
+    with env.begin(write=True) as txn:
+        dataset_2d = txn.get(key)
+        if dataset_2d is not None:
+            return dataset_2d
+
+        if alg_name == 'pca':
+            model = sklearn.decomposition.PCA(n_components=2, random_state=0)
+        elif alg_name == 'tsne':
+            model = sklearn.manifold.TSNE(n_components=2, random_state=0)
+        elif alg_name == 'spectral':
+            model = sklearn.manifold.SpectralEmbedding(n_components=2, random_state=0)
+        elif alg_name == 'mds':
+            model = sklearn.manifold.MDS(n_components=2, random_state=0)
+        else:
+            assert False, 'Unknown embedding algorithm:%s' % alg_name
+
+        (dataset, description) = cluster.dataset_from_name(dataset_name)
+        dataset_2d = model.fit_transform(dataset)
+        dataset_2d = json.dumps(dataset_2d.tolist())
+        txn.put(key, dataset_2d)
+        return dataset_2d
 
 @app.route('/superpoint', methods=['POST', 'GET'])
 def superpoint():

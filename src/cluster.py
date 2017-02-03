@@ -29,6 +29,7 @@ from multiprocessing import Pool
 
 def compute_all_clusterings(dataset_name):
     param_vec = []
+
     for n_clusters in [2, 3, 5, 8, 13]:
         # KMeans
         params = {
@@ -83,7 +84,7 @@ def compute_clustering(params):
         When using random weightings, only the clustering algorithm sees the perturbed
         dataset. The quality metrics still use the original dataset.
     '''
-    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
+    env = get_env()
     with env.begin(write=True) as txn:
         clustering_key = clustering_key_from_params(params)
         clustering = txn.get('clusterings/%d' % clustering_key)
@@ -132,7 +133,7 @@ def compute_clustering(params):
                 'cohesion_clusters': quality_neg_cohesion_clusters,
                 'separation': quality_separation,
                 'separation_clusters': quality_separation_clusters,
-                'min_max_dist': quality_min_max_dist
+                'min_max_dist': quality_min_max_dist,
             },
             'labels': labels.tolist(),
             'n_clusters': n_clusters,
@@ -282,7 +283,6 @@ def dataset_from_name(dataset_name, include_description=False):
         data /= data.std(axis=0)[None, :]
         return (data, descriptions)
 
-
     else:
         assert False, 'Unknown dataset name'
 
@@ -330,6 +330,45 @@ def sort_labels(dataset, labels):
         sorted_labels.append(sorted_point_indices)
     return sorted_labels
 
+def get_env():
+    env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)
+    return env
+
+def load_session(session_id):
+    env = get_env()
+    with env.begin() as txn:
+        session = json.loads(txn.get('sessions/%d' % session_id))
+    return session
+
+def save_session(session_id, session):
+    env = get_env()
+    with env.begin(write=True) as txn:
+        txn.put('sessions/%d' % session_id, json.dumps(session))
+    # env.sync()
+
+def load_num_sessions():
+    env = get_env()
+    with env.begin() as txn:
+        return int(txn.get('num_sessions', 0))
+ 
+def save_num_sessions(num_sessions):
+    env = get_env()
+    with env.begin(write=True) as txn:
+        txn.put('num_sessions', str(num_sessions))
+
+def load_clustering(params):
+    clustering_key = clustering_key_from_params(params)
+    env = get_env()
+    with env.begin() as txn:
+        return json.loads(txn.get('clusterings/%d' % clustering_key))
+
+
 if __name__ == '__main__':
-    (dataset, description) = dataset_from_name('enron')
-    print dataset
+    session_id = 3
+    session = load_session(session_id)
+    session['choices'] = 'This is a test'
+    print session.keys()
+    save_session(session_id, session)
+    del session
+    session = load_session(session_id)
+    print session.keys()
