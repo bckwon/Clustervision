@@ -49,8 +49,9 @@
     var chosen_lambda = 0.5;
     var chosen_dr_method = "tsne";
     var session = {};
-    var same_cluster = [];
-    var diff_cluster = [];
+    var chosen_constraints = {same_cluster: [], diff_cluster: []};
+    // chosen_constraints["same_cluster"] = [];
+    // chosen_constraints["diff_cluster"] = [];
     var sort_asc = "{{url_for('static', filename='images/sort_asc.svg')}}";
     var sort_desc = "{{url_for('static', filename='images/sort_desc.svg')}}";
 
@@ -68,11 +69,10 @@
     same_diff_cluster_listener.subscribe(update_same_diff_clusters);
 
     function update_same_diff_clusters(same_diff_arrays){
-        same_cluster = [same_diff_arrays[0]];
-        diff_cluster = [same_diff_arrays[1]];
+        chosen_constraints["same_cluster"] = [same_diff_arrays[0]];
+        chosen_constraints["diff_cluster"] = [same_diff_arrays[1]];
         console.log("Updated!");
-        console.log(same_cluster);
-        console.log(diff_cluster);
+        console.log(chosen_constraints);
     }
 
     function toggle_dataset(element){
@@ -118,33 +118,49 @@
     }
 
     function fetch_clustering() {
-        console.log('Fetching a new clustering with session_id:', chosen_session_id);
-    	$.ajax({
-	        type: "GET",
-	        url: $SCRIPT_ROOT + "/clustering",
-	        contentType: "application/json; charset=utf-8",
-            data:{
+        var myData = JSON.stringify({
                 "session_id": chosen_session_id,
                 "lambda": chosen_lambda,
                 "user_choice": chosen_user_choice,
-                "same_cluster": same_cluster,
-                "diff_cluster": diff_cluster
-            },
+                "constraints": chosen_constraints
+            }, null, '\t');
+        console.log('Fetching a new clustering with session_id:', chosen_session_id);
+        console.log('chosen_constraints: ', chosen_constraints)
+    	$.ajax({
+	        type: "POST",
+	        url: $SCRIPT_ROOT + "/clustering",
+	        contentType: "application/json; charset=utf-8",
+            data: myData,
 	        success: function(data) {
 	            var parsed_data = JSON.parse(data);
-                console.log(chosen_user_choice);
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
 	            // var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
-                var CR = new ClusteringStripes(".canvas_left", parsed_data, screen_width/4.5, (screen_height*8/10));
-	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
-	            session["clustering"] = parsed_data;
+                if(parsed_data.length > 0){
+                    var CR = new ClusteringStripes(".canvas_left", parsed_data, screen_width/4.5, (screen_height*8/10));
+    	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
+    	            session["clustering"] = parsed_data;
 
-                for (var i = 0; i < session['clustering'].length; i++) {
-                    clustering = session['clustering'][i];
-                    // console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
+                    for (var i = 0; i < session['clustering'].length; i++) {
+                        clustering = session['clustering'][i];
+                        // console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
+                    }
+                    fetch_dataset();
+                }else{
+                    initialize_values();
+                    d3.select(".canvas_left").append("div")
+                        .attr("id", "no_clustering")
+                        .html(function(){
+                            var html = '<br><br><div class="alert alert-danger" id="no_clustering_message"><strong>No Results Found.</strong> No clustering results satisfy your constrints. Initial results with no constraints will show up in 3 seconds.</div>';
+                            return html;
+                        });
+                    $("#no_clustering_message").fadeTo(3000, 500).slideUp(500, function(){
+                        $("#no_clustering_message").slideUp(500);
+                        d3.select("#no_clustering").remove();
+                        fetch_clustering();
+                    });   
+
                 }
-                fetch_dataset();
 	        }
 	    });
     }
@@ -197,9 +213,12 @@
             console.log(session);
             var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc)
         }
+        initialize_values();
+    }
+
+    function initialize_values(){
         // initialize values:
-        same_cluster = [];
-        diff_cluster = [];
+        chosen_constraints = {same_cluster: [], diff_cluster: []};
         chosen_user_choice = 0;
     }
 
