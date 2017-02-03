@@ -136,10 +136,14 @@ def get_clustering():
                 dist_to_closest_clustering = dist_vec
                 score = L * quality + (1. - L) * dist_to_closest_clustering
                 if score > best_score and \
-                   dist_to_closest_clustering > config.MIN_CLUSTERING_DIST:
+                   dist_to_closest_clustering > config.MIN_CLUSTERING_DIST and \
+                   constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
                     best_score = score
                     best_params = params
                     best_clustering = clustering
+        if best_score == float('-inf'):
+            break
+
         param_choices.append(best_params)
         clustering_choices.append(best_clustering)
 
