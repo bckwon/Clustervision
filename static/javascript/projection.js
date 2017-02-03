@@ -66,6 +66,18 @@ function Projection(canvas, data, screen_width, screen_height){
     // new listener
     _self.cluster_list_listener_for_data_point = new _s.Listener("cluster_list_listener_for_data_point");
     _self.cluster_list_listener_for_data_point.subscribe($.proxy(_self.clusterListHandler, _self));
+
+    // new listener
+    _self.pc_listener_for_data_point = new _s.Listener("pc_listener_for_data_point");
+    _self.pc_listener_for_data_point.subscribe($.proxy(_self.pcDataPointHandler, _self));
+
+    // new listener
+    _self.pc_listener_for_group = new _s.Listener("pc_listener_for_group");
+    _self.pc_listener_for_group.subscribe($.proxy(_self.pcGroupHandler, _self));
+
+    // new listener
+    _self.pc_listener_for_cluster_selection = new _s.Listener("pc_listener_for_cluster_selection");
+    _self.pc_listener_for_cluster_selection.subscribe($.proxy(_self.pcClusterSelectionHandler, _self));
 }
 
 Projection.prototype.request_superpoints = function(distance) {
@@ -111,12 +123,6 @@ Projection.prototype.qualityChartHandler = function(argument) {
 
 	var distance = $('#zoom_input').val();
 	_self.request_superpoints(distance);
-	// _self.zoom_input_slider
- //        .attr("value", $('#zoom_input').attr("value"))
- //        .attr("min", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])
- //        .attr("max", _self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1])
- //        .attr("step", (_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][1]-_self.clustering[_self.cls_index]["quality_metrics"]["min_max_dist"][0])/20);
-
 	_self.draw();
 	_self.color_by_new_index();
 };
@@ -128,11 +134,56 @@ Projection.prototype.clusterListHandler = function(argument) {
 			d3.select(this.parentNode).moveToFront();
 			var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 			_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
+			_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([i, _self.cls_index, cluster_label, _self.data]);
 			return "red";
 		}else{
 			return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 		}
 	})
+};
+
+Projection.prototype.pcDataPointHandler = function(argument) {
+	var _self = this;
+	_self.circ.style("fill", function(d,i){
+		if(argument == i){
+			d3.select(this.parentNode).moveToFront();
+			var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
+			_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
+			return "red";
+		}else{
+			return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
+		}
+	})
+};
+
+Projection.prototype.pcGroupHandler = function(argument) {
+	var _self = this;
+	_self.circ.style("display", function(d,i){
+		if(argument.indexOf(i) > -1){
+			return null;
+		}else{
+			return "none";
+		}
+	})
+};
+
+Projection.prototype.pcClusterSelectionHandler = function(argument) {
+	var _self = this;
+	if(isNaN(argument)){
+		_self.circ
+		    .style("opacity", function(d,i){
+		      return SELECTED_CIRCLE_OPACITY;
+		    });
+	}else{
+		_self.circ
+		    .style("opacity", function(d,i){
+		      if(argument == _self.labels[i]){
+		        return SELECTED_CIRCLE_OPACITY;
+		      }else{
+		        return DESELECTED_CIRCLE_OPACITY;
+		      }
+		    });
+	}
 };
 
 Projection.prototype.color_by_new_index = function(){
@@ -175,6 +226,7 @@ Projection.prototype.draw = function(){
 							}).style("opacity", SELECTED_CIRCLE_OPACITY);
 							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
+							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([]);
 						});
 
 	_self.title_box = _self.svg.append("rect")
@@ -254,6 +306,7 @@ Projection.prototype.draw = function(){
 							d3.select(this).moveToFront();
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
+							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([i, _self.cls_index, cluster_label, _self.data]);
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							});
@@ -269,11 +322,10 @@ Projection.prototype.draw = function(){
 							// d3.selectAll("circle.data_item_circ").style("stroke", "none").style("stroke-width", 1);
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data]);
+							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(cluster_label);
 							// d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
 							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY);
 							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", SELECTED_CIRCLE_OPACITY);
 						})
 						.on("contextmenu", d3.contextMenu(_self.context_menu));
 }
-
-

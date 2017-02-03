@@ -71,6 +71,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 								d3.select(this).selectAll(".clustering_container").style("stroke", "orange");
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
+								_s.listenerMap['quality_chart_listener_for_parallel_coordinates'].fire([d,i]);
 								_self.asterplots.forEach(function(ap,j){
 									if(i == j){
 										ap.highlight_circles(true);

@@ -24,7 +24,22 @@
     left: 25%;
     height: 100%;
     z-index: 4;
-    overflow-y: scroll;
+    overflow-y: hidden;
+}
+
+.canvas_middle_top{
+    position: absolute;
+    top: 0%;
+    height: 50%;
+    z-index: 4;
+    overflow: hidden;
+}
+.canvas_middle_bottom{
+    position: absolute;
+    top: 50%;
+    height: 50%;
+    z-index: 4;
+    overflow: hidden;
 }
 
 .canvas_right{
@@ -43,7 +58,7 @@
 .drt_title{
     color: blue;
 }
-
+/*
 .x.axis path{
     fill: none;
     stroke: black;
@@ -52,4 +67,10 @@
 .y.axis path{
     fill: none;
     stroke: black;
+}*/
+
+.axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
 }

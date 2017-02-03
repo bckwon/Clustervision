@@ -31,6 +31,8 @@
 	<div class="canvas_left">
 	</div>	
 	<div class="canvas_middle">
+        <div class = "canvas_middle_top"></div>
+        <div class = "canvas_middle_bottom"></div>
 	</div>
 	<div class="canvas_right">
 	</div>
@@ -43,12 +45,15 @@
 	var screen_height = window.screen.availHeight;
     var chosen_dataset = "blobs";
     var chosen_session_id = 0;
-    var chosen_user_choice = null;
+    var chosen_user_choice = 0;
     var chosen_lambda = 0.5;
     var chosen_dr_method = "tsne";
     var session = {};
     var same_cluster = [];
     var diff_cluster = [];
+    var sort_asc = "{{url_for('static', filename='images/sort_asc.svg')}}";
+    var sort_desc = "{{url_for('static', filename='images/sort_desc.svg')}}";
+
 
     $('.dataset_item').on("click", toggle_dataset);
     $('.drt_item').on("click", toggle_drt);
@@ -88,7 +93,8 @@
 
     function remove_all(){
     	d3.select(".canvas_left").selectAll("*").remove();
-    	d3.select(".canvas_middle").selectAll("*").remove();
+    	d3.select(".canvas_middle_top").selectAll("*").remove();
+        d3.select(".canvas_middle_bottom").selectAll("*").remove();
     	d3.select(".canvas_right").selectAll("*").remove();
     }
 
@@ -133,6 +139,7 @@
                 var CR = new ClusteringStripes(".canvas_left", parsed_data, screen_width/4.5, (screen_height*8/10));
 	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
 	            session["clustering"] = parsed_data;
+
                 for (var i = 0; i < session['clustering'].length; i++) {
                     clustering = session['clustering'][i];
                     // console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
@@ -186,15 +193,14 @@
         if ((session['embedding'] == null) || (session['data_attributes'] == null) || (session['clustering'] == null)) {
             window.setTimeout('load_projection();', 100);
         } else {
-            // console.log('embedding:', session['embedding']);
-            // console.log('data_attributes:', session['data_attributes']);
-            // console.log('clustering:', session['clustering']);
-            var proj = new Projection(".canvas_middle", session, screen_width/2, screen_height/2);
+            var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2.5);
+            console.log(session);
+            var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc)
         }
         // initialize values:
         same_cluster = [];
         diff_cluster = [];
-        chosen_user_choice = null;
+        chosen_user_choice = 0;
     }
 
     function start(new_session){
