@@ -175,6 +175,10 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		_self.circ
 		    .style("opacity", function(d,i){
 		      return SELECTED_CIRCLE_OPACITY;
+		    }).style("stroke", function(d,i){
+		      return SELECTED_CIRCLE_STROKE_COLOR;
+		    }).style("stroke-width", function(d,i){
+		      return SELECTED_CIRCLE_STROKE_WIDTH;
 		    });
 	}else{
 		_self.circ
@@ -183,6 +187,20 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		        return SELECTED_CIRCLE_OPACITY;
 		      }else{
 		        return DESELECTED_CIRCLE_OPACITY;
+		      }
+		    })
+				.style("stroke", function(d,i){
+		      if(argument == _self.labels[i]){
+		        return SELECTED_CIRCLE_STROKE_COLOR;
+		      }else{
+		        return DESELECTED_CIRCLE_STROKE_COLOR;
+		      }
+		    })
+				.style("stroke-width", function(d,i){
+		      if(argument == _self.labels[i]){
+		        return SELECTED_CIRCLE_STROKE_WIDTH;
+		      }else{
+		        return DESELECTED_CIRCLE_STROKE_WIDTH;
 		      }
 		    });
 	}
@@ -225,7 +243,7 @@ Projection.prototype.draw = function(){
 						.on("click", function(){
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
-							}).style("opacity", SELECTED_CIRCLE_OPACITY);
+							}).style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
 							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
 							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([]);
@@ -274,7 +292,7 @@ Projection.prototype.draw = function(){
             	_self.stroke_by_same_separate();
             	_s.listenerMap['same_diff_cluster_listener'].fire([_self.together,_self.separate])
             },
-            disabled: false 
+            disabled: false
         },
         {
             title: 'NOT in a same cluster',
@@ -288,7 +306,7 @@ Projection.prototype.draw = function(){
             	_self.stroke_by_same_separate();
             	_s.listenerMap['same_diff_cluster_listener'].fire([_self.together,_self.separate])
             },
-            disabled: false 
+            disabled: false
         }
     ];
 
@@ -304,6 +322,8 @@ Projection.prototype.draw = function(){
 						.style("fill", function(d,i){
 							return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 						})
+						.style("stroke", DESELECTED_CIRCLE_STROKE_COLOR)
+						.style("stroke-width", DESELECTED_CIRCLE_STROKE_WIDTH)
 						.on("mouseenter", function(d,i){
 							d3.select(this).moveToFront();
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
@@ -326,8 +346,8 @@ Projection.prototype.draw = function(){
 							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data]);
 							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(cluster_label);
 							// d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
-							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY);
-							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", SELECTED_CIRCLE_OPACITY);
+							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
+							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
 						})
 						.on("contextmenu", d3.contextMenu(_self.context_menu));
 }
