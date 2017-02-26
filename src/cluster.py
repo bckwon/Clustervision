@@ -26,11 +26,16 @@ import string
 
 from tqdm import tqdm
 from multiprocessing import Pool
+from src import optimal_k
 
 def compute_all_clusterings(dataset_name):
     param_vec = []
 
-    for n_clusters in [2, 3, 5, 8, 13]:
+    # (dataset, description) = dataset_from_name(dataset_name)
+    # optimal_ks = optimal_k.find_K(dataset)
+    # print len(optimal_ks)
+
+    for n_clusters in [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
         # KMeans
         params = {
             'alg_name': 'KMeans',
@@ -350,7 +355,7 @@ def load_num_sessions():
     env = get_env()
     with env.begin() as txn:
         return int(txn.get('num_sessions', 0))
- 
+
 def save_num_sessions(num_sessions):
     env = get_env()
     with env.begin(write=True) as txn:
