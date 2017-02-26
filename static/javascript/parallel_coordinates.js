@@ -74,7 +74,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   var cell_width = 60;
   var tab_padding = (w-cell_width*5)/2;
 
-  var sortarray = [];
+  _self.sortarray = [];
   var temparray = [];
   var first_dimensions = [];
   var drag_start = [];
@@ -95,8 +95,8 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   original_dimensions = dimensions.slice().sort();
   _self.dimensions = dimensions;
   
-  for (var i = dimensions.length - 1; i >= 0; i--) {
-    sortarray.push(0);
+  for (var i = _self.dimensions.length - 1; i >= 0; i--) {
+    _self.sortarray.push(0);
     temparray.push(0);
   };
 
@@ -182,16 +182,16 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           if(typeof this.__origin__ != 'undefined' ){
             _self.dragging[d] = Math.min(w, Math.max(0, this.__origin__ += d3.event.dx));
             foreground.attr("d", path);
-            _self.area_path.attr("d", _self.area_computation);
-            _self.line_path.attr("d", _self.mean_line_computation);
-            _self.dimensions.sort(function(a, b) { return position(a) - position(b); });
+            _self.area_path.attr("d", function(d){return _self.compute_area_path(d);});
+            _self.line_path.attr("d", function(d){return _self.compute_line_path(d);});
+            _self.dimensions.sort(function(a, b) { return _self.position(a) - _self.position(b); });
             for (var i = 0; i < original_dimensions.length; i++) {
-              temparray[_self.dimensions.indexOf(original_dimensions[i])] = sortarray[original_dimensions.indexOf(original_dimensions[i])];
+              temparray[_self.dimensions.indexOf(original_dimensions[i])] = _self.sortarray[original_dimensions.indexOf(original_dimensions[i])];
             };
-            sortarray = temparray.slice();
+            _self.sortarray = temparray.slice();
             original_dimensions = _self.dimensions.slice();
             _self.x.domain(_self.dimensions);
-            g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })}
+            g.attr("transform", function(d) { return "translate(" + _self.position(d) + ")"; })}
         })
         .on("dragend", function(d) {
           if(typeof this.__origin__ != 'undefined' ){
@@ -200,8 +200,8 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
             transition(d3.select(this)).attr("transform", "translate(" + _self.x(d) + ")");
             transition(foreground)
                 .attr("d", path);
-            transition(_self.area_path).attr("d", _self.area_computation);
-            transition(_self.line_path).attr("d", _self.mean_line_computation);
+            transition(_self.area_path).attr("d", function(d){return _self.compute_area_path(d);});
+            transition(_self.line_path).attr("d", function(d){return _self.compute_line_path(d);});
               }
             drag_end = _self.dimensions.slice();
             if(drag_start.equals(drag_end) == false && drag_start.length == drag_end.length){
@@ -245,16 +245,16 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         })
         .attr("y", -20).attr("width", 18).attr("height", 15)
         .attr("class", "sort").attr("id", function(d,i){return i;}).text("Sort!").on("click", function(d, i){
-          var prev_sort = sortarray.slice();
-          if(sortarray[_self.dimensions.indexOf(d)]==0){
+          var prev_sort = _self.sortarray.slice();
+          if(_self.sortarray[_self.dimensions.indexOf(d)]==0){
             flip_axis_ascending(d, 100, 250);
-            sortarray[_self.dimensions.indexOf(d)] = 1;
+            _self.sortarray[_self.dimensions.indexOf(d)] = 1;
           }else{
             flip_axis_descending(d, 100, 250);
-            sortarray[_self.dimensions.indexOf(d)] = 0;
+            _self.sortarray[_self.dimensions.indexOf(d)] = 0;
           }
         }).attr("xlink:href", function(d,i){
-          if(sortarray[dimensions.indexOf(d)] == 0){
+          if(_self.sortarray[dimensions.indexOf(d)] == 0){
             return sort_asc;
           }else{
             return sort_desc;
@@ -312,14 +312,14 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         .domain([h, 0])
         .range(d3.extent(datum, function(p) { return +p[dim]; }));
         
-        sortarray[dimensions.indexOf(dim)] = 1;
+        _self.sortarray[dimensions.indexOf(dim)] = 1;
         g_axis.each(function(d, i) { 
           var temp_id = dimensions.indexOf(d) + 1;
           d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(axis.scale(_self.y[d])); });
       
       d3.selectAll(".sort")
         .attr("xlink:href", function(d,i){
-          if(sortarray[dimensions.indexOf(d)] == 0){
+          if(_self.sortarray[dimensions.indexOf(d)] == 0){
             return sort_asc;
           }else{
             return sort_desc;
@@ -335,7 +335,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       for (var i = 0; i < dimensions.length; i++) {
         _self.y[_self.dimensions[i]].brush.extent(prev_extents[_self.dimensions[i]]);
         d3.select("g.brush").call(brush);
-        var num = (sortarray[i]==0)? 1 : 0;
+        var num = (_self.sortarray[i]==0)? 1 : 0;
         var temp_id_2 = first_dimensions.indexOf(_self.dimensions[i]);
         d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][0])));
       };
@@ -344,9 +344,9 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           .attr("d", path);
       // Sort Action for Areas
       transition(_self.area_path).delay(delay).duration(duration)
-          .attr("d", _self.area_computation);
+          .attr("d", function(d){return _self.compute_area_path(d);});
       transition(_self.line_path).delay(delay).duration(duration)
-          .attr("d", _self.mean_line_computation);
+          .attr("d", function(d){return _self.compute_line_path(d);});
       // 
       var line_label = d3.selectAll(".line_label");
       transition(line_label).delay(delay).duration(duration).attr("transform", function(d){
@@ -368,7 +368,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         .domain([h, 0])
         .range(d3.extent(datum, function(p) { return +p[dim]; }));
 
-        sortarray[_self.dimensions.indexOf(dim)] = 0;
+        _self.sortarray[_self.dimensions.indexOf(dim)] = 0;
         
         g_axis.each(function(d, i) { 
           var temp_id = _self.dimensions.indexOf(d) + 1;
@@ -376,7 +376,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           
         g_axis.selectAll(".sort")
             .attr("xlink:href", function(d,i){
-          if(sortarray[_self.dimensions.indexOf(d)] == 0){
+          if(_self.sortarray[_self.dimensions.indexOf(d)] == 0){
             return sort_asc;
           }else{
             return sort_desc;
@@ -392,7 +392,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       for (var i = 0; i < _self.dimensions.length; i++) {
         _self.y[_self.dimensions[i]].brush.extent(prev_extents[_self.dimensions[i]]);
         d3.select("g.brush").call(brush);
-        var num = (sortarray[i]==0)? 1 : 0;
+        var num = (_self.sortarray[i]==0)? 1 : 0;
         var temp_id_2 = first_dimensions.indexOf(_self.dimensions[i]);
         d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][0])));
       };
@@ -401,9 +401,9 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           .attr("d", path);
       // Sort Action for Areas
       transition(_self.area_path).delay(delay).duration(duration)
-          .attr("d", _self.area_computation);
+          .attr("d", function(d){return _self.compute_area_path(d);});
       transition(_self.line_path).delay(delay).duration(duration)
-          .attr("d", _self.mean_line_computation);
+          .attr("d", function(d){return _self.compute_line_path(d);});
       // 
       var line_label = d3.selectAll(".line_label");
       transition(line_label).delay(delay).duration(duration).attr("transform", function(d){
@@ -429,8 +429,6 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   function brush() {
     var actives = dimensions.filter(function(p) { return !_self.y[p].brush.empty(); }),
         extents = actives.map(function(p) { return _self.y[p].brush.extent(); });
-    console.log("actives: ", actives);
-    console.log("extents: ", extents);
 
     if(actives.length==0 && extents.length == 0){
       foreground.style("visibility", "hidden")
@@ -633,22 +631,24 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
     return _self.labels[i];
   });
 
+  var clusters = Object.values(clusters);
+
   // Get Means and 95% Intervals per Each Cluster:
-  var mean_and_95 = Object.values(clusters).map(function(d){
-    var array = [];
-    _self.dimensions.forEach(function(dim){
-      var obj = {};
-      obj["dimension"] = dim;
-      obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
-      var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
-      // var int95 = se95(d.length, deviation);
-      var int95 = deviation; // bckwon: currently set as standard deviation
-      obj["upper_bound"] = obj["mean"] + int95;
-      obj["lower_bound"] = obj["mean"] - int95;
-      array.push(obj);
-    })
-    return array;
-  });
+  // var mean_and_95 = Object.values(clusters).map(function(d){
+  //   var array = [];
+  //   _self.dimensions.forEach(function(dim){
+  //     var obj = {};
+  //     obj["dimension"] = dim;
+  //     obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
+  //     var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
+  //     // var int95 = se95(d.length, deviation);
+  //     var int95 = deviation; // bckwon: currently set as standard deviation
+  //     obj["upper_bound"] = obj["mean"] + int95;
+  //     obj["lower_bound"] = obj["mean"] - int95;
+  //     array.push(obj);
+  //   })
+  //   return array;
+  // });
 
   // Area Coputation
   _self.area_computation = d3.svg.area()
@@ -666,10 +666,10 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
 
   _self.area_path = _self.area_svg
       .selectAll("path.area_path")
-    .data(mean_and_95).enter()
+    .data(clusters).enter()
       .append("path")
       .attr("class", "area_path")
-      .attr("d", _self.area_computation)
+      .attr("d", function(d){return _self.compute_area_path(d);})
       .attr("stroke-width", _self.stroke_width)
       .attr("fill", function(d, i){
           return _self.color(i);
@@ -682,10 +682,10 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
 
   _self.line_path = _self.area_svg
       .selectAll("path.line_path")
-    .data(mean_and_95).enter()
+    .data(clusters).enter()
       .append("path")
       .attr("class", "line_path")
-      .attr("d", _self.mean_line_computation)
+      .attr("d", function(d){return _self.compute_line_path(d);})
       .attr("stroke-width", _self.stroke_width)
       .style("stroke", function(d, i){
           return _self.color(i);
@@ -693,6 +693,46 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .attr("fill", "none")
       .style("cursor", "pointer");
 
+};
+
+ParallelCoordinates.prototype.compute_area_path = function(d) {
+  var _self = this;
+  var array = [];
+  _self.dimensions.forEach(function(dim, dim_index){
+    var obj = {};
+    obj["dimension"] = dim;
+    obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
+    var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
+    // var int95 = se95(d.length, deviation);
+    var int95 = deviation; // bckwon: currently set as standard deviation
+    if(_self.sortarray[dim_index]==1){
+      int95 = -int95;
+    }
+    obj["upper_bound"] = obj["mean"] + int95;
+    obj["lower_bound"] = obj["mean"] - int95;
+    array.push(obj);
+  });
+  return _self.area_computation(array);
+};
+
+ParallelCoordinates.prototype.compute_line_path = function(d) {
+  var _self = this;
+  var array = [];
+  _self.dimensions.forEach(function(dim, dim_index){
+    var obj = {};
+    obj["dimension"] = dim;
+    obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
+    var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
+    // var int95 = se95(d.length, deviation);
+    var int95 = deviation; // bckwon: currently set as standard deviation
+    if(_self.sortarray[dim_index]==1){
+      int95 = -int95;
+    }
+    obj["upper_bound"] = obj["mean"] + int95;
+    obj["lower_bound"] = obj["mean"] - int95;
+    array.push(obj);
+  })
+  return _self.mean_line_computation(array);
 };
 
 function se95(sample_size, deviation){
