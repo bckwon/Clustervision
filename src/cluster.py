@@ -23,19 +23,15 @@ import sklearn.manifold
 import sklearn.metrics
 import sklearn.preprocessing
 import string
+import pandas as pd
 
 from tqdm import tqdm
 from multiprocessing import Pool
-from src import optimal_k
 
 def compute_all_clusterings(dataset_name):
     param_vec = []
 
-    # (dataset, description) = dataset_from_name(dataset_name)
-    # optimal_ks = optimal_k.find_K(dataset)
-    # print len(optimal_ks)
-
-    for n_clusters in [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+    for n_clusters in [2, 3, 5, 8, 13]: # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
         # KMeans
         params = {
             'alg_name': 'KMeans',
@@ -287,7 +283,25 @@ def dataset_from_name(dataset_name, include_description=False):
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
         return (data, descriptions)
+    elif dataset_name == 'snow':
+        # data = np.load('data/snow_data/snow.npy').astype(float)
+        pdata = pd.read_csv('data/snow_data/snow.csv')
+        data = pdata.as_matrix()
+        # std = data.std(axis=0)
+        # data = data[:, std != 0]
+        # data -= data.mean(axis=0)[None, :]
+        # data /= data.std(axis=0)[None, :]
 
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        return (data, descriptions)
     else:
         assert False, 'Unknown dataset name'
 
