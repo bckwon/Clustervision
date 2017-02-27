@@ -241,9 +241,10 @@ Projection.prototype.draw = function(){
 						.attr("height", _self.height)
 						.style("opacity", 0)
 						.on("click", function(){
-							_self.circ.style("fill", function(d,i){
-								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
-							}).style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
+							// _self.circ.style("fill", function(d,i){
+							// 	return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
+							// }).style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
+							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
 							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([]);
@@ -337,7 +338,7 @@ Projection.prototype.draw = function(){
 						.on("mouseleave", function(d,i){
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
-							})
+							});
 						})
 						.on("click", function(d,i){
 							d3.select(this).moveToFront();

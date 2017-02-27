@@ -595,11 +595,15 @@ ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
 ParallelCoordinates.prototype.projectionClusterSelectionHandler = function(argument) {
   var _self = this;
   _self.highlight_by_cluster(argument);
+  var g = $('g.area_svg');
+  g.append($('.line_path'));
 };
 
 ParallelCoordinates.prototype.projectionHandler = function(argument){
   var _self = this;
   _self.highlight(argument);
+  var g = $('g.area_svg');
+  g.append($('.line_path'));
 }
 
 ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
@@ -686,10 +690,11 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .append("path")
       .attr("class", "line_path")
       .attr("d", function(d){return _self.compute_line_path(d);})
-      .attr("stroke-width", _self.stroke_width)
+      .attr("stroke-width", MEAN_LINE_STROKE_WIDTH)
       .style("stroke", function(d, i){
-          return _self.color(i);
+          return ColorLuminance(_self.color(i), MEAN_LINE_STROKE_COEFFICIENT);
       })
+      .style("stroke-dasharray", "3, 3")
       .attr("fill", "none")
       .style("cursor", "pointer");
 
@@ -739,3 +744,22 @@ function se95(sample_size, deviation){
   return 1.96*deviation/Math.sqrt(sample_size);
 }
 
+function ColorLuminance(hex, lum) {
+
+  // validate hex string
+  hex = String(hex).replace(/[^0-9a-f]/gi, '');
+  if (hex.length < 6) {
+    hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  }
+  lum = lum || 0;
+
+  // convert to decimal and change luminosity
+  var rgb = "#", c, i;
+  for (i = 0; i < 3; i++) {
+    c = parseInt(hex.substr(i*2,2), 16);
+    c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+    rgb += ("00"+c).substr(c.length);
+  }
+
+  return rgb;
+}
