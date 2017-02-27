@@ -129,6 +129,20 @@ def boundaries(data_matrix):
 
 
 def gap_statistic(data_matrix, clusters, l=10, dist=1.0):
+	"""
+	Computes the Gap Statistic for the clustering.
+
+	Parameters
+	----------
+	data_matrix: An array of the data vectors.
+	clusters: An array containing cluster indices.
+	l: Number of reference datasets to be created.
+	dist: Distance value for the 
+
+	Returns
+	-------
+	Value of the gap statistic.
+	"""
 	min_dim, max_dim = boundaries(data_matrix)
 	Wk_real = np.log(Wk(data_matrix, clusters))
 	# create l reference datasets
@@ -148,3 +162,37 @@ def gap_statistic(data_matrix, clusters, l=10, dist=1.0):
 	WK_av = np.mean(WKs)
 	sk = np.sqrt(np.sum((Wk_real - WK_av)**2)/l)
 	return WK_av, sk
+
+
+
+
+
+# data_matrix = [[1,2],[2,4],[1,1], [3,4],[2,3]]
+# # print np.array(data_matrix).shape
+# # print boudaries(np.array(data_matrix))
+# clusters = [1,0,1,2,2]
+# # print Wk(data_matrix, clusters)
+
+# print davies_bouldin(data_matrix, clusters)
+# print "gap_statistic..."
+# print gap_statistic(data_matrix, clusters)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
