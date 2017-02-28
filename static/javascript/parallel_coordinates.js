@@ -1,4 +1,4 @@
-function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_asc, sort_desc){
+function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_asc, sort_desc, remove_svg){
   var _self = this;
   var dimensions_shuffle = dimensions_shuffle || {};
   var axis_hidden = dimensions_shuffle.axis_hidden || false;
@@ -11,7 +11,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   d3.select(div_name).selectAll("*").remove();
 
   _self.session = data;
-  
+
   _self.cls_index = 0;
   _self.clustering = _self.session["clustering"];
   _self.labels = _self.clustering[_self.cls_index]["labels"];
@@ -94,7 +94,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   first_dimensions = dimensions.slice().sort();
   original_dimensions = dimensions.slice().sort();
   _self.dimensions = dimensions;
-  
+
   for (var i = _self.dimensions.length - 1; i >= 0; i--) {
     _self.sortarray.push(0);
     temparray.push(0);
@@ -214,7 +214,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   // Add an axis and title.
   var g_axis = g.append("svg:g")
       .attr("class", "axis")
-      .each(function(d, i) { d3.select(this).attr("id", function(){return "dim-" +i;}).call(axis.scale(_self.y[d])); 
+      .each(function(d, i) { d3.select(this).attr("id", function(){return "dim-" +i;}).call(axis.scale(_self.y[d]));
         if(d == highlight_axis){
           d3.select(this).style("fill", "red");
         }
@@ -243,7 +243,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
           return x;
         })
-        .attr("y", -20).attr("width", 18).attr("height", 15)
+        .attr("y", -20).attr("width", 16).attr("height", 16)
         .attr("class", "sort").attr("id", function(d,i){return i;}).text("Sort!").on("click", function(d, i){
           var prev_sort = _self.sortarray.slice();
           if(_self.sortarray[_self.dimensions.indexOf(d)]==0){
@@ -265,11 +265,15 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   // Add and store a brush for each axis.
   g.append("svg:g")
       .attr("class", "brush")
-      .each(function(d) { d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush)); 
-      _self.y[d].brush.on("brushend", function(d){
-        if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
-        }
-    });
+      .each(function(d) {
+        d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush));
+        _self.y[d].brush.on("brushend", function(d,i){
+          if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
+
+          }
+          var rem = d3.select("#remove-" + d).attr("opacity", 1);
+          console.log(rem)
+        });
     })
     .selectAll("rect")
       .attr("fill", "none")
@@ -279,18 +283,52 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
 
   d3.selectAll("rect.extent").attr("id", function(d,i){return "extent-" + i;})
 
+
+  // g_axis.append("svg:image")
+  //   .attr("x", function(d, i){
+  //     var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
+  //     return x;
+  //   })
+  //   .attr("y", -20).attr("width", 18).attr("height", 15)
+  //   .attr("class", "sort").attr("id", function(d,i){return i;}).text("Sort!").on("click", function(d, i){
+  //     var prev_sort = _self.sortarray.slice();
+  //     if(_self.sortarray[_self.dimensions.indexOf(d)]==0){
+  //       flip_axis_ascending(d, 100, 250);
+  //       _self.sortarray[_self.dimensions.indexOf(d)] = 1;
+  //     }else{
+  //       flip_axis_descending(d, 100, 250);
+  //       _self.sortarray[_self.dimensions.indexOf(d)] = 0;
+  //     }
+  //   }).attr("xlink:href", function(d,i){
+  //     if(_self.sortarray[dimensions.indexOf(d)] == 0){
+  //       return sort_asc;
+  //     }else{
+  //       return sort_desc;
+  //     }
+  //   }).style("cursor", "pointer");
+
   // Remove Filter Button
-    g_axis.append("svg:text")
+    g_axis.append("svg:image")
     .attr("class", "remove_filter")
+    .attr("id", function(d, i){
+      return "remove-" + d;
+    })
     .attr("text-anchor", "middle")
-    .attr("y", -20)
+    .attr("xlink:href", remove_svg)
+    .attr("width", 16).attr("height", 16)
+    .attr("opacity", 0)
+    .attr("y", -20).attr("x", function(d, i){
+      var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4+16);
+      return x;
+    })
     .style("font-size", "75%")
     .style("cursor", "pointer")
-    .text("Remove Filter")
+    // .text("Remove Filter")
     .on("click", function(d, i){
       if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
       }
       d3.select("#extent-" + i).attr("y", 0).attr("height", 0);
+      d3.select("#remove-" + d).attr("opacity", 0);
       _self.y[d].brush.clear();
       brush();
     });
@@ -303,7 +341,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       for (var i = 0; i < dimensions.length; i++) {
         prev_extents[_self.dimensions[i]] = _self.y[_self.dimensions[i]].brush.extent();
       };
-      
+
       _self.y[dim] = d3.scale.linear()
         .domain(d3.extent(cars, function(p) { return +p[dim]; }))
         .range([0, h]);
@@ -311,12 +349,12 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       y_reverse[dim] = d3.scale.linear()
         .domain([h, 0])
         .range(d3.extent(datum, function(p) { return +p[dim]; }));
-        
+
         _self.sortarray[dimensions.indexOf(dim)] = 1;
-        g_axis.each(function(d, i) { 
+        g_axis.each(function(d, i) {
           var temp_id = dimensions.indexOf(d) + 1;
           d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(axis.scale(_self.y[d])); });
-      
+
       d3.selectAll(".sort")
         .attr("xlink:href", function(d,i){
           if(_self.sortarray[dimensions.indexOf(d)] == 0){
@@ -325,13 +363,13 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
             return sort_desc;
           }
         });
-      
+
       d3.selectAll("g.brush")
         .each(function(d) { d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush)); })
       .selectAll("rect")
         .attr("x", -8)
         .attr("width", 16);
-        
+
       for (var i = 0; i < dimensions.length; i++) {
         _self.y[_self.dimensions[i]].brush.extent(prev_extents[_self.dimensions[i]]);
         d3.select("g.brush").call(brush);
@@ -347,7 +385,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           .attr("d", function(d){return _self.compute_area_path(d);});
       transition(_self.line_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_line_path(d);});
-      // 
+      //
       var line_label = d3.selectAll(".line_label");
       transition(line_label).delay(delay).duration(duration).attr("transform", function(d){
               return "translate(" + (position(dimensions[dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
@@ -355,7 +393,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
     }
 
     function flip_axis_descending(dim, delay, duration){
-      
+
       for (var i = 0; i < _self.dimensions.length; i++) {
         prev_extents[_self.dimensions[i]] = _self.y[_self.dimensions[i]].brush.extent();
       };
@@ -369,11 +407,11 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         .range(d3.extent(datum, function(p) { return +p[dim]; }));
 
         _self.sortarray[_self.dimensions.indexOf(dim)] = 0;
-        
-        g_axis.each(function(d, i) { 
+
+        g_axis.each(function(d, i) {
           var temp_id = _self.dimensions.indexOf(d) + 1;
           d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(axis.scale(_self.y[d])); });
-          
+
         g_axis.selectAll(".sort")
             .attr("xlink:href", function(d,i){
           if(_self.sortarray[_self.dimensions.indexOf(d)] == 0){
@@ -404,7 +442,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           .attr("d", function(d){return _self.compute_area_path(d);});
       transition(_self.line_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_line_path(d);});
-      // 
+      //
       var line_label = d3.selectAll(".line_label");
       transition(line_label).delay(delay).duration(duration).attr("transform", function(d){
               return "translate(" + (position(_self.dimensions[_self.dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[_self.dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
@@ -470,7 +508,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       if (!array)
           return false;
 
-      // compare lengths - can save a lot of time 
+      // compare lengths - can save a lot of time
       if (this.length != array.length)
           return false;
 
@@ -479,13 +517,13 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           if (this[i] instanceof Array && array[i] instanceof Array) {
               // recurse into the nested arrays
               if (!this[i].equals(array[i]))
-                  return false;       
-          }           
-          else if (this[i] != array[i]) { 
+                  return false;
+          }
+          else if (this[i] != array[i]) {
               // Warning - two different object instances will never be equal: {x:20} != {x:20}
-              return false;   
-          }           
-      }       
+              return false;
+          }
+      }
       return true;
   }
   _self.position = position;

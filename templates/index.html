@@ -29,7 +29,7 @@
 
 <div class = "canvas_main">
 	<div class="canvas_left">
-	</div>	
+	</div>
 	<div class="canvas_middle">
         <div class = "canvas_middle_top"></div>
         <div class = "canvas_middle_bottom"></div>
@@ -54,6 +54,7 @@
     // chosen_constraints["diff_cluster"] = [];
     var sort_asc = "{{url_for('static', filename='images/sort_asc.svg')}}";
     var sort_desc = "{{url_for('static', filename='images/sort_desc.svg')}}";
+		var remove_svg = "{{url_for('static', filename='images/remove.svg')}}";
 
 
     $('.dataset_item').on("click", toggle_dataset);
@@ -159,13 +160,13 @@
                         $("#no_clustering_message").slideUp(500);
                         d3.select("#no_clustering").remove();
                         fetch_clustering();
-                    });   
+                    });
 
                 }
 	        }
 	    });
     }
-    
+
     function fetch_dataset() {
         console.log('Fetching dataset:', chosen_dataset);
 	    $.ajax({
@@ -212,7 +213,7 @@
         } else {
             var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2.5);
             console.log(session);
-            var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc)
+            var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc, remove_svg)
         }
         initialize_values();
     }
@@ -233,18 +234,18 @@
         // fetch_dataset();
     }
 
-    d3.selection.prototype.moveToFront = function() {  
+    d3.selection.prototype.moveToFront = function() {
       return this.each(function(){
         this.parentNode.appendChild(this);
       });
     };
-    
-    d3.selection.prototype.moveToBack = function() {  
-        return this.each(function() { 
-            var firstChild = this.parentNode.firstChild; 
-            if (firstChild) { 
-                this.parentNode.insertBefore(this, firstChild); 
-            } 
+
+    d3.selection.prototype.moveToBack = function() {
+        return this.each(function() {
+            var firstChild = this.parentNode.firstChild;
+            if (firstChild) {
+                this.parentNode.insertBefore(this, firstChild);
+            }
         });
     };
 
