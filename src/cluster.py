@@ -121,10 +121,13 @@ def compute_clustering(params):
 
         quality_min_max_dist = quality_metrics.min_max_dist(dataset, labels)
 
+        quality_sdbw = quality_metrics.neg_s_Dbw(dataset,labels)
+
         n_clusters = n_clusters_from_labels(labels)
         clustering = {
-            'quality': quality_silhouette, # backward compatability
+            'quality': quality_sdbw, # quality_silhouette, # backward compatability
             'quality_metrics': {
+                'sdbw': quality_sdbw,
                 'silhouette_score': quality_silhouette,
                 'silhouette_clusters': quality_silhouette_clusters,
                 'silhouette_samples': quality_silhouette_samples,

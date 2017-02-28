@@ -1,6 +1,7 @@
 import numpy as np
 import sklearn.metrics
 import clusterhelpers_db_gs
+import SDbw
 
 def silhouette_score(X, labels):
     n_labels = len(set(labels))
@@ -25,6 +26,9 @@ def silhouette_clusters(X, labels):
 
 def neg_davies_bouldin(X, labels):
     return -1.0 * clusterhelpers_db_gs.davies_bouldin(X, labels)
+
+def neg_s_Dbw(X, labels):
+    return -1.0 * SDbw.SDbw(X,labels)
 
 def calinski_harabaz_score(X, labels):
     n_labels = len(set(labels))
