@@ -283,9 +283,9 @@ def dataset_from_name(dataset_name, include_description=False):
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
         return (data, descriptions)
-    elif dataset_name == 'snow':
+    elif dataset_name == 'sutter':
         # data = np.load('data/snow_data/snow.npy').astype(float)
-        pdata = pd.read_csv('data/snow_data/snow.csv')
+        pdata = pd.read_csv('data/sutter_data/sutter022817.csv')
         data = pdata.as_matrix()
         # std = data.std(axis=0)
         # data = data[:, std != 0]

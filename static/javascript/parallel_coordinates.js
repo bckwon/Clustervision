@@ -271,8 +271,8 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
           if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
 
           }
-          var rem = d3.select("#remove-" + d).attr("opacity", 1);
-          console.log(rem)
+          d3.select("#remove-" + d).attr("opacity", 1);
+
         });
     })
     .selectAll("rect")
