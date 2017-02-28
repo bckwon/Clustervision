@@ -719,7 +719,7 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .style("opacity", function(d,i){
           return SELECTED_PATH_OPACITY;
       })
-      .style("fill-opacity", .5)
+      .style("fill-opacity", DESELECTED_PATH_OPACITY)
       .style("cursor", "pointer");
 
   _self.line_path = _self.area_svg
