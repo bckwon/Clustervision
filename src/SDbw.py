@@ -123,6 +123,7 @@ def Density_bw(data_matrix, cluster_data, sigma):
 		# print "centeroid i", centroid_i
 		for j in cluster_centers:
 			if (j < i):
+				# print i,j
 				centroid_j = cluster_centers[j]
 				# print "centeroid j", centroid_j
 				midpt = (centroid_i + centroid_j) / 2.0
@@ -132,7 +133,11 @@ def Density_bw(data_matrix, cluster_data, sigma):
 				density_j = point_density(data_matrix, cluster_data, i, j, centroid_j, sigma)
 				density_ij = point_density(data_matrix, cluster_data, i, j, midpt, sigma)
 				# print density_i, density_j, density_ij
-				R_ij = density_ij / (max(density_i, density_j))
+				denom = (max(density_i, density_j))
+				if (denom == 0):
+					R_ij = R_ij
+				else:
+					R_ij = density_ij / denom
 
 				G += R_ij
 	return G
@@ -162,6 +167,7 @@ def SDbw(data_matrix, clusters):
  	# compute S and density limit.
 	S, sigma = density_limit(data_matrix, cluster_data)
 	G = Density_bw(data_matrix, cluster_data, sigma)
+	print sigma
 
 	return S + G
 
@@ -175,8 +181,8 @@ def SDbw(data_matrix, clusters):
 
 	
 
-# data_matrix = [[1,2],[2,4],[1,1], [3,4],[2,3]]
-# clusters = [1,0,1,2,2]
+# data_matrix = [[1,2,1],[2,4,3],[1,1,1], [3,4,1],[2,3,1],[1,2,3]]
+# clusters = [1,0,1,2,2,3]
 # print SDbw(data_matrix, clusters)
 
 
