@@ -9,3 +9,4 @@ requests
 scikit-learn[alldeps]
 scipy
 tqdm
+pandas

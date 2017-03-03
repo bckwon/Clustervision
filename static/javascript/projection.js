@@ -174,11 +174,11 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 	if(isNaN(argument)){
 		_self.circ
 		    .style("opacity", function(d,i){
-		      return SELECTED_CIRCLE_OPACITY;
+		      return DESELECTED_CIRCLE_OPACITY;
 		    }).style("stroke", function(d,i){
-		      return SELECTED_CIRCLE_STROKE_COLOR;
+		      return DESELECTED_CIRCLE_STROKE_COLOR;
 		    }).style("stroke-width", function(d,i){
-		      return SELECTED_CIRCLE_STROKE_WIDTH;
+		      return DESELECTED_CIRCLE_STROKE_WIDTH;
 		    });
 	}else{
 		_self.circ

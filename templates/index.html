@@ -5,15 +5,15 @@
 <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/bootstrap-theme.min.css')}}">
 <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cluster_view.css')}}">
 <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/d3-context-menu.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/nouislider.min.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/jquery-ui.min.css')}}">
 <link href="https://fonts.googleapis.com/css?family=Open+Sans|Ropa+Sans" rel="stylesheet">
-<style>
-			body {
-        font-family: 'Ropa Sans', sans-serif;
-      }
-</style>
+
 <script src="{{ url_for('static', filename='javascript/d3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/jquery-2.2.0.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/d3-context-menu.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/nouislider.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/jquery-ui.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/underscore-min.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/visual_parameters.js') }}"></script>
@@ -56,11 +56,13 @@
     var chosen_dr_method = "tsne";
     var session = {};
     var chosen_constraints = {same_cluster: [], diff_cluster: []};
+    var chosen_k = [2, 20];
     // chosen_constraints["same_cluster"] = [];
     // chosen_constraints["diff_cluster"] = [];
     var sort_asc = "{{url_for('static', filename='images/sort_asc.svg')}}";
     var sort_desc = "{{url_for('static', filename='images/sort_desc.svg')}}";
-		var remove_svg = "{{url_for('static', filename='images/remove.svg')}}";
+	var remove_svg = "{{url_for('static', filename='images/remove.svg')}}";
+
 
 
     $('.dataset_item').on("click", toggle_dataset);
@@ -130,7 +132,8 @@
                 "session_id": chosen_session_id,
                 "lambda": chosen_lambda,
                 "user_choice": chosen_user_choice,
-                "constraints": chosen_constraints
+                "constraints": chosen_constraints,
+                "k": chosen_k
             }, null, '\t');
         console.log('Fetching a new clustering with session_id:', chosen_session_id);
         console.log('chosen_constraints: ', chosen_constraints)
@@ -297,9 +300,60 @@
         var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
 
         addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
+
+        var btn_group_k = d3.select(".canvas_left").append("div").attr("class", "k_slider").style("position", "absolute").style("top", "25px").style("background", "white").style("width", "100%");
+
+        btn_group_k.append("div")
+                    .text("Specify K: ").style("position", "absolute").style("left", "0%").style("width", "25%");
+        btn_group_k.append("div").attr("id", "k_slider").style("position", "absolute").style("left", "25%").style("width", "50%").style("top", "4px");
+        btn_group_k.append("div").attr("id", "k_slider_title").style("position", "absolute").style("left", "80%").style("width", "25%").style("color", "blue").text(chosen_k[0] + " - " + chosen_k[1]);
+
         d3.select("span.lambda_input_slider_text#lambda_input_text")
         .style("color", "blue")
         .text(chosen_lambda);
+
+        $( "#k_slider" ).slider({
+            range: true,
+            min: 2,
+            max: 20,
+            step: 2,
+            values: chosen_k,
+            slide: function( event, ui ) {
+                // $( "#amount" ).val( "$" + ui.values[ 0 ] + " - $" + ui.values[ 1 ] );
+                d3.select('#k_slider_title').text(ui.values[0] + " - " + ui.values[1]);
+                chosen_k = ui.values;
+            }
+        });
+
+        // var slider = document.getElementById('k_slider');
+
+        // noUiSlider.create(slider, {
+        //     start: [2, 20],
+        //     connect: true,
+        //     snap: true,
+        //     range: {
+        //         'min': 2,
+        //         '10%': 4,
+        //         '20%': 6,
+        //         '30%': 8,
+        //         '40%': 10,
+        //         '50%': 12,
+        //         '60%': 14,
+        //         '70%': 16,
+        //         '80%': 18,
+        //         '90%': 20,
+        //         'max': 20
+        //     }
+        // });
+
+        // slider.noUiSlider.on('update', function( value ){
+        //     // console.log(value);
+        //     var array = [];
+        //     value.forEach(function(d,i){
+        //         array.push(parseInt(d));
+        //     })
+        //     d3.select('#k_slider_title').text(array.join(" - "));
+        // });
 
         var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
                                     .attr("value", chosen_lambda)

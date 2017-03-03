@@ -19,7 +19,7 @@ import sklearn.datasets
 import sklearn.manifold
 import sklearn.metrics
 import sklearn.preprocessing
-
+import collections
 from flask import Flask, request, render_template
 from multiprocessing import Pool
 from src import cluster, config, constraints, permute_clustering, superpoints
@@ -41,7 +41,7 @@ def new_session():
                'L': config.L_INITIAL}
     cluster.save_session(session_id, session)
 
-    param_vec = cluster.compute_all_clusterings(dataset_name)
+    param_vec = cluster.compute_all_clusterings(dataset_name, None)
 
     session = cluster.load_session(session_id)
     session['param_vec'] = param_vec
@@ -60,10 +60,12 @@ def get_clustering():
     # with env.begin(write=True) as txn:
     session_id = int(request.json['session_id'])
     user_choice = request.json['user_choice']
+    chosen_k = request.json['k']
+    print(chosen_k)
     session = cluster.load_session(session_id)
 
     param_vec = session['param_vec']
-
+    dataset_name = session['dataset']
     # If L is given in the request, use that value.
     # Otherwise, use the value stored in the session
     L = float(request.json['lambda'])
@@ -75,6 +77,17 @@ def get_clustering():
     else:
         print 'ERROR: no choices'
         prev_choices = []
+
+    compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
+    if compare(chosen_k, [2, 20]):
+        param_vec = param_vec
+    else:
+        param_vec = cluster.compute_all_clusterings(dataset_name, chosen_k)
+        # session['param_vec'] = param_vec
+        # cluster.save_session(session_id, session)
+        # session = cluster.load_session(session_id)
+
+    ### Filter clustering results with chosen_k
 
     # Step 1: Find the query
     query_params = None

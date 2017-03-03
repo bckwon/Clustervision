@@ -28,11 +28,18 @@ import pandas as pd
 from tqdm import tqdm
 from multiprocessing import Pool
 
-def compute_all_clusterings(dataset_name):
+def compute_all_clusterings(dataset_name, k_range):
     param_vec = []
+    if k_range is None:
+        k_range = [2, 20]
 
-    for n_clusters in [2, 3, 5, 8, 13]: # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+    cluster_range = [2, 3, 5, 8, 13] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+
+    for n_clusters in cluster_range: 
         # KMeans
+        if (n_clusters < k_range[0]) or (n_clusters > k_range[1]):
+            continue
+
         params = {
             'alg_name': 'KMeans',
             'n_clusters': n_clusters,
