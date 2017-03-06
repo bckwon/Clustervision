@@ -38,7 +38,10 @@
 	</div>
 	<div class="canvas_middle">
         <div class = "canvas_middle_top"></div>
-        <div class = "canvas_middle_bottom"></div>
+        <div class = "canvas_middle_bottom">
+<!--             <div class = "canvas_middle_bottom_left"></div>
+            <div class = "canvas_middle_bottom_right"></div> -->
+        </div>
 	</div>
 	<div class="canvas_right">
 	</div>
@@ -80,8 +83,6 @@
     function update_same_diff_clusters(same_diff_arrays){
         chosen_constraints["same_cluster"] = [same_diff_arrays[0]];
         chosen_constraints["diff_cluster"] = [same_diff_arrays[1]];
-        console.log("Updated!");
-        console.log(chosen_constraints);
     }
 
     function toggle_dataset(element){
@@ -121,7 +122,6 @@
             success: function(data) {
                 var parsed_data = JSON.parse(data);
                 chosen_session_id = parsed_data;
-                // console.log('Sessiod ID for dataset', chosen_dataset, 'is', chosen_session_id);
                 fetch_clustering();
             }
         });
@@ -154,7 +154,6 @@
 
                     for (var i = 0; i < session['clustering'].length; i++) {
                         clustering = session['clustering'][i];
-                        // console.log('Dataset of returned clustering:', clustering['clustering_parameters']['dataset']);
                     }
                     fetch_dataset();
                 }else{
@@ -221,8 +220,8 @@
             window.setTimeout('load_projection();', 100);
         } else {
             var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2.5);
-            console.log(session);
-            var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc, remove_svg)
+            setup_checkbox_list();
+            var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc, remove_svg);
         }
         initialize_values();
     }
@@ -295,6 +294,55 @@
         }
     }
 
+    function setup_checkbox_list() {
+        d3.select(".canvas_middle_bottom").selectAll("*").remove();
+        var btn_group = d3.select(".canvas_middle_bottom").append("div").attr("class", "btn-group").style("position", "fixed").style("background", "white");
+
+        var data_desc_keys = d3.keys(session["data_description"][0]).sort();
+
+        btn_group.append("button").attr("data-toggle", "dropdown").attr("class", "btn btn-default dropdown-toggle").text("Features to Select")
+            .append("span").attr("class", "caret");
+
+
+
+        var ul = btn_group.append("ul").attr("class", "dropdown-menu scrollable-menu").attr("role", "menu");
+        var li_all = ul.append("li").style("border-bottom", ".5px solid black");
+
+        li_all.append("input").attr("type", "checkbox").attr("class", "check_all");
+        li_all.append("label").text("Check/Uncheck All").style("padding-left", "10px");
+
+        $('input.check_all').prop("checked", true);
+
+        $('input.check_all').on("click", function(elm){
+            var array = $('input.check_all:checked').map(function(){
+                return $(this).val();
+            })
+            if(array.length > 0){
+                $('input.feature_checkbox').prop("checked", true);
+            }else{
+                $('input.feature_checkbox').prop("checked", false);
+            }
+            var array = $('input.feature_checkbox:checked').map(function(){
+                return $(this).val();
+            })
+            _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
+        })
+
+        var li  =  ul.selectAll("li.feature").data(data_desc_keys).enter().append("li").attr("class", "feature");
+
+        li.append("input").attr("type", "checkbox").attr("class", "feature_checkbox").attr("id", function(d){return "id_"+d;}).attr("value", function(d){return d;});
+        li.append("label").attr("for", function(d){return "id_"+d;}).attr("name", "name").attr("value", function(d){return d;}).text(function(d){return d;}).style("padding-left", "10px");
+
+        $('input.feature_checkbox').attr("checked", "checked");
+
+        $('input.feature_checkbox').on("click", function(elm){
+            var array = $('input.feature_checkbox:checked').map(function(){
+                return $(this).val();
+            })
+            _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
+        })
+    }
+
     function setup_slider(){
 
         var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
@@ -325,36 +373,6 @@
             }
         });
 
-        // var slider = document.getElementById('k_slider');
-
-        // noUiSlider.create(slider, {
-        //     start: [2, 20],
-        //     connect: true,
-        //     snap: true,
-        //     range: {
-        //         'min': 2,
-        //         '10%': 4,
-        //         '20%': 6,
-        //         '30%': 8,
-        //         '40%': 10,
-        //         '50%': 12,
-        //         '60%': 14,
-        //         '70%': 16,
-        //         '80%': 18,
-        //         '90%': 20,
-        //         'max': 20
-        //     }
-        // });
-
-        // slider.noUiSlider.on('update', function( value ){
-        //     // console.log(value);
-        //     var array = [];
-        //     value.forEach(function(d,i){
-        //         array.push(parseInt(d));
-        //     })
-        //     d3.select('#k_slider_title').text(array.join(" - "));
-        // });
-
         var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
                                     .attr("value", chosen_lambda)
                                     .attr("min", 0)
@@ -364,7 +382,6 @@
                                         chosen_lambda = parseFloat(d3.select(this).property("value"));
                                         d3.select("span.lambda_input_slider_text#lambda_input_text")
                                         .text(chosen_lambda);
-                                        console.log(chosen_lambda);
                                     });
 
         $('#lambda_input').val(chosen_lambda);

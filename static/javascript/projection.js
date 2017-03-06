@@ -284,9 +284,6 @@ Projection.prototype.draw = function(){
         {
             title: 'IN a same cluster',
             action: function(elm, d, i) {
-            	console.log(elm);
-            	console.log(d);
-            	console.log(i);
             	if(_self.together.indexOf(i)<0){
             		_self.together.push(i);
             	}
@@ -298,9 +295,6 @@ Projection.prototype.draw = function(){
         {
             title: 'NOT in a same cluster',
             action: function(elm, d, i) {
-            	console.log(elm);
-            	console.log(d);
-            	console.log(i);
             	if(_self.separate.indexOf(i)<0){
             		_self.separate.push(i);
             	}

@@ -8,9 +8,10 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   var highlight_line_color = highlight.highlight_line_color || "red";
   var stroke_width = highlight.stroke_width || 1;
 
-  d3.select(div_name).selectAll("*").remove();
+  d3.select(div_name).selectAll("svg").remove();
 
   _self.session = data;
+  _self.highlight_axis = highlight_axis;
 
   _self.cls_index = 0;
   _self.clustering = _self.session["clustering"];
@@ -35,7 +36,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   }
   var original_data = datum;
 
-  var m = [30, 10, 10, 30],
+  var m = [60, 10, 10, 30],
       w = screen_width - m[1] - m[3],
       h = screen_height - m[0] - m[2];
 
@@ -43,12 +44,15 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
 
   var x = d3.scale.ordinal().rangePoints([0, w], 1),
       y = {},
-      y_reverse={},
       dragging = {};
 
+  _self.y_reverse = {};
   _self.dragging = dragging;
   _self.x = x;
   _self.y = y;
+  _self.w = w;
+  _self.h = h;
+  _self.m = m;
 
   var line = d3.svg.line(),
       axis = d3.svg.axis().tickFormat(d3.format("d")).orient("left"),
@@ -57,67 +61,192 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       tableground;
 
   _self.line = line;
+  _self.axis = axis;
 
   var axis_right = d3.svg.axis().orient("right");
-  var prev_extents = {};
+  _self.prev_extents = {};
 
   var svg = d3.select(div_name).append("svg")
-      .attr("width", w + m[1] + m[3])
-      .attr("height", h + m[0] + m[2])
+      .attr("width", _self.w + _self.m[1] + _self.m[3])
+      .attr("height", _self.h + _self.m[0] + _self.m[2])
     .append("svg:g")
-      .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+      .attr("transform", "translate(" + _self.m[3] + "," + _self.m[0] + ")");
 
   _self.svg = svg;
   _self.svg.style("display", "none");
 
   var cell_height = 14;
   var cell_width = 60;
-  var tab_padding = (w-cell_width*5)/2;
+  var tab_padding = (_self.w-cell_width*5)/2;
 
-  _self.sortarray = [];
-  var temparray = [];
+  _self.temparray = [];
   var first_dimensions = [];
-  var drag_start = [];
-  var drag_end = [];
+  _self.drag_start = [];
+  _self.drag_end = [];
 
   // Extract the list of dimensions and create a scale for each.
   var cars = original_data;
   _self.x.domain(dimensions = d3.keys(cars[0]).sort().filter(function(d) {
     return d != "Player Name" && d != "Team" && d != "Pos" && d!="Vehicle Name" && d!="Country" && d!="University Name" && d!="Subreddit" && d!="equals" && (_self.y[d] = d3.scale.linear()
         .domain(d3.extent(cars, function(p) { return +p[d]; }))
-        .range([h, 0])) && (y_reverse[d] = d3.scale.linear()
+        .range([h, 0])) && (_self.y_reverse[d] = d3.scale.linear()
         .domain([h, 0])
         .range(d3.extent(cars, function(p) { return +p[d]; }))
         );
   }));
+
   dimensions = dimensions.sort();
   first_dimensions = dimensions.slice().sort();
   original_dimensions = dimensions.slice().sort();
   _self.dimensions = dimensions;
 
-  for (var i = _self.dimensions.length - 1; i >= 0; i--) {
-    _self.sortarray.push(0);
-    temparray.push(0);
-  };
-
-  // new listener
+  // Quality Chart listener
   _self.quality_chart_listener = new _s.Listener("quality_chart_listener_for_parallel_coordinates");
   _self.quality_chart_listener.subscribe($.proxy(_self.qualityChartHandler, _self));
 
-  // new listener
+  // Projection listener
   _self.projection_listener = new _s.Listener("projection_listener_for_parallel_coordinates");
   _self.projection_listener.subscribe($.proxy(_self.projectionHandler, _self));
 
-  // new listener
+  // Projection Cluster listener
   _self.projection_cluster_listener = new _s.Listener("projection_cluster_listener_for_parallel_coordinates");
   _self.projection_cluster_listener.subscribe($.proxy(_self.projectionClusterSelectionHandler, _self));
 
-  var foreground_g = svg.append("svg:g")
+  // Checkbox listener
+  _self.checkbox_listener = new _s.Listener("checkbox_listener_for_parallel_coordinates");
+  _self.checkbox_listener.subscribe($.proxy(_self.checkboxHandler, _self));
+
+  _self.redraw();
+}
+
+ParallelCoordinates.prototype.highlight = function(argument){
+  var _self = this;
+  var id = [];
+  if(argument.length > 0){
+    var index = argument[0];
+    _self.foreground
+    .style("stroke", function(d, i){
+      if(i==index){
+        id.push(i);
+        return "red";
+      }else{
+        return _self.color(_self.labels[i]);
+      }
+    }).style("stroke-width", function(d,i){
+      if(i==index){
+        return 2;
+      }else{
+        return 1;
+      }
+    });
+
+    var g = $('g.foreground');
+    for (var i = id.length - 1; i >= 0; i--) {
+      g.append($("#line-" + id[i])[0]);
+    };
+  }else{
+    _self.foreground
+          .style("visibility", "hidden")
+          .style("stroke-width", 1)
+          .style("opacity", 1)
+          .style("stroke", function(d,i){
+            return _self.color(_self.labels[i]);
+          });
+    _self.area_path
+        .style("opacity", function(d,i){
+          return SELECTED_PATH_OPACITY;
+        });
+    _self.line_path
+        .style("opacity", function(d,i){
+          return SELECTED_PATH_OPACITY;
+        });
+  }
+}
+
+ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
+  var _self = this;
+  if(isNaN(argument)){
+    _self.foreground
+        .style("visibility", "hidden")
+        .style("opacity", function(d,i){
+          return SELECTED_PATH_OPACITY;
+        });
+    _self.area_path
+        .style("opacity", function(d,i){
+          return SELECTED_PATH_OPACITY;
+        });
+    _self.line_path
+        .style("opacity", function(d,i){
+          return SELECTED_PATH_OPACITY;
+        });
+  }else{
+    _self.foreground
+        .style("visibility", function(d,i){
+          if(argument == _self.labels[i]){
+            return "visible";
+          }else{
+            return "hidden";
+          }
+        })
+        .style("opacity", function(d,i){
+          if(argument == _self.labels[i]){
+            return SELECTED_PATH_OPACITY;
+          }else{
+            return DESELECTED_PATH_OPACITY;
+          }
+        });
+    _self.area_path
+        .style("opacity", function(d,i){
+          if(argument == i){
+            return SELECTED_PATH_OPACITY;
+          }else{
+            return DESELECTED_PATH_OPACITY;
+          }
+        });
+    _self.line_path
+        .style("opacity", function(d,i){
+          if(argument == i){
+            return SELECTED_PATH_OPACITY;
+          }else{
+            return DESELECTED_PATH_OPACITY;
+          }
+        });
+  }
+};
+
+ParallelCoordinates.prototype.redraw = function() {
+  // body...
+  var _self = this;
+  _self.svg.selectAll("*").remove();
+  var datum = _self.session["data_description"];
+  _self.dimensions = _.intersection(_self.dimensions, Object.keys(datum[0]));
+  var first_dimensions = _self.dimensions.slice().sort();
+  var original_dimensions = _self.dimensions.slice().sort();
+
+  _self.x.domain(_self.dimensions = _self.dimensions.sort().filter(function(d) {
+    return d != "Player Name" && d != "Team" && d != "Pos" && d!="Vehicle Name" && d!="Country" && d!="University Name" && d!="Subreddit" && d!="equals" && (_self.y[d] = d3.scale.linear()
+        .domain(d3.extent(datum, function(p) { return +p[d]; }))
+        .range([_self.h, 0])) && (_self.y_reverse[d] = d3.scale.linear()
+        .domain([_self.h, 0])
+        .range(d3.extent(datum, function(p) { return +p[d]; }))
+        );
+  }));
+
+  _self.sortarray = [];
+  _self.temparray = [];
+  for (var i = _self.dimensions.length - 1; i >= 0; i--) {
+    _self.sortarray.push(0);
+    _self.temparray.push(0);
+  };
+
+
+
+  var foreground_g = _self.svg.append("svg:g")
       .attr("class", "foreground");
 
   _self.bg_rect = foreground_g.append("rect")
-            .attr("width", w)
-            .attr("height", h)
+            .attr("width", _self.w)
+            .attr("height", _self.h)
             .style("opacity", 0)
             .on("click", function(){
               _self.highlight_by_cluster();
@@ -133,7 +262,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         return "line-" + i;
       })
       .attr("class", "pc_path")
-      .attr("stroke-width", stroke_width)
+      .attr("stroke-width", _self.stroke_width)
       .style("stroke", function(d, i){
           return _self.color(_self.labels[i]);
       })
@@ -166,8 +295,8 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   });
 
   // Add a group element for each dimension.
-  var g = svg.selectAll(".dimension")
-      .data(dimensions)
+  var g = _self.svg.selectAll(".dimension")
+      .data(_self.dimensions)
     .enter().append("svg:g")
       .attr("class", "dimension")
       .attr("transform", function(d) { return "translate(" + _self.x(d) + ")"; })
@@ -175,20 +304,20 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         .on("dragstart", function(d) {
           if(on_label){
             _self.dragging[d] = this.__origin__ = _self.x(d);
-            drag_start = _self.dimensions.slice();
+            _self.drag_start = _self.dimensions.slice();
           }
         })
         .on("drag", function(d) {
           if(typeof this.__origin__ != 'undefined' ){
-            _self.dragging[d] = Math.min(w, Math.max(0, this.__origin__ += d3.event.dx));
+            _self.dragging[d] = Math.min(_self.w, Math.max(0, this.__origin__ += d3.event.dx));
             foreground.attr("d", path);
             _self.area_path.attr("d", function(d){return _self.compute_area_path(d);});
             _self.line_path.attr("d", function(d){return _self.compute_line_path(d);});
             _self.dimensions.sort(function(a, b) { return _self.position(a) - _self.position(b); });
             for (var i = 0; i < original_dimensions.length; i++) {
-              temparray[_self.dimensions.indexOf(original_dimensions[i])] = _self.sortarray[original_dimensions.indexOf(original_dimensions[i])];
+              _self.temparray[_self.dimensions.indexOf(original_dimensions[i])] = _self.sortarray[original_dimensions.indexOf(original_dimensions[i])];
             };
-            _self.sortarray = temparray.slice();
+            _self.sortarray = _self.temparray.slice();
             original_dimensions = _self.dimensions.slice();
             _self.x.domain(_self.dimensions);
             g.attr("transform", function(d) { return "translate(" + _self.position(d) + ")"; })}
@@ -203,8 +332,8 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
             transition(_self.area_path).attr("d", function(d){return _self.compute_area_path(d);});
             transition(_self.line_path).attr("d", function(d){return _self.compute_line_path(d);});
               }
-            drag_end = _self.dimensions.slice();
-            if(drag_start.equals(drag_end) == false && drag_start.length == drag_end.length){
+            _self.drag_end = _self.dimensions.slice();
+            if(_self.drag_start.equals(_self.drag_end) == false && _self.drag_start.length == _self.drag_end.length){
             }
             d3.selectAll(".line_label").attr("transform", function(d){
               return "translate(" + (position(_self.dimensions[_self.dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[_self.dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
@@ -214,8 +343,8 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   // Add an axis and title.
   var g_axis = g.append("svg:g")
       .attr("class", "axis")
-      .each(function(d, i) { d3.select(this).attr("id", function(){return "dim-" +i;}).call(axis.scale(_self.y[d]));
-        if(d == highlight_axis){
+      .each(function(d, i) { d3.select(this).attr("id", function(){return "dim-" +i;}).call(_self.axis.scale(_self.y[d]));
+        if(d == _self.highlight_axis){
           d3.select(this).style("fill", "red");
         }
     });
@@ -254,7 +383,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
             _self.sortarray[_self.dimensions.indexOf(d)] = 0;
           }
         }).attr("xlink:href", function(d,i){
-          if(_self.sortarray[dimensions.indexOf(d)] == 0){
+          if(_self.sortarray[_self.dimensions.indexOf(d)] == 0){
             return sort_asc;
           }else{
             return sort_desc;
@@ -282,30 +411,6 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
       .attr("width", 16);
 
   d3.selectAll("rect.extent").attr("id", function(d,i){return "extent-" + i;})
-
-
-  // g_axis.append("svg:image")
-  //   .attr("x", function(d, i){
-  //     var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
-  //     return x;
-  //   })
-  //   .attr("y", -20).attr("width", 18).attr("height", 15)
-  //   .attr("class", "sort").attr("id", function(d,i){return i;}).text("Sort!").on("click", function(d, i){
-  //     var prev_sort = _self.sortarray.slice();
-  //     if(_self.sortarray[_self.dimensions.indexOf(d)]==0){
-  //       flip_axis_ascending(d, 100, 250);
-  //       _self.sortarray[_self.dimensions.indexOf(d)] = 1;
-  //     }else{
-  //       flip_axis_descending(d, 100, 250);
-  //       _self.sortarray[_self.dimensions.indexOf(d)] = 0;
-  //     }
-  //   }).attr("xlink:href", function(d,i){
-  //     if(_self.sortarray[dimensions.indexOf(d)] == 0){
-  //       return sort_asc;
-  //     }else{
-  //       return sort_desc;
-  //     }
-  //   }).style("cursor", "pointer");
 
   // Remove Filter Button
     g_axis.append("svg:image")
@@ -338,26 +443,26 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
 
     function flip_axis_ascending(dim, delay, duration){
 
-      for (var i = 0; i < dimensions.length; i++) {
-        prev_extents[_self.dimensions[i]] = _self.y[_self.dimensions[i]].brush.extent();
+      for (var i = 0; i < _self.dimensions.length; i++) {
+        _self.prev_extents[_self.dimensions[i]] = _self.y[_self.dimensions[i]].brush.extent();
       };
 
       _self.y[dim] = d3.scale.linear()
-        .domain(d3.extent(cars, function(p) { return +p[dim]; }))
-        .range([0, h]);
+        .domain(d3.extent(datum, function(p) { return +p[dim]; }))
+        .range([0, _self.h]);
 
-      y_reverse[dim] = d3.scale.linear()
-        .domain([h, 0])
+      _self.y_reverse[dim] = d3.scale.linear()
+        .domain([_self.h, 0])
         .range(d3.extent(datum, function(p) { return +p[dim]; }));
 
-        _self.sortarray[dimensions.indexOf(dim)] = 1;
+        _self.sortarray[_self.dimensions.indexOf(dim)] = 1;
         g_axis.each(function(d, i) {
-          var temp_id = dimensions.indexOf(d) + 1;
-          d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(axis.scale(_self.y[d])); });
+          var temp_id = _self.dimensions.indexOf(d) + 1;
+          d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(_self.axis.scale(_self.y[d])); });
 
       d3.selectAll(".sort")
         .attr("xlink:href", function(d,i){
-          if(_self.sortarray[dimensions.indexOf(d)] == 0){
+          if(_self.sortarray[_self.dimensions.indexOf(d)] == 0){
             return sort_asc;
           }else{
             return sort_desc;
@@ -370,12 +475,12 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         .attr("x", -8)
         .attr("width", 16);
 
-      for (var i = 0; i < dimensions.length; i++) {
-        _self.y[_self.dimensions[i]].brush.extent(prev_extents[_self.dimensions[i]]);
+      for (var i = 0; i < _self.dimensions.length; i++) {
+        _self.y[_self.dimensions[i]].brush.extent(_self.prev_extents[_self.dimensions[i]]);
         d3.select("g.brush").call(brush);
         var num = (_self.sortarray[i]==0)? 1 : 0;
         var temp_id_2 = first_dimensions.indexOf(_self.dimensions[i]);
-        d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][0])));
+        d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][0])));
       };
 
       transition(foreground).delay(delay).duration(duration)
@@ -395,22 +500,22 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
     function flip_axis_descending(dim, delay, duration){
 
       for (var i = 0; i < _self.dimensions.length; i++) {
-        prev_extents[_self.dimensions[i]] = _self.y[_self.dimensions[i]].brush.extent();
+        _self.prev_extents[_self.dimensions[i]] = _self.y[_self.dimensions[i]].brush.extent();
       };
 
       _self.y[dim] = d3.scale.linear()
-        .domain(d3.extent(cars, function(p) { return +p[dim]; }))
-        .range([h, 0]);
+        .domain(d3.extent(datum, function(p) { return +p[dim]; }))
+        .range([_self.h, 0]);
 
-      y_reverse[dim] = d3.scale.linear()
-        .domain([h, 0])
+      _self.y_reverse[dim] = d3.scale.linear()
+        .domain([_self.h, 0])
         .range(d3.extent(datum, function(p) { return +p[dim]; }));
 
         _self.sortarray[_self.dimensions.indexOf(dim)] = 0;
 
         g_axis.each(function(d, i) {
           var temp_id = _self.dimensions.indexOf(d) + 1;
-          d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(axis.scale(_self.y[d])); });
+          d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(_self.axis.scale(_self.y[d])); });
 
         g_axis.selectAll(".sort")
             .attr("xlink:href", function(d,i){
@@ -428,11 +533,11 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
         .attr("width", 16);
 
       for (var i = 0; i < _self.dimensions.length; i++) {
-        _self.y[_self.dimensions[i]].brush.extent(prev_extents[_self.dimensions[i]]);
+        _self.y[_self.dimensions[i]].brush.extent(_self.prev_extents[_self.dimensions[i]]);
         d3.select("g.brush").call(brush);
         var num = (_self.sortarray[i]==0)? 1 : 0;
         var temp_id_2 = first_dimensions.indexOf(_self.dimensions[i]);
-        d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](prev_extents[_self.dimensions[i]][0])));
+        d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][0])));
       };
 
       transition(foreground).delay(delay).duration(duration)
@@ -465,7 +570,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
 
   // Handles a brush event, toggling the display of foreground lines.
   function brush() {
-    var actives = dimensions.filter(function(p) { return !_self.y[p].brush.empty(); }),
+    var actives = _self.dimensions.filter(function(p) { return !_self.y[p].brush.empty(); }),
         extents = actives.map(function(p) { return _self.y[p].brush.extent(); });
 
     if(actives.length==0 && extents.length == 0){
@@ -528,106 +633,15 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   }
   _self.position = position;
   _self.path = path;
-  _self.dimensions = dimensions;
-  _self.svg = svg;
-  _self.stroke_width = stroke_width;
   _self.mean_and_95();
-}
+};
 
-ParallelCoordinates.prototype.highlight = function(argument){
+
+ParallelCoordinates.prototype.checkboxHandler = function(argument) {
   var _self = this;
-  var id = [];
-  if(argument.length > 0){
-    var index = argument[0];
-    _self.foreground
-    .style("stroke", function(d, i){
-      if(i==index){
-        id.push(i);
-        return "red";
-      }else{
-        return _self.color(_self.labels[i]);
-      }
-    }).style("stroke-width", function(d,i){
-      if(i==index){
-        return 2;
-      }else{
-        return 1;
-      }
-    });
-
-    var g = $('g.foreground');
-    for (var i = id.length - 1; i >= 0; i--) {
-      g.append($("#line-" + id[i])[0]);
-    };
-  }else{
-    _self.foreground
-          .style("visibility", "hidden")
-          .style("stroke-width", 1)
-          .style("opacity", 1)
-          .style("stroke", function(d,i){
-            return _self.color(_self.labels[i]);
-          });
-    _self.area_path
-        .style("opacity", function(d,i){
-          return SELECTED_PATH_OPACITY;
-        });
-    _self.line_path
-        .style("opacity", function(d,i){
-          return SELECTED_PATH_OPACITY;
-        });
-  }
-}
-
-ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
-  var _self = this;
-  if(isNaN(argument)){
-    console.log("here!");
-    _self.foreground
-        .style("visibility", "hidden")
-        .style("opacity", function(d,i){
-          return SELECTED_PATH_OPACITY;
-        });
-    _self.area_path
-        .style("opacity", function(d,i){
-          return SELECTED_PATH_OPACITY;
-        });
-    _self.line_path
-        .style("opacity", function(d,i){
-          return SELECTED_PATH_OPACITY;
-        });
-  }else{
-    _self.foreground
-        .style("visibility", function(d,i){
-          if(argument == _self.labels[i]){
-            return "visible";
-          }else{
-            return "hidden";
-          }
-        })
-        .style("opacity", function(d,i){
-          if(argument == _self.labels[i]){
-            return SELECTED_PATH_OPACITY;
-          }else{
-            return DESELECTED_PATH_OPACITY;
-          }
-        });
-    _self.area_path
-        .style("opacity", function(d,i){
-          if(argument == i){
-            return SELECTED_PATH_OPACITY;
-          }else{
-            return DESELECTED_PATH_OPACITY;
-          }
-        });
-    _self.line_path
-        .style("opacity", function(d,i){
-          if(argument == i){
-            return SELECTED_PATH_OPACITY;
-          }else{
-            return DESELECTED_PATH_OPACITY;
-          }
-        });
-  }
+  // redraw with new dimension
+  _self.dimensions = argument;
+  _self.redraw();
 };
 
 ParallelCoordinates.prototype.projectionClusterSelectionHandler = function(argument) {
