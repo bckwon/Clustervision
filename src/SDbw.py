@@ -135,7 +135,7 @@ def Density_bw(data_matrix, cluster_data, sigma):
 				# print density_i, density_j, density_ij
 				denom = (max(density_i, density_j))
 				if (denom == 0):
-					R_ij = R_ij
+					R_ij = 0
 				else:
 					R_ij = density_ij / denom
 
