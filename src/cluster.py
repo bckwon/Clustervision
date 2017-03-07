@@ -33,9 +33,9 @@ def compute_all_clusterings(dataset_name, k_range):
     if k_range is None:
         k_range = [2, 20]
 
-    cluster_range = [2, 3, 5, 8, 13] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+    cluster_range = [2,3,4,5,6,7,8,9,10,13,20] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
 
-    for n_clusters in cluster_range: 
+    for n_clusters in cluster_range:
         # KMeans
         if (n_clusters < k_range[0]) or (n_clusters > k_range[1]):
             continue
@@ -295,7 +295,7 @@ def dataset_from_name(dataset_name, include_description=False):
         return (data, descriptions)
     elif dataset_name == 'sutter':
         # data = np.load('data/snow_data/snow.npy').astype(float)
-        pdata = pd.read_csv('data/sutter_data/sutter022817.csv')
+        pdata = pd.read_csv('data/sutter_data/sutter3-7-2017-all.csv')
         data = pdata.as_matrix()
         # std = data.std(axis=0)
         # data = data[:, std != 0]
