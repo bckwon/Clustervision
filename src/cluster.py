@@ -54,10 +54,17 @@ def compute_all_clusterings(dataset_name, k_range):
         }
         param_vec.append(params)
 
-    # DBSCAN
-    # params = {
-    #     'alg_name': 'dbscan',
-    # }
+        # DBSCAN
+        # params = {
+        #     'alg_name': 'dbscan',
+        # }
+
+        params = {
+            'alg_name': 'AgglomerativeClustering',
+            'n_clusters': n_clusters,
+        }
+
+        param_vec.append(params)
 
     param_vec.append(params)
     new_param_vec = []
@@ -166,6 +173,8 @@ def model_from_params(params):
                                                   affinity=params['affinity'])
     elif alg_name == 'dbscan':
         return sklearn.cluster.DBSCAN(min_samples=1)
+    elif alg_name == 'AgglomerativeClustering':
+        return sklearn.cluster.AgglomerativeClustering(n_clusters=params['n_clusters'])
     else:
         assert False, 'Unknown clustering algorithn name'
 
