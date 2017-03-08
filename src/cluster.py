@@ -312,6 +312,29 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions.append(d)
 
         return (data, descriptions)
+    elif dataset_name == 'bobross':
+        pdata = pd.read_csv('data/bobross_data/elements-by-episode.csv')
+
+        pdata.drop(pdata.columns[[0,1]], axis=1, inplace=True)
+
+        pdata = pdata.loc[:, (pdata.sum() >= 5)] #remove columns that have been tagged less than 5 times
+
+        # convert to numpy matrix
+        matrix = pdata.as_matrix()
+
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in matrix:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        # normalize according to stddev
+        # data = whiten(matrix)
+        data = matrix
+        return (data, descriptions)
     else:
         assert False, 'Unknown dataset name'
 
