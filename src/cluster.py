@@ -54,19 +54,28 @@ def compute_all_clusterings(dataset_name, k_range):
         }
         param_vec.append(params)
 
-    # DBSCAN
-    # params = {
-    #     'alg_name': 'dbscan',
-    # }
+        # DBSCAN
+        # params = {
+        #     'alg_name': 'dbscan',
+        # }
+
+        params = {
+            'alg_name': 'AgglomerativeClustering',
+            'n_clusters': n_clusters,
+        }
+
+        param_vec.append(params)
+
     param_vec.append(params)
     new_param_vec = []
     for param in param_vec:
         param['dataset'] = dataset_name
         param['random_seed'] = None
-        for random_seed in range(config.NUM_RANDOM_WEIGHTINGS):
-            new_param = {key: value for (key, value) in param.items()}
-            new_param['random_seed'] = random_seed
-            new_param_vec.append(new_param)
+        if config.RANDOM_PERTUBATIONS:
+            for random_seed in range(config.NUM_RANDOM_WEIGHTINGS):
+                new_param = {key: value for (key, value) in param.items()}
+                new_param['random_seed'] = random_seed
+                new_param_vec.append(new_param)
     param_vec = param_vec + new_param_vec
 
     # for param in param_vec:
@@ -77,7 +86,7 @@ def compute_all_clusterings(dataset_name, k_range):
     #     print 'Duration: %.3f' % (end - start)
     #     print
 
-    if config.PARELLEL:
+    if config.PARALLEL:
         pool = Pool()
         pool.map(compute_clustering, param_vec)
     else:
@@ -164,6 +173,8 @@ def model_from_params(params):
                                                   affinity=params['affinity'])
     elif alg_name == 'dbscan':
         return sklearn.cluster.DBSCAN(min_samples=1)
+    elif alg_name == 'AgglomerativeClustering':
+        return sklearn.cluster.AgglomerativeClustering(n_clusters=params['n_clusters'])
     else:
         assert False, 'Unknown clustering algorithn name'
 

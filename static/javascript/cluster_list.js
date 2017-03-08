@@ -13,7 +13,7 @@ function ClusterList(canvas, data, screen_width, screen_height){
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
 	_self.radius = _self.rect_size/2;
 	_self.default = 0;
-	
+
 	_self.display_data = _self.data[0]["sorted_labels"].map(function(d){return {"size": d.length, "array": d};});
 	_self.color = d3.scale.ordinal()
     .range(COLOR_RANGE.slice()).domain(_self.data[0]["sorted_labels"].map(function(d,i){return i;}));
@@ -112,7 +112,7 @@ ClusterList.prototype.projectionDataPointHandler = function(argument) {
 
 ClusterList.prototype.projectionClusterHandler = function(argument) {
 	var _self = this;
-	
+
 	var data_item_index = argument[0];
 	var clustering_index = argument[1];
 	var cluster_num = argument[2];
@@ -143,7 +143,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 	// 				.style("fill", "none")
 	// 				.style("stroke", "black")
 	// 				.style("stroke-width", "2.5px")
-	
+
 	_self.cluster_title = _self.cluster_space.append("text")
 					.attr("dy", _self.rect_size*2)
 					.text("Cluster " + cluster_num)
@@ -172,7 +172,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.attr("class", "cluster_measures")
 						.style("fill", "blue")
 						.text(function(d){return d["name"]+ ": " + d["value"];});
-	
+
 	// Inliner + Outlier
 	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
 	var top_5 = sorted_labels.slice(0,5);
@@ -187,7 +187,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 							var x = i*_self.width/2;
 							var y = _self.rect_size*(4+cluster_measures.length);
 							return "translate("+x+","+y+")";
-						});					
+						});
 
 	_self.sample_item_text = _self.sample_items_space.selectAll("text")
 						.data(function(d){return d;}).enter()
@@ -246,7 +246,7 @@ ClusterList.prototype.draw_data_point_in_html = function(data_item_index, cluste
 	// 				.style("fill", "none")
 	// 				.style("stroke", "black")
 	// 				.style("stroke-width", "2.5px")
-	
+
 	_self.cluster_title = _self.data_point_space.append("div")
 					.text("Data Point " + data_item_index)
 					.style("font-size", "200%");
@@ -254,7 +254,7 @@ ClusterList.prototype.draw_data_point_in_html = function(data_item_index, cluste
 	var data_point_measures = data_point_keys.map(function(d){return {"name": d, "value": data_point[d]};});
 
 	_self.data_point_measures = _self.data_point_space.selectAll("div.data_point_measures")
-						.data(data_point_measures).enter()
+						.data(data_point_measures.sort(function(a,b) { return b.value-a.value})).enter()
 					.append("div")
 						.attr("class", "data_point_measures")
 						.style("color", "blue")
@@ -278,7 +278,7 @@ ClusterList.prototype.draw_data_point = function(data_item_index, clustering_ind
 					.style("fill", "none")
 					.style("stroke", "black")
 					.style("stroke-width", "2.5px")
-	
+
 	_self.cluster_title = _self.data_point_space.append("text")
 					.attr("dy", _self.rect_size*2)
 					.text("Data Point " + data_item_index)
@@ -310,7 +310,7 @@ ClusterList.prototype.draw = function() {
 			.append("g")
 				.attr("transform", "translate("+_self.margin+","+_self.margin+")");
 
-	
+
 	_self.cluster_panel = _self.svg.append("g");
 
 	_self.cluster_view = _self.cluster_panel
