@@ -222,6 +222,12 @@ ParallelCoordinates.prototype.redraw = function() {
   var first_dimensions = _self.dimensions.slice().sort();
   var original_dimensions = _self.dimensions.slice().sort();
 
+  _self.extent = {};
+
+  _self.dimensions.forEach(function(d){
+    _self.extent[d] = d3.extent(datum, function(p){return +p[d];});
+  });
+
   _self.x.domain(_self.dimensions = _self.dimensions.sort().filter(function(d) {
     return d != "Player Name" && d != "Team" && d != "Pos" && d!="Vehicle Name" && d!="Country" && d!="University Name" && d!="Subreddit" && d!="equals" && (_self.y[d] = d3.scale.linear()
         .domain(d3.extent(datum, function(p) { return +p[d]; }))
@@ -238,7 +244,24 @@ ParallelCoordinates.prototype.redraw = function() {
     _self.temparray.push(0);
   };
 
-
+  _self.context_menu = [
+        {
+            title: 'Fit Axes to Original Axes',
+            action: function(elm, d, i) {
+              _self.rescale_axes("Original");
+              _self.mean_and_95();
+            },
+            disabled: false
+        },
+        {
+            title: 'Fit Axes to Cluster Trend Line',
+            action: function(elm, d, i) {
+              _self.rescale_axes("Fit to Cluster");
+              _self.mean_and_95();
+            },
+            disabled: false
+        }
+    ];
 
   var foreground_g = _self.svg.append("svg:g")
       .attr("class", "foreground");
@@ -250,7 +273,7 @@ ParallelCoordinates.prototype.redraw = function() {
             .on("click", function(){
               _self.highlight_by_cluster();
               _s.listenerMap['pc_listener_for_cluster_selection'].fire();
-            });
+            }).on("contextmenu", d3.contextMenu(_self.context_menu));
 
   // Add blue foreground lines for focus.
   foreground = foreground_g
@@ -633,8 +656,29 @@ ParallelCoordinates.prototype.redraw = function() {
   _self.position = position;
   _self.path = path;
   _self.mean_and_95();
+  _self.g_axis = g_axis;
 };
 
+ParallelCoordinates.prototype.rescale_axes = function(argument) {
+  var _self = this;
+  if(argument == "Original"){
+    var extent = _self.extent;
+  }else if(argument == "Fit to Cluster"){
+    var extent = _self.cluster_extent;
+  }
+  _self.dimensions.forEach(function(d){
+    _self.y[d] = d3.scale.linear()
+      .domain(extent[d])
+      .range([_self.h, 0]);
+    _self.y_reverse[d] = d3.scale.linear()
+      .domain([_self.h, 0])
+      .range(extent[d]);
+  });
+  _self.foreground.attr("d", _self.path);
+  _self.g_axis.each(function(d, i) {
+  var temp_id = _self.dimensions.indexOf(d) + 1;
+  d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(_self.axis.scale(_self.y[d])); });
+};
 
 ParallelCoordinates.prototype.checkboxHandler = function(argument) {
   var _self = this;
@@ -666,7 +710,10 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
   _self.labels = _self.cls_argument["labels"];
   _self.svg.style("display", null);
   _self.color_by_new_index();
+  _self.get_cluster_extent();
+  _self.rescale_axes("Fit to Cluster");
   _self.mean_and_95();
+  console.log("I am here.");
 };
 
 ParallelCoordinates.prototype.color_by_new_index = function() {
@@ -675,6 +722,39 @@ ParallelCoordinates.prototype.color_by_new_index = function() {
     return _self.color(_self.labels[i]);
   });
 };
+
+ParallelCoordinates.prototype.get_cluster_extent = function(){
+  var _self = this;
+
+  var clusters = _.groupBy(_self.session["data_description"], function(d,i){
+    return _self.labels[i];
+  });
+  var clusters = Object.values(clusters);
+  var array = [];
+
+  clusters.forEach(function(d){
+    _self.dimensions.forEach(function(dim, dim_index){
+      var obj = {};
+      obj["dimension"] = dim;
+      obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
+      var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
+      // var int95 = se95(d.length, deviation);
+      var int95 = deviation; // bckwon: currently set as standard deviation
+      if(_self.sortarray[dim_index]==1){
+        int95 = -int95;
+      }
+      obj["upper_bound"] = obj["mean"] + int95;
+      obj["lower_bound"] = obj["mean"] - int95;
+      array.push(obj);
+    });
+  });
+
+  _self.cluster_extent = {};
+  _self.dimensions.forEach(function(d){
+    _self.cluster_extent[d] = [d3.min(array.filter(function(a){return a["dimension"]==d;}), function(elm){return elm["lower_bound"];}), d3.max(array.filter(function(a){return a["dimension"]==d;}), function(elm){return elm["upper_bound"];})];
+  });
+
+}
 
 ParallelCoordinates.prototype.mean_and_95 = function() {
   var _self = this;

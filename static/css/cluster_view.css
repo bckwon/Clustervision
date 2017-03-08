@@ -109,3 +109,7 @@ th, td{
     padding-right: 1px;
     text-align: center;
 }
+
+.tick{
+    font-size: 75%;
+}
