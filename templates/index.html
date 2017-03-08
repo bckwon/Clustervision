@@ -21,6 +21,7 @@
 <script src="{{ url_for('static', filename='javascript/shorty.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/parallel_coordinates.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/table.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/clustering_result.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/clustering_stripes.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/quality_chart.js') }}"></script>
@@ -39,8 +40,8 @@
 	<div class="canvas_middle">
         <div class = "canvas_middle_top"></div>
         <div class = "canvas_middle_bottom">
-<!--             <div class = "canvas_middle_bottom_left"></div>
-            <div class = "canvas_middle_bottom_right"></div> -->
+            <div class = "canvas_middle_bottom_left"></div>
+            <div class = "canvas_middle_bottom_right"></div>
         </div>
 	</div>
 	<div class="canvas_right">
@@ -105,7 +106,9 @@
     function remove_all(){
     	d3.select(".canvas_left").selectAll("*").remove();
     	d3.select(".canvas_middle_top").selectAll("*").remove();
-        d3.select(".canvas_middle_bottom").selectAll("*").remove();
+        // d3.select(".canvas_middle_bottom").selectAll("*").remove();
+        d3.select(".canvas_middle_bottom_left").selectAll("*").remove();
+        d3.select(".canvas_middle_bottom_right").selectAll("*").remove();
     	d3.select(".canvas_right").selectAll("*").remove();
     }
 
@@ -221,7 +224,7 @@
         } else {
             var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2.5);
             setup_checkbox_list();
-            var pc = new ParallelCoordinates(".canvas_middle_bottom", session, screen_width/2, screen_height/2.5, sort_asc, sort_desc, remove_svg);
+            var pc = new ParallelCoordinates(".canvas_middle_bottom_right", session, screen_width/2*.75, screen_height/2.5, sort_asc, sort_desc, remove_svg);
         }
         initialize_values();
     }
@@ -295,15 +298,61 @@
     }
 
     function setup_checkbox_list() {
-        d3.select(".canvas_middle_bottom").selectAll("*").remove();
-        var btn_group = d3.select(".canvas_middle_bottom").append("div").attr("class", "btn-group").style("position", "fixed").style("background", "white");
+        d3.select(".canvas_middle_bottom_left").selectAll("*").remove();
+        var data_desc_keys = d3.keys(session["data_description"][0]).sort();
+        
+        var numeric_attr = [];
+        for (var i = 0; i < data_desc_keys.length; i++) {
+            if(isNaN(session["data_description"][0][data_desc_keys[i]])){
+
+            }else{
+              numeric_attr.push(data_desc_keys[i]);
+            }
+        }
+
+        var table_data = [];
+        numeric_attr.forEach(function(d){
+            table_data.push({"Name": d});
+        })
+
+        var table = new Table(".canvas_middle_bottom_left", [screen_width/10, screen_height/2.5], table_data);
+
+        $('input.check_all').prop("checked", true);
+
+        $('input.check_all').on("click", function(elm){
+            var array = $('input.check_all:checked').map(function(){
+                return $(this).val();
+            })
+            if(array.length > 0){
+                $('input.feature_checkbox').prop("checked", true);
+            }else{
+                $('input.feature_checkbox').prop("checked", false);
+            }
+            var array = $('input.feature_checkbox:checked').map(function(){
+                return $(this).val();
+            })
+            _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
+        })
+
+        $('input.feature_checkbox').attr("checked", "checked");
+
+        $('input.feature_checkbox').on("click", function(elm){
+            var array = $('input.feature_checkbox:checked').map(function(){
+                return $(this).val();
+            })
+            _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
+        })
+    }
+
+
+    function setup_checkbox_list_in_dropdown() {
+        d3.select(".canvas_middle_bottom_left").selectAll("*").remove();
+        var btn_group = d3.select(".canvas_middle_bottom_left").append("div").attr("class", "btn-group").style("position", "fixed").style("background", "white");
 
         var data_desc_keys = d3.keys(session["data_description"][0]).sort();
 
         btn_group.append("button").attr("data-toggle", "dropdown").attr("class", "btn btn-default dropdown-toggle").text("Features to Select")
             .append("span").attr("class", "caret");
-
-
 
         var ul = btn_group.append("ul").attr("class", "dropdown-menu scrollable-menu").attr("role", "menu");
         var li_all = ul.append("li").style("border-bottom", ".5px solid black");

@@ -20,7 +20,6 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   _self.color = d3.scale.ordinal()
     .range(COLOR_RANGE.slice()).domain(color_domain);
 
-  // var datum = _self.session["data_attributes"];
   var datum = _self.session["data_description"];
   var datum_keys = Object.keys(datum[0]);
   var numeric_attr = [];
@@ -36,7 +35,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   }
   var original_data = datum;
 
-  var m = [60, 10, 10, 30],
+  var m = [30, 10, 10, 30],
       w = screen_width - m[1] - m[3],
       h = screen_height - m[0] - m[2];
 
