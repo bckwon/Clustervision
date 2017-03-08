@@ -5,7 +5,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.margin = 60;
 	_self.rect_size = 30;
 
-	_self.parameters = ["n_clusters"];
+	_self.parameters = ["n_clusters", "alg_name"];
 	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_samples", "separation_clusters", "cohesion_clusters", "min_max_dist");
 	_self.radius = 7.5;
 	_self.buffer_coeff = 1.25;
@@ -58,7 +58,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
             		.style("stroke", "#e34a33")
             		.style("stroke-width", 2.5);
             },
-            disabled: false 
+            disabled: false
         }
     ];
 
@@ -234,12 +234,17 @@ ClusteringStripes.prototype.popup = function(list_index){
 
 	var list_desc = pop_space.selectAll("g.list_desc")
 							.data(function(d){
+								var cluster_param = d;
+
 								var array = _self.parameters.map(function(e){
+
 									var value = 0;
 									if(isInt(d[e])){
 										value = d[e];
-									}else if(isFloat(d[e])){
+									} else if(isFloat(d[e])){
 										value = parseFloat(d[e]).toFixed(3);
+									} else { // else a string parameter (like alg_name)
+										return {"name": e, "value": d.clustering_parameters[e]};
 									}
 									return {"name": e, "value": value};});
 								array = array.concat(_self.quality_metrics.map(function(e){
