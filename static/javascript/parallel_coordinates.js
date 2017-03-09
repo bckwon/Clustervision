@@ -809,11 +809,15 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .attr("fill", function(d, i){
           return _self.color(i);
       })
+      .style("cursor", "pointer")
       .style("opacity", function(d,i){
           return SELECTED_PATH_OPACITY;
       })
       .style("fill-opacity", DESELECTED_PATH_OPACITY)
-      .style("cursor", "pointer");
+      .style("cursor", "pointer")
+      .on("click", function(d,i){
+        _s.listenerMap['pc_listener_for_cluster_selection'].fire(i);
+      });
 
   _self.line_path = _self.area_svg
       .selectAll("path.line_path")
@@ -825,9 +829,13 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .style("stroke", function(d, i){
           return ColorLuminance(_self.color(i), MEAN_LINE_STROKE_COEFFICIENT);
       })
+      .style("cursor", "pointer")
       .style("stroke-dasharray", "3, 3")
       .attr("fill", "none")
-      .style("cursor", "pointer");
+      .style("cursor", "pointer")
+      .on("click", function(d,i){
+        _s.listenerMap['pc_listener_for_cluster_selection'].fire(i);
+      });
 
 };
 
