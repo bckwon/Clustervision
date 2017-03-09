@@ -114,6 +114,10 @@
 
     start(true);
 
+    // Quality Chart listener
+    var quality_chart_listener = new _s.Listener("quality_chart_listener_for_updating_list_table");
+    quality_chart_listener.subscribe(qualityChartHandler);
+
     $('#dataset_dropdown_link').html('Current Dataset: <span class="dataset_title">' + chosen_dataset+'</span><span class="caret"></span>');
     $('#drt_dropdown_link').html('Dimensionality Reduction Technique: <span class="drt_title">'+chosen_dr_method+'</span><span class="caret"></span>');
 
@@ -158,6 +162,7 @@
                     for (var i = 0; i < session['clustering'].length; i++) {
                         clustering = session['clustering'][i];
                     }
+                    console.log(session["clustering"]);
                     fetch_dataset();
                 }else{
                     initialize_values();
@@ -297,7 +302,14 @@
         }
     }
 
-    function setup_checkbox_list() {
+    function qualityChartHandler(argument) {
+        console.log(argument);
+        console.log(session["clustering"][argument]["feature_selection"]);
+        // setup_checkbox_list with argument: setup_checkbox_list(true, argument);
+        setup_checkbox_list(true, argument);
+    }
+
+    function setup_checkbox_list(cluster_bool, cluster_index) {
         d3.select(".canvas_middle_bottom_left").selectAll("*").remove();
         var data_desc_keys = d3.keys(session["data_description"][0]).sort();
         
@@ -310,9 +322,27 @@
             }
         }
 
+        if(cluster_bool){
+            var feature_selection = session["clustering"][cluster_index]["feature_selection"];
+        }
+
         var table_data = [];
         numeric_attr.forEach(function(d){
-            table_data.push({"Name": d});
+            if(cluster_bool){
+                var obj = {};
+                obj["Name"] = d;
+                feature_index = feature_selection["names"].indexOf(d);
+                obj["Score"] = Math.round(feature_selection["scores"][feature_index],0);
+                if(feature_selection["pvalues"][feature_index] < .05){
+                    obj["Score"] = obj["Score"].toString() + "*";
+                }else{
+                    obj["Score"] = obj["Score"].toString();
+                }
+                // obj["P-Value"] = Math.round(feature_selection["pvalues"][feature_index],-2);
+                table_data.push(obj);
+            }else{
+                table_data.push({"Name": d});
+            }
         })
 
         var table = new Table(".canvas_middle_bottom_left", [screen_width/10, screen_height/2.5], table_data);
