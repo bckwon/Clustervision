@@ -24,6 +24,8 @@ import sklearn.metrics
 import sklearn.preprocessing
 import string
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectPercentile
 
 from tqdm import tqdm
 from multiprocessing import Pool
@@ -110,7 +112,7 @@ def compute_clustering(params):
             return clustering
 
         model = model_from_params(params)
-        (dataset, description) = dataset_from_name(params['dataset'])
+        (dataset, description) = dataset_from_name(params['dataset'], True)
         if params['random_seed'] is not None:
             np.random.seed(params['random_seed'])
             alpha = config.RANDOM_WEIGHTING_ALPHA
@@ -118,6 +120,16 @@ def compute_clustering(params):
             labels = model.fit_predict(dataset * weights[None, :])
         else:
             labels = model.fit_predict(dataset)
+
+        # print labels
+        # print description[0].keys()
+
+        X_train, X_test, y_train, y_test = train_test_split(dataset, labels,random_state=0,test_size=1)
+
+        select = SelectPercentile(percentile=50)
+        select.fit(X_train,y_train)
+        # X_train_selected = select.transform(X_train)
+
 
         sorted_labels = sort_labels(dataset, labels)
 
@@ -159,7 +171,12 @@ def compute_clustering(params):
             'n_clusters': n_clusters,
             'clustering_parameters': params,
             'sorted_labels': sorted_labels,
-            'clustering_id': clustering_key
+            'clustering_id': clustering_key,
+            'feature_selection': {
+                'names': description[0].keys(),
+                'scores': select.scores_.tolist(),
+                'pvalues': select.pvalues_.tolist(),
+            },
         }
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
