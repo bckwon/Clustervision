@@ -91,9 +91,13 @@ function Table(div_name, canvassize, datum) {
 			})
 			.on("mouseover", function(k) {
 				d3.select(this).classed("hover", true);
+				d3.select(this).style("background-color", ATTRIBUTE_HIGHLIGHT_COLOR);
+				_s.listenerMap['table_listener_for_parallel_coordinates'].fire(k["Name"]);
 			})
 			.on("mouseout", function(k) {
 				d3.select(this).classed("hover", false);
+				d3.select(this).style("background-color", ATTRIBUTE_DEHIGHLIGHT_COLOR);
+				_s.listenerMap['table_listener_for_parallel_coordinates'].fire(null);
 			});
 
 		// create the cells
@@ -111,7 +115,22 @@ function Table(div_name, canvassize, datum) {
 			.text(function(d) { return d; });
 	}
 	_self.add_checkbox();
+
+	// PC listener
+	_self.pc_listener = new _s.Listener("pc_listener_for_table");
+	_self.pc_listener.subscribe($.proxy(_self.pcHandler, _self));
 }
+
+Table.prototype.pcHandler = function(argument) {
+	var _self = this;
+	_self.rows.style("background-color", function(d,i){
+		if(argument==d["Name"]){
+			return ATTRIBUTE_HIGHLIGHT_COLOR;
+		}else{
+			return ATTRIBUTE_DEHIGHLIGHT_COLOR;
+		}
+	});
+};
 
 Table.prototype.add_checkbox = function(first_argument) {
 	// body...
@@ -133,7 +152,7 @@ Table.prototype.add_checkbox = function(first_argument) {
 			}else{
 				return "feature_checkbox";
 			}
-		})
+		});
 };
 
 // highlight rows that match objects of the input array

@@ -115,6 +115,17 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   _self.checkbox_listener = new _s.Listener("checkbox_listener_for_parallel_coordinates");
   _self.checkbox_listener.subscribe($.proxy(_self.checkboxHandler, _self));
 
+  // Table listener
+  _self.table_listener = new _s.Listener("table_listener_for_parallel_coordinates");
+  _self.table_listener.subscribe($.proxy(_self.tableHandler, _self));
+
+  _self.sortarray = [];
+  _self.temparray = [];
+  for (var i = _self.dimensions.length - 1; i >= 0; i--) {
+    _self.sortarray.push(0);
+    _self.temparray.push(0);
+  };
+  _self.get_cluster_extent();
   _self.redraw();
 }
 
@@ -371,17 +382,27 @@ ParallelCoordinates.prototype.redraw = function() {
         }
     });
 
-  g_axis.append("svg:text")
-  .attr("text-anchor", "middle")
+  _self.g_axis_text = g_axis.append("svg:text")
+  .style("text-anchor", "middle")
   .attr("y", -9)
   .attr("class", "axis_label")
   .attr("id", function(d, i){
     return "Axis-" + (i+1);
   })
   .text(function(d, i){
-        return d;
+        return d.charAt(0);
     })
   .style("font-size", "75%")
+  .on("mouseenter", function(d,i){
+    d3.select(this).style("font-size", "150%").style("text-anchor", "end").text(d);
+    // fire to highlight the table row pc_listener_for_table
+    _s.listenerMap['pc_listener_for_table'].fire(d);
+  })
+  .on("mouseleave", function(d,i){
+    d3.select(this).style("font-size", "75%").style("text-anchor", "middle").text(d.charAt(0));
+    // fire to highlight the table row
+    _s.listenerMap['pc_listener_for_table'].fire(null);
+  })
   .on("mouseover", function(d, i){
         d3.select(this).style("cursor", "move")
         on_label = true;
@@ -470,12 +491,12 @@ ParallelCoordinates.prototype.redraw = function() {
       };
 
       _self.y[dim] = d3.scale.linear()
-        .domain(d3.extent(datum, function(p) { return +p[dim]; }))
+        .domain(_self.current_extent[dim])
         .range([0, _self.h]);
 
       _self.y_reverse[dim] = d3.scale.linear()
         .domain([_self.h, 0])
-        .range(d3.extent(datum, function(p) { return +p[dim]; }));
+        .range(_self.current_extent[dim]);
 
         _self.sortarray[_self.dimensions.indexOf(dim)] = 1;
         g_axis.each(function(d, i) {
@@ -526,12 +547,12 @@ ParallelCoordinates.prototype.redraw = function() {
       };
 
       _self.y[dim] = d3.scale.linear()
-        .domain(d3.extent(datum, function(p) { return +p[dim]; }))
+        .domain(_self.current_extent[dim])
         .range([_self.h, 0]);
 
       _self.y_reverse[dim] = d3.scale.linear()
         .domain([_self.h, 0])
-        .range(d3.extent(datum, function(p) { return +p[dim]; }));
+        .range(_self.current_extent[dim]);
 
         _self.sortarray[_self.dimensions.indexOf(dim)] = 0;
 
@@ -657,27 +678,41 @@ ParallelCoordinates.prototype.redraw = function() {
   _self.path = path;
   _self.mean_and_95();
   _self.g_axis = g_axis;
+  _self.g = g;
+  _self.brush = brush;
 };
 
 ParallelCoordinates.prototype.rescale_axes = function(argument) {
   var _self = this;
   if(argument == "Original"){
-    var extent = _self.extent;
+    _self.current_extent = _self.extent;
   }else if(argument == "Fit to Cluster"){
-    var extent = _self.cluster_extent;
+    _self.current_extent = _self.cluster_extent;
   }
   _self.dimensions.forEach(function(d){
     _self.y[d] = d3.scale.linear()
-      .domain(extent[d])
+      .domain(_self.current_extent[d])
       .range([_self.h, 0]);
     _self.y_reverse[d] = d3.scale.linear()
       .domain([_self.h, 0])
-      .range(extent[d]);
+      .range(_self.current_extent[d]);
   });
   _self.foreground.attr("d", _self.path);
   _self.g_axis.each(function(d, i) {
   var temp_id = _self.dimensions.indexOf(d) + 1;
   d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(_self.axis.scale(_self.y[d])); });
+
+  // Add and store a brush for each axis.
+  _self.g.selectAll(".brush")
+      .each(function(d) {
+        d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", _self.brush));
+        _self.y[d].brush.on("brushend", function(d,i){
+          if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
+
+          }
+          d3.select("#remove-" + d).attr("opacity", 1);
+        });
+    })
 };
 
 ParallelCoordinates.prototype.checkboxHandler = function(argument) {
@@ -699,6 +734,29 @@ ParallelCoordinates.prototype.projectionHandler = function(argument){
   _self.highlight(argument);
   var g = $('g.area_svg');
   g.append($('.line_path'));
+}
+
+ParallelCoordinates.prototype.tableHandler = function(argument){
+  var _self = this;
+  _self.g_axis_text.style("font-size", function(d,i){
+    if(argument == d){
+      return "150%";
+    }else{
+      return "75%";
+    }
+  }).style("text-anchor", function(d,i){
+    if(argument == d){
+      return "end";
+    }else{
+      return "middle";
+    }
+  }).text(function(d,i){
+    if(argument == d){
+      return d;
+    }else{
+      return d.charAt(0);
+    }
+  })
 }
 
 ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
@@ -753,7 +811,7 @@ ParallelCoordinates.prototype.get_cluster_extent = function(){
   _self.dimensions.forEach(function(d){
     _self.cluster_extent[d] = [d3.min(array.filter(function(a){return a["dimension"]==d;}), function(elm){return elm["lower_bound"];}), d3.max(array.filter(function(a){return a["dimension"]==d;}), function(elm){return elm["upper_bound"];})];
   });
-
+  _self.current_extent = _self.cluster_extent;
 }
 
 ParallelCoordinates.prototype.mean_and_95 = function() {
