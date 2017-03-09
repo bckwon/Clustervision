@@ -112,7 +112,8 @@ def compute_clustering(params):
             return clustering
 
         model = model_from_params(params)
-        (dataset, description) = dataset_from_name(params['dataset'], True)
+        (pd_dataset, description) = dataset_from_name(params['dataset'], True)
+        dataset = pd_dataset.as_matrix()
         if params['random_seed'] is not None:
             np.random.seed(params['random_seed'])
             alpha = config.RANDOM_WEIGHTING_ALPHA
@@ -129,7 +130,6 @@ def compute_clustering(params):
         select = SelectPercentile(percentile=50)
         select.fit(X_train,y_train)
         # X_train_selected = select.transform(X_train)
-
 
         sorted_labels = sort_labels(dataset, labels)
 
@@ -173,11 +173,20 @@ def compute_clustering(params):
             'sorted_labels': sorted_labels,
             'clustering_id': clustering_key,
             'feature_selection': {
-                'names': description[0].keys(),
+                'names': list(pd_dataset.columns.values),
                 'scores': select.scores_.tolist(),
                 'pvalues': select.pvalues_.tolist(),
             },
         }
+
+        # print clustering['feature_selection']
+        # print dataset.shape
+        # print dataset[0][0]
+        # print pd_dataset[0][list(pd_dataset.columns.values)[0]]
+        # print len(description[0].keys())
+        # print dataset[0][0]
+        # print description[0]
+
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
 
@@ -211,7 +220,12 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions = [{'label': l, 'x': x, 'y': y} for ((x, y), l) in zip(dataset, labels)]
         else:
             descriptions = None
-        return (dataset, descriptions)
+
+        pd_dataset = pd.DataFrame(data=dataset,columns=["x","y"])
+        # pd_dataset['label'] = labels
+        # print pd_dataset
+
+        return (pd_dataset, descriptions)
 
     elif dataset_name == 'digits':
         (dataset, labels) = sklearn.datasets.load_digits(return_X_y=True)
@@ -228,7 +242,10 @@ def dataset_from_name(dataset_name, include_description=False):
                 descriptions.append(d)
         else:
             descriptions = None
-        return (dataset, descriptions)
+
+        pd_dataset = pd.DataFrame(data=dataset)
+
+        return (pd_dataset, descriptions)
     # elif dataset_name == 'sequence':
     #     dataset = np.load('data/sequence_data/sequence_data.npy')
     #     if include_description:
@@ -242,35 +259,11 @@ def dataset_from_name(dataset_name, include_description=False):
         # Remove rows with nan values
         good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
         data = data[good_rows]
+        col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower',\
+                     'weight', 'acceleration', 'year', 'origin']
+
         if include_description:
             descriptions = []
-            col_names = ['miles per gallon', 'cylinders', 'displacement', 'horsepower',\
-                         'weight', 'acceleration', 'year', 'origin']
-            for row in data:
-                d = {}
-                # Don't include origin because we don't know what it means
-                for (key, value) in zip(col_names[:-1], row[:-1]):
-                    d[key] = value
-                descriptions.append(d)
-        else:
-            descriptions = None
-
-        data -= data.mean(axis=0)[None, :]
-        data /= data.std(axis=0)[None, :]
-        return (data, descriptions)
-
-    elif dataset_name == 'cameras':
-        data = np.genfromtxt('data/cameras_data/camera.csv', skip_header=2,
-                             delimiter=';', usecols=range(1, 13))
-        # Remove rows with nan values
-        good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
-        data = data[good_rows]
-        if include_description:
-            descriptions = []
-            col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution',
-                         'Effective pixels', 'Zoom wide (W)', 'Zoom tele (T)',
-                         'Normal focus range', 'Macro focus range', 'Storage included',
-                         'Weight (inc. batteries)', 'Dimensions', 'Price']
             for row in data:
                 d = {}
                 for (key, value) in zip(col_names, row):
@@ -281,7 +274,37 @@ def dataset_from_name(dataset_name, include_description=False):
 
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
-        return (data, descriptions)
+
+        pd_dataset = pd.DataFrame(data=data,columns=col_names)
+
+        return (pd_dataset, descriptions)
+
+    elif dataset_name == 'cameras':
+        data = np.genfromtxt('data/cameras_data/camera.csv', skip_header=2,
+                             delimiter=';', usecols=range(1, 13))
+        # Remove rows with nan values
+        good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
+        data = data[good_rows]
+        col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution',
+                     'Effective pixels', 'Zoom wide (W)', 'Zoom tele (T)',
+                     'Normal focus range', 'Macro focus range', 'Storage included',
+                     'Weight (inc. batteries)', 'Dimensions', 'Price']
+        if include_description:
+            descriptions = []
+            for row in data:
+                d = {}
+                for (key, value) in zip(col_names, row):
+                    d[key] = value
+                descriptions.append(d)
+        else:
+            descriptions = None
+
+        data -= data.mean(axis=0)[None, :]
+        data /= data.std(axis=0)[None, :]
+
+        pd_dataset = pd.DataFrame(data=data,columns=col_names)
+
+        return (pd_dataset, descriptions)
     elif dataset_name == 'universities':
         # data = np.genfromtxt('data/universities_data/college_rank_2013.csv', dtype=None, skip_header=1, delimiter=',')
         with open('data/universities_data/college_rank_2013.csv') as f:
@@ -309,6 +332,9 @@ def dataset_from_name(dataset_name, include_description=False):
         data = np.array(data)
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
+
+        pd_dataset = pd.DataFrame(data=data,columns=header[1:])
+
         return (data, descriptions)
 
     elif dataset_name == 'enron':
@@ -320,6 +346,8 @@ def dataset_from_name(dataset_name, include_description=False):
 
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
+
+        pd_dataset = pd.DataFrame(data=data)
         return (data, descriptions)
     elif dataset_name == 'sutter':
         # data = np.load('data/snow_data/snow.npy').astype(float)
@@ -339,7 +367,7 @@ def dataset_from_name(dataset_name, include_description=False):
                 d[key] = value
             descriptions.append(d)
 
-        return (data, descriptions)
+        return (pdata, descriptions)
     elif dataset_name == 'bobross':
         pdata = pd.read_csv('data/bobross_data/elements-by-episode.csv')
 
@@ -362,7 +390,7 @@ def dataset_from_name(dataset_name, include_description=False):
         # normalize according to stddev
         # data = whiten(matrix)
         data = matrix
-        return (data, descriptions)
+        return (pdata, descriptions)
     else:
         assert False, 'Unknown dataset name'
 

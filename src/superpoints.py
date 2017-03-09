@@ -29,7 +29,9 @@ def find_superpoints(clustering_id, max_dist=None):
 
     labels = np.array(clustering['labels'])
     dataset_name = clustering['clustering_parameters']['dataset']
-    (dataset, description) = cluster.dataset_from_name(dataset_name)
+    (pd_dataset, description) = cluster.dataset_from_name(dataset_name)
+
+    dataset = pd_dataset.as_matrix()
 
     d = {'superpoint': [], 'size': [], 'children': []}
     for cluster_index in sorted(set(labels)):
@@ -68,4 +70,3 @@ def find_superpoints(clustering_id, max_dist=None):
         txn.put(key, json.dumps(d))
 
     return d
-

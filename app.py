@@ -175,7 +175,7 @@ def get_clustering():
 def get_dataset():
     dataset_name = request.args.get('dataset')
     (dataset, description) = cluster.dataset_from_name(dataset_name)
-    return json.dumps(dataset.tolist())
+    return json.dumps(dataset.as_matrix().tolist())
 
 def is_float(num):
     return isinstance(num, (np.floating, float))
