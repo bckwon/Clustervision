@@ -39,7 +39,6 @@ function Table(div_name, canvassize, datum) {
 				d3.selectAll("th").classed("sorted", false);
 				d3.select(this).classed("sorted", true);
 				_self.rows.sort(function(a, b) {
-					console.log(a[k],b[k],parseFloat(a[k]),parseFloat(b[k]), isNaN(parseFloat(a[k])));
 					if (isNaN(parseFloat(a[k])) || isNaN(parseFloat(b[k]))) {
 						return d3.ascending(a[k], b[k]);
 					} else {
@@ -52,7 +51,12 @@ function Table(div_name, canvassize, datum) {
 				.duration(1000)
 				.delay(function(d, i) { return i * 25; })
 				.attr("transform", function(d, i) { return "translate(0," + (height + (i * height)) + ")"; });
-				_s.listenerMap['shuffle_listener_for_parallel_coordinates'].fire(_self.rows.data().map(function(row_data){return row_data["Name"];}));
+				// Send only 'checked' ones
+				var array = $('input.feature_checkbox:checked').map(function(){
+	                return $(this).val();
+	            });
+	            var dimset = _.intersection(_self.rows.data().map(function(row_data){return row_data["Name"];}),array);
+				_s.listenerMap['shuffle_listener_for_parallel_coordinates'].fire(dimset);
 
 			}).on("mouseover", function(k) {
 				d3.select(this).classed("hover", true);

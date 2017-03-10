@@ -244,12 +244,12 @@ ParallelCoordinates.prototype.redraw = function() {
     _self.extent[d] = d3.extent(datum, function(p){return +p[d];});
   });
 
-  _self.x.domain(_self.dimensions = _self.dimensions.sort().filter(function(d) {
+  _self.x.domain(_self.dimensions = _self.dimensions.filter(function(d) {
     return d != "Player Name" && d != "Team" && d != "Pos" && d!="Vehicle Name" && d!="Country" && d!="University Name" && d!="Subreddit" && d!="equals" && (_self.y[d] = d3.scale.linear()
-        .domain(d3.extent(datum, function(p) { return +p[d]; }))
+        .domain(_self.current_extent[d])
         .range([_self.h, 0])) && (_self.y_reverse[d] = d3.scale.linear()
         .domain([_self.h, 0])
-        .range(d3.extent(datum, function(p) { return +p[d]; }))
+        .range(_self.current_extent[d])
         );
   }));
 
@@ -742,7 +742,9 @@ ParallelCoordinates.prototype.checkboxHandler = function(argument) {
   var _self = this;
   // redraw with new dimension
   _self.dimensions = argument;
+  _self.x.domain(_self.dimensions);  
   _self.redraw();
+  _self.clean_brush();
 };
 
 ParallelCoordinates.prototype.projectionClusterSelectionHandler = function(argument) {
@@ -796,9 +798,7 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
 }
 
 ParallelCoordinates.prototype.shuffleHandler = function(argument) {
-  // body...
   var _self = this;
-  console.log(argument);
   _self.dimensions = argument;
   _self.shuffle_dimension();
 };
@@ -821,10 +821,17 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
   _self.labels = _self.cls_argument["labels"];
   _self.svg.style("display", null);
   _self.color_by_new_index();
+  _self.dimensions = _self.original_dimensions;
+  _self.sortarray = [];
+  _self.temparray = [];
+  for (var i = _self.dimensions.length - 1; i >= 0; i--) {
+    _self.sortarray.push(0);
+    _self.temparray.push(0);
+  };
   _self.get_cluster_extent();
   _self.rescale_axes("Fit to Cluster");
+  _self.redraw();
   _self.mean_and_95();
-  console.log("I am here.");
 };
 
 ParallelCoordinates.prototype.color_by_new_index = function() {

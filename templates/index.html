@@ -303,9 +303,6 @@
     }
 
     function qualityChartHandler(argument) {
-        console.log(argument);
-        console.log(session["clustering"][argument]["feature_selection"]);
-        // setup_checkbox_list with argument: setup_checkbox_list(true, argument);
         setup_checkbox_list(true, argument);
     }
 
@@ -364,6 +361,9 @@
             var array = $('input.feature_checkbox:checked').map(function(){
                 return $(this).val();
             })
+            var table_array = table.rows.data().map(function(row_data){return row_data["Name"];});
+            array = _.intersection(table_array, array);
+
             _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
         })
 
@@ -373,6 +373,8 @@
             var array = $('input.feature_checkbox:checked').map(function(){
                 return $(this).val();
             })
+            var table_array = table.rows.data().map(function(row_data){return row_data["Name"];});
+            array = _.intersection(table_array, array);
             _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
         })
     }
