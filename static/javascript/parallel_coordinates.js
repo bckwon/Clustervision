@@ -290,6 +290,8 @@ ParallelCoordinates.prototype.redraw = function() {
             .style("opacity", 0)
             .on("click", function(){
               _self.highlight_by_cluster();
+              _s.listenerMap['projection_listener_for_data_point'].fire([]);
+              // pc_listener_for_cluster_selection
               _s.listenerMap['pc_listener_for_cluster_selection'].fire();
               _self.clean_brush();
             }).on("contextmenu", d3.contextMenu(_self.context_menu));

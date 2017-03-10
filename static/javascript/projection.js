@@ -181,7 +181,10 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		    }).style("stroke-width", function(d,i){
 		      return DESELECTED_CIRCLE_STROKE_WIDTH;
 		    });
+		d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 	}else{
+		// fire to cluster_list
+		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument, _self.data]);
 		_self.circ
 		    .style("opacity", function(d,i){
 		      if(argument == _self.labels[i]){
