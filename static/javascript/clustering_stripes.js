@@ -25,8 +25,10 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 			max_domain = domain.sort();
 		}
 	})
+
+	var my_domain = COLOR_RANGE.map(function(d,i){return i.toString();});
 	_self.color = d3.scale.ordinal()
-    .range(COLOR_RANGE.slice()).domain(max_domain);
+    .range(COLOR_RANGE.slice()).domain(my_domain);
 
 	_self.cluster_rect_scale = d3.scale.linear().range([0, _self.width]).domain([0, _self.data[0]["labels"].length]);
 
@@ -111,6 +113,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 								// x: x_position
 								// size: rect_size
 								// array: sorted_labels
+								console.log(d);
 								var array = [];
 								array = d["sorted_labels"].map(function(e,j){
 									var obj = {};
