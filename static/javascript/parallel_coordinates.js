@@ -392,7 +392,9 @@ ParallelCoordinates.prototype.redraw = function() {
   // Add an axis and title.
   var g_axis = g.append("svg:g")
       .attr("class", "axis")
-      .attr("g_axis_id", function(d){return "g_axis_"+d})
+      .attr("g_axis_id", function(d){
+        var g_axis_id = _self.original_dimensions.indexOf(d);
+        return "g_axis_"+g_axis_id;})
       .each(function(d, i) { d3.select(this).attr("id", function(){return "dim-" +i;}).call(_self.axis.scale(_self.y[d]));
         if(d == _self.highlight_axis){
           d3.select(this).style("fill", "red");
@@ -790,7 +792,8 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
   d3.selectAll("rect.rect_for_highlight").remove();
 
   if(argument!=null){
-    var g_axis_id = "g_axis_"+argument;
+    // var g_axis_id = "g_axis_"+argument;
+    var g_axis_id = "g_axis_"+_self.original_dimensions.indexOf(argument);
     d3.select('[g_axis_id='+ g_axis_id +']').append("rect").attr("class", "rect_for_highlight")
     .style("fill", ATTRIBUTE_HIGHLIGHT_COLOR).attr("x", -8).attr("width", 16)
     .attr("y", -24).attr("height", _self.h+48).moveToBack();
@@ -860,6 +863,9 @@ ParallelCoordinates.prototype.get_cluster_extent = function(){
       obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
       var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
       // var int95 = se95(d.length, deviation);
+      if(deviation==undefined){
+        deviation = 0;
+      }
       var int95 = deviation; // bckwon: currently set as standard deviation
       if(_self.sortarray[dim_index]==1){
         int95 = -int95;
