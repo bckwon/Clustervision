@@ -35,7 +35,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   }
   var original_data = datum;
 
-  var m = [30, 10, 10, 30],
+  var m = [50, 10, 10, 30],
       w = screen_width - m[1] - m[3],
       h = screen_height - m[0] - m[2];
 
@@ -98,6 +98,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   first_dimensions = dimensions.slice().sort();
   original_dimensions = dimensions.slice().sort();
   _self.dimensions = dimensions;
+  _self.original_dimensions = original_dimensions;
 
   // Quality Chart listener
   _self.quality_chart_listener = new _s.Listener("quality_chart_listener_for_parallel_coordinates");
@@ -281,14 +282,22 @@ ParallelCoordinates.prototype.redraw = function() {
   var foreground_g = _self.svg.append("svg:g")
       .attr("class", "foreground");
 
-  _self.bg_rect = foreground_g.append("rect")
-            .attr("width", _self.w)
-            .attr("height", _self.h)
+  _self.bg_rect = _self.svg.append("rect")
+            .attr("width", _self.w+_self.m[1]+_self.m[3])
+            .attr("height", _self.h+_self.m[0]*4+_self.m[2]*4)
+            .attr("y", -(_self.m[0]+_self.m[2])*2)
             .style("opacity", 0)
             .on("click", function(){
               _self.highlight_by_cluster();
               _s.listenerMap['pc_listener_for_cluster_selection'].fire();
+              _self.clean_brush();
             }).on("contextmenu", d3.contextMenu(_self.context_menu));
+
+  _self.title_text = foreground_g.append("text")
+                .style("font-size", "150%")
+                .style("text-anchor", "middle")
+                .attr("x", _self.w/2)
+                .attr("y", -32);
 
   // Add blue foreground lines for focus.
   foreground = foreground_g
@@ -382,6 +391,7 @@ ParallelCoordinates.prototype.redraw = function() {
   // Add an axis and title.
   var g_axis = g.append("svg:g")
       .attr("class", "axis")
+      .attr("g_axis_id", function(d){return "g_axis_"+d})
       .each(function(d, i) { d3.select(this).attr("id", function(){return "dim-" +i;}).call(_self.axis.scale(_self.y[d]));
         if(d == _self.highlight_axis){
           d3.select(this).style("fill", "red");
@@ -400,14 +410,20 @@ ParallelCoordinates.prototype.redraw = function() {
     })
   .style("font-size", "75%")
   .on("mouseenter", function(d,i){
-    d3.select(this).style("font-size", "150%").style("text-anchor", "end").text(d);
-    // fire to highlight the table row pc_listener_for_table
+    // d3.select(this).style("font-size", "150%").style("text-anchor", "end").text(d);
+    d3.select(this.parentNode).append("rect").attr("class", "rect_for_highlight")
+      .style("fill", ATTRIBUTE_HIGHLIGHT_COLOR).attr("x", -8).attr("width", 16)
+      .attr("y", -24).attr("height", _self.h+48).moveToBack();
+    d3.select(this).style("font-size", "150%");
     _s.listenerMap['pc_listener_for_table'].fire(d);
+    _self.title_text.text(d);
   })
   .on("mouseleave", function(d,i){
-    d3.select(this).style("font-size", "75%").style("text-anchor", "middle").text(d.charAt(0));
-    // fire to highlight the table row
+    // d3.select(this).style("font-size", "75%").style("text-anchor", "middle").text(d.charAt(0));
+    d3.selectAll("rect.rect_for_highlight").remove();
+    d3.select(this).style("font-size", "75%");
     _s.listenerMap['pc_listener_for_table'].fire(null);
+    _self.title_text.text("");
   })
   .on("mouseover", function(d, i){
         d3.select(this).style("cursor", "move")
@@ -469,10 +485,11 @@ ParallelCoordinates.prototype.redraw = function() {
     })
     .attr("text-anchor", "middle")
     .attr("xlink:href", remove_svg)
-    .attr("width", 16).attr("height", 16)
+    .attr("width", 16)
+    .attr("height", 16)
     .attr("opacity", 0)
     .attr("y", -20).attr("x", function(d, i){
-      var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4+16);
+      var x = -parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4)-18;
       return x;
     })
     .style("font-size", "75%")
@@ -733,6 +750,9 @@ ParallelCoordinates.prototype.projectionClusterSelectionHandler = function(argum
   _self.highlight_by_cluster(argument);
   var g = $('g.area_svg');
   g.append($('.line_path'));
+  d3.select("#area_path_"+argument).moveToFront();
+  d3.select("#line_path_"+argument).moveToFront();
+  d3.selectAll("g.dimension").moveToFront();
 };
 
 ParallelCoordinates.prototype.projectionHandler = function(argument){
@@ -758,11 +778,21 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
     }
   }).text(function(d,i){
     if(argument == d){
-      return d;
+      return d.charAt(0);
+      // return d;
     }else{
       return d.charAt(0);
     }
-  })
+  });
+  d3.selectAll("rect.rect_for_highlight").remove();
+
+  if(argument!=null){
+    var g_axis_id = "g_axis_"+argument;
+    d3.select('[g_axis_id='+ g_axis_id +']').append("rect").attr("class", "rect_for_highlight")
+    .style("fill", ATTRIBUTE_HIGHLIGHT_COLOR).attr("x", -8).attr("width", 16)
+    .attr("y", -24).attr("height", _self.h+48).moveToBack();
+    _self.title_text.text(argument);
+  }
 }
 
 ParallelCoordinates.prototype.shuffleHandler = function(argument) {
@@ -886,6 +916,7 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .append("path")
       .attr("class", "area_path")
       .attr("d", function(d){return _self.compute_area_path(d);})
+      .attr("id", function(d,i){return "area_path_"+i;})
       .attr("stroke-width", _self.stroke_width)
       .attr("fill", function(d, i){
           return _self.color(i);
@@ -894,10 +925,13 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .style("opacity", function(d,i){
           return SELECTED_PATH_OPACITY;
       })
-      .style("fill-opacity", DESELECTED_PATH_OPACITY)
       .style("cursor", "pointer")
       .on("click", function(d,i){
+        d3.select(this).moveToFront();
+        d3.select("#line_path_"+i).moveToFront();
+        d3.selectAll("g.dimension").moveToFront();
         _s.listenerMap['pc_listener_for_cluster_selection'].fire(i);
+        _self.highlight_by_cluster(i);
       });
 
   _self.line_path = _self.area_svg
@@ -905,6 +939,7 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
     .data(clusters).enter()
       .append("path")
       .attr("class", "line_path")
+      .attr("id", function(d,i){return "line_path_"+i;})
       .attr("d", function(d){return _self.compute_line_path(d);})
       .attr("stroke-width", MEAN_LINE_STROKE_WIDTH)
       .style("stroke", function(d, i){
@@ -915,7 +950,11 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .attr("fill", "none")
       .style("cursor", "pointer")
       .on("click", function(d,i){
+        d3.select("#area_path_"+i).moveToFront();
+        d3.select(this).moveToFront();
+        d3.selectAll("g.dimension").moveToFront();
         _s.listenerMap['pc_listener_for_cluster_selection'].fire(i);
+        _self.highlight_by_cluster(i);
       });
 
 };
@@ -960,6 +999,17 @@ ParallelCoordinates.prototype.compute_line_path = function(d) {
   return _self.mean_line_computation(array);
 };
 
+ParallelCoordinates.prototype.clean_brush = function() {
+  var _self = this;
+  _self.dimensions.forEach(function(d,i){
+    d3.select("#extent-" + i).attr("y", 0).attr("height", 0);
+    d3.select("#remove-" + d).attr("opacity", 0);
+    _self.y[d].brush.clear();    
+  });
+  _self.brush();
+};
+
+
 function se95(sample_size, deviation){
   return 1.96*deviation/Math.sqrt(sample_size);
 }
@@ -983,3 +1033,13 @@ function ColorLuminance(hex, lum) {
 
   return rgb;
 }
+
+function superSafeParseFloat(val) {
+  if (isNaN(val)) {
+    if ((val = val.match(/([0-9\.]+\d)/g))) {
+      val = val[0].replace(/[^\d\.]+/g, '')
+    }
+  }
+  return parseFloat(val)
+}
+
