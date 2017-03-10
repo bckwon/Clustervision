@@ -795,6 +795,8 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
     .style("fill", ATTRIBUTE_HIGHLIGHT_COLOR).attr("x", -8).attr("width", 16)
     .attr("y", -24).attr("height", _self.h+48).moveToBack();
     _self.title_text.text(argument);
+  }else{
+    _self.title_text.text("");
   }
 }
 
