@@ -333,6 +333,9 @@
                 obj["Name"] = d;
                 feature_index = feature_selection["names"].indexOf(d);
                 obj["Score"] = Math.round(feature_selection["scores"][feature_index],0);
+                if(isNaN(obj["Score"])){
+                    obj["Score"] = 0;
+                }
                 if(feature_selection["pvalues"][feature_index] < .05){
                     obj["Score"] = obj["Score"].toString() + "*";
                 }else{

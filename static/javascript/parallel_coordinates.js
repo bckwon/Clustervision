@@ -119,6 +119,10 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   _self.table_listener = new _s.Listener("table_listener_for_parallel_coordinates");
   _self.table_listener.subscribe($.proxy(_self.tableHandler, _self));
 
+  // Table listener
+  _self.shuffle_listener = new _s.Listener("shuffle_listener_for_parallel_coordinates");
+  _self.shuffle_listener.subscribe($.proxy(_self.shuffleHandler, _self));
+
   _self.sortarray = [];
   _self.temparray = [];
   for (var i = _self.dimensions.length - 1; i >= 0; i--) {
@@ -371,6 +375,8 @@ ParallelCoordinates.prototype.redraw = function() {
             d3.selectAll(".line_label").attr("transform", function(d){
               return "translate(" + (position(_self.dimensions[_self.dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[_self.dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
             });
+            // fire dimensions to table so that table can be sorted:
+            _s.listenerMap['pc_shuffle_listener_for_table'].fire(_self.dimensions);
         }));
 
   // Add an axis and title.
@@ -758,6 +764,23 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
     }
   })
 }
+
+ParallelCoordinates.prototype.shuffleHandler = function(argument) {
+  // body...
+  var _self = this;
+  console.log(argument);
+  _self.dimensions = argument;
+  _self.shuffle_dimension();
+};
+
+ParallelCoordinates.prototype.shuffle_dimension = function(first_argument) {
+  var _self = this;
+  _self.x.domain(_self.dimensions);
+  _self.foreground.transition().duration(250).attr("d", _self.path);
+  _self.area_path.transition().duration(250).attr("d", function(d){return _self.compute_area_path(d);});
+  _self.line_path.transition().duration(250).attr("d", function(d){return _self.compute_line_path(d);});
+  _self.g.transition().duration(250).attr("transform", function(d) { return "translate(" + _self.x(d) + ")"; });
+};
 
 ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
   var _self = this;

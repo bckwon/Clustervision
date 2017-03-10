@@ -34,15 +34,17 @@ function Table(div_name, canvassize, datum) {
 		.append("th")
 			.text(function(d) { return d; })
 			.classed("head", true)
+			.style("cursor", "pointer")
 			.on("click", function(k) {
 				d3.selectAll("th").classed("sorted", false);
 				d3.select(this).classed("sorted", true);
 				_self.rows.sort(function(a, b) {
-					if (isNaN(a[k]) || isNaN(b[k])) {
+					console.log(a[k],b[k],parseFloat(a[k]),parseFloat(b[k]), isNaN(parseFloat(a[k])));
+					if (isNaN(parseFloat(a[k])) || isNaN(parseFloat(b[k]))) {
 						return d3.ascending(a[k], b[k]);
 					} else {
-						if (+a[k] > +b[k]) { return 1; }
-						if (+a[k] < +b[k]) { return -1; }
+						if (+parseFloat(a[k]) > +parseFloat(b[k])) { return -1; }
+						if (+parseFloat(a[k]) < +parseFloat(b[k])) { return 1; }
 						return 0;
 					}
 				})
@@ -50,6 +52,8 @@ function Table(div_name, canvassize, datum) {
 				.duration(1000)
 				.delay(function(d, i) { return i * 25; })
 				.attr("transform", function(d, i) { return "translate(0," + (height + (i * height)) + ")"; });
+				_s.listenerMap['shuffle_listener_for_parallel_coordinates'].fire(_self.rows.data().map(function(row_data){return row_data["Name"];}));
+
 			}).on("mouseover", function(k) {
 				d3.select(this).classed("hover", true);
 			})
@@ -63,6 +67,7 @@ function Table(div_name, canvassize, datum) {
 			.enter()
 			.append("tr")
 			.attr("class", "table_element")
+			.style("cursor", "pointer")
 			.on("click", function(k) {
 				if (d3.event.shiftKey) {
 					var currentSelection = this;
@@ -119,7 +124,18 @@ function Table(div_name, canvassize, datum) {
 	// PC listener
 	_self.pc_listener = new _s.Listener("pc_listener_for_table");
 	_self.pc_listener.subscribe($.proxy(_self.pcHandler, _self));
+
+	// PC Shuffle listener
+	_self.pc_shuffle_listener = new _s.Listener("pc_shuffle_listener_for_table");
+	_self.pc_shuffle_listener.subscribe($.proxy(_self.pcShuffleHandler, _self));
 }
+
+Table.prototype.pcShuffleHandler = function(argument) {
+	var _self = this;
+	_self.rows.sort(function(a,b){
+		return argument.indexOf(a["Name"]) - argument.indexOf(b["Name"]);
+	})
+};
 
 Table.prototype.pcHandler = function(argument) {
 	var _self = this;
