@@ -234,6 +234,7 @@ ParallelCoordinates.prototype.redraw = function() {
   // body...
   var _self = this;
   _self.svg.selectAll("*").remove();
+  _self.prev_extents = {};
   var datum = _self.session["data_description"];
   _self.dimensions = _.intersection(_self.dimensions, Object.keys(datum[0]));
   var first_dimensions = _self.dimensions.slice().sort();
@@ -362,12 +363,25 @@ ParallelCoordinates.prototype.redraw = function() {
             foreground.attr("d", path);
             _self.area_path.attr("d", function(d){return _self.compute_area_path(d);});
             _self.line_path.attr("d", function(d){return _self.compute_line_path(d);});
+
+            // 
+            var prev_dimensions = _self.dimensions.slice();
+
+            // 
             _self.dimensions.sort(function(a, b) { return _self.position(a) - _self.position(b); });
-            for (var i = 0; i < original_dimensions.length; i++) {
-              _self.temparray[_self.dimensions.indexOf(original_dimensions[i])] = _self.sortarray[original_dimensions.indexOf(original_dimensions[i])];
-            };
-            _self.sortarray = _self.temparray.slice();
-            original_dimensions = _self.dimensions.slice();
+
+            var array = _self.dimensions.map(function(d){return 0});
+            prev_dimensions.forEach(function(d, i){
+              var element = _self.sortarray[i];
+              array[_self.dimensions.indexOf(d)] = element;
+            });
+            _self.sortarray = array.slice();
+
+            // for (var i = 0; i < original_dimensions.length; i++) {
+            //   _self.temparray[_self.dimensions.indexOf(original_dimensions[i])] = _self.sortarray[original_dimensions.indexOf(original_dimensions[i])];
+            // };
+            // _self.sortarray = _self.temparray.slice();
+            // original_dimensions = _self.dimensions.slice();
             _self.x.domain(_self.dimensions);
             g.attr("transform", function(d) { return "translate(" + _self.position(d) + ")"; })}
         })
@@ -380,7 +394,8 @@ ParallelCoordinates.prototype.redraw = function() {
                 .attr("d", path);
             transition(_self.area_path).attr("d", function(d){return _self.compute_area_path(d);});
             transition(_self.line_path).attr("d", function(d){return _self.compute_line_path(d);});
-              }
+            _s.listenerMap['pc_shuffle_listener_for_table'].fire(_self.dimensions);
+            }
             _self.drag_end = _self.dimensions.slice();
             if(_self.drag_start.equals(_self.drag_end) == false && _self.drag_start.length == _self.drag_end.length){
             }
@@ -388,7 +403,6 @@ ParallelCoordinates.prototype.redraw = function() {
               return "translate(" + (position(_self.dimensions[_self.dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[_self.dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
             });
             // fire dimensions to table so that table can be sorted:
-            _s.listenerMap['pc_shuffle_listener_for_table'].fire(_self.dimensions);
         }));
 
   // Add an axis and title.
@@ -442,7 +456,7 @@ ParallelCoordinates.prototype.redraw = function() {
           var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
           return x;
         })
-        .attr("y", -20).attr("width", 16).attr("height", 16)
+        .attr("y", -20).attr("width", 10).attr("height", 10)
         .attr("class", "sort").attr("id", function(d,i){return i;}).text("Sort!").on("click", function(d, i){
           var prev_sort = _self.sortarray.slice();
           if(_self.sortarray[_self.dimensions.indexOf(d)]==0){
@@ -470,8 +484,9 @@ ParallelCoordinates.prototype.redraw = function() {
           if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
 
           }
-          d3.select("#remove-" + d).attr("opacity", 1);
-
+          var remove_id = _self.original_dimensions.indexOf(d);
+          d3.select("#remove-" + remove_id).attr("opacity", 1);
+          d3.select("#remove-" + remove_id).moveToFront();
         });
     })
     .selectAll("rect")
@@ -486,15 +501,16 @@ ParallelCoordinates.prototype.redraw = function() {
     g_axis.append("svg:image")
     .attr("class", "remove_filter")
     .attr("id", function(d, i){
-      return "remove-" + d;
+      var remove_id = _self.original_dimensions.indexOf(d);
+      return "remove-" + remove_id;
     })
     .attr("text-anchor", "middle")
     .attr("xlink:href", remove_svg)
-    .attr("width", 16)
-    .attr("height", 16)
+    .attr("width", 10)
+    .attr("height", 10)
     .attr("opacity", 0)
     .attr("y", -20).attr("x", function(d, i){
-      var x = -parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4)-18;
+      var x = -parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4)-12;
       return x;
     })
     .style("font-size", "75%")
@@ -503,8 +519,10 @@ ParallelCoordinates.prototype.redraw = function() {
     .on("click", function(d, i){
       if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
       }
+      var remove_id = _self.original_dimensions.indexOf(d);
       d3.select("#extent-" + i).attr("y", 0).attr("height", 0);
-      d3.select("#remove-" + d).attr("opacity", 0);
+      d3.select("#remove-" + remove_id).attr("opacity", 0);
+      d3.select("#remove-" + remove_id).moveToBack();
       _self.y[d].brush.clear();
       brush();
     });
@@ -541,7 +559,17 @@ ParallelCoordinates.prototype.redraw = function() {
         });
 
       d3.selectAll("g.brush")
-        .each(function(d) { d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush)); })
+        .each(function(d) { 
+          d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush)); 
+          _self.y[d].brush.on("brushend", function(d,i){
+            if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
+
+            }
+            var remove_id = _self.original_dimensions.indexOf(d);
+            d3.select("#remove-" + remove_id).attr("opacity", 1);
+            d3.select("#remove-" + remove_id).moveToFront();
+          });
+        })
       .selectAll("rect")
         .attr("x", -8)
         .attr("width", 16);
@@ -554,8 +582,8 @@ ParallelCoordinates.prototype.redraw = function() {
         d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][0])));
       };
 
-      transition(foreground).delay(delay).duration(duration)
-          .attr("d", path);
+      transition(_self.foreground).delay(delay).duration(duration)
+          .attr("d", _self.path);
       // Sort Action for Areas
       transition(_self.area_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_area_path(d);});
@@ -598,7 +626,17 @@ ParallelCoordinates.prototype.redraw = function() {
         });
 
       d3.selectAll("g.brush")
-        .each(function(d) { d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush)); })
+        .each(function(d) { 
+          d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", brush)); 
+          _self.y[d].brush.on("brushend", function(d,i){
+            if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
+
+            }
+            var remove_id = _self.original_dimensions.indexOf(d);
+            d3.select("#remove-" + remove_id).attr("opacity", 1);
+            d3.select("#remove-" + remove_id).moveToFront();
+          });
+        })
       .selectAll("rect")
         .attr("x", -8)
         .attr("width", 16);
@@ -611,8 +649,8 @@ ParallelCoordinates.prototype.redraw = function() {
         d3.select("#extent-" + temp_id_2).attr("y", _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][num])).attr("height", Math.abs(_self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][1]) - _self.y[_self.dimensions[i]](_self.prev_extents[_self.dimensions[i]][0])));
       };
 
-      transition(foreground).delay(delay).duration(duration)
-          .attr("d", path);
+      transition(_self.foreground).delay(delay).duration(duration)
+          .attr("d", _self.path);
       // Sort Action for Areas
       transition(_self.area_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_area_path(d);});
@@ -708,6 +746,9 @@ ParallelCoordinates.prototype.redraw = function() {
   _self.g_axis = g_axis;
   _self.g = g;
   _self.brush = brush;
+  d3.selectAll("image.sort").moveToFront();
+  _self.flip_axis_ascending = flip_axis_ascending;
+  _self.flip_axis_descending = flip_axis_descending;
 };
 
 ParallelCoordinates.prototype.rescale_axes = function(argument) {
@@ -717,7 +758,8 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
   }else if(argument == "Fit to Cluster"){
     _self.current_extent = _self.cluster_extent;
   }
-  _self.dimensions.forEach(function(d){
+
+  _self.dimensions.forEach(function(d,i){
     _self.y[d] = d3.scale.linear()
       .domain(_self.current_extent[d])
       .range([_self.h, 0]);
@@ -725,6 +767,8 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
       .domain([_self.h, 0])
       .range(_self.current_extent[d]);
   });
+
+
   _self.foreground.attr("d", _self.path);
   _self.g_axis.each(function(d, i) {
   var temp_id = _self.dimensions.indexOf(d) + 1;
@@ -738,9 +782,20 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
           if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
 
           }
-          d3.select("#remove-" + d).attr("opacity", 1);
+          var remove_id = _self.original_dimensions.indexOf(d);
+          d3.select("#remove-" + remove_id).attr("opacity", 1);
+          d3.select("#remove-" + remove_id).moveToFront();
         });
-    })
+    });
+
+  _self.dimensions.forEach(function(d,i){
+    if(_self.sortarray[i]==0){
+      _self.flip_axis_descending(d);
+    }else{
+      _self.flip_axis_ascending(d);
+    }
+  });
+  _self.foreground.attr("d", _self.path);
 };
 
 ParallelCoordinates.prototype.checkboxHandler = function(argument) {
@@ -807,17 +862,39 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
 
 ParallelCoordinates.prototype.shuffleHandler = function(argument) {
   var _self = this;
+  var prev_dimensions = _self.dimensions.slice();
   _self.dimensions = argument;
+  var array = _self.dimensions.map(function(d){return 0});
+  prev_dimensions.forEach(function(d, i){
+    var element = _self.sortarray[i];
+    array[_self.dimensions.indexOf(d)] = element;
+  });
+  _self.sortarray = array.slice();
+  console.log(_self.sortarray);
+  // check if axes are flipped?
   _self.shuffle_dimension();
 };
 
 ParallelCoordinates.prototype.shuffle_dimension = function(first_argument) {
   var _self = this;
   _self.x.domain(_self.dimensions);
+  _self.g.transition().duration(250).attr("transform", function(d) { return "translate(" + _self.x(d) + ")"; });
+  _self.dimensions.forEach(function(d,i){
+    _self.y[d]
+      .domain(_self.current_extent[d])
+      .range([_self.h, 0]);
+    _self.y_reverse[d]
+      .domain([_self.h, 0])
+      .range(_self.current_extent[d]);
+    if(_self.sortarray[i]==0){
+      _self.flip_axis_descending(d);
+    }else{
+      _self.flip_axis_ascending(d);
+    }
+  });
   _self.foreground.transition().duration(250).attr("d", _self.path);
   _self.area_path.transition().duration(250).attr("d", function(d){return _self.compute_area_path(d);});
   _self.line_path.transition().duration(250).attr("d", function(d){return _self.compute_line_path(d);});
-  _self.g.transition().duration(250).attr("transform", function(d) { return "translate(" + _self.x(d) + ")"; });
 };
 
 ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
@@ -987,7 +1064,7 @@ ParallelCoordinates.prototype.compute_area_path = function(d) {
     var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
     // var int95 = se95(d.length, deviation);
     var int95 = deviation; // bckwon: currently set as standard deviation
-    if(_self.sortarray[dim_index]==1){
+    if(_self.sortarray[_self.dimensions.indexOf(dim)] == 1){
       int95 = -int95;
     }
     obj["upper_bound"] = obj["mean"] + int95;
@@ -1007,7 +1084,7 @@ ParallelCoordinates.prototype.compute_line_path = function(d) {
     var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
     // var int95 = se95(d.length, deviation);
     var int95 = deviation; // bckwon: currently set as standard deviation
-    if(_self.sortarray[dim_index]==1){
+    if(_self.sortarray[_self.dimensions.indexOf(dim)] == 1){
       int95 = -int95;
     }
     obj["upper_bound"] = obj["mean"] + int95;
@@ -1021,10 +1098,11 @@ ParallelCoordinates.prototype.clean_brush = function() {
   var _self = this;
   _self.dimensions.forEach(function(d,i){
     d3.select("#extent-" + i).attr("y", 0).attr("height", 0);
-    d3.select("#remove-" + d).attr("opacity", 0);
     _self.y[d].brush.clear();    
   });
+  d3.selectAll(".remove_filter").attr("opacity", 0);
   _self.brush();
+  d3.selectAll("image.sort").moveToFront();
 };
 
 

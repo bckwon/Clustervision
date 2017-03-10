@@ -136,6 +136,7 @@ function Table(div_name, canvassize, datum) {
 
 Table.prototype.pcShuffleHandler = function(argument) {
 	var _self = this;
+	console.log(argument);
 	_self.rows.sort(function(a,b){
 		return argument.indexOf(a["Name"]) - argument.indexOf(b["Name"]);
 	})
