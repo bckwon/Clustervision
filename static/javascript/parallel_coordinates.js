@@ -16,7 +16,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   _self.cls_index = 0;
   _self.clustering = _self.session["clustering"];
   _self.labels = _self.clustering[_self.cls_index]["labels"];
-  var color_domain = d3.extent(_self.labels);
+  var color_domain = d3.extent(_self.labels, function(d){return parseInt(d);});
   _self.color = d3.scale.ordinal()
     .range(COLOR_RANGE.slice()).domain(color_domain);
 
@@ -764,7 +764,7 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
   _self.cls_argument = argument[0];
   _self.cls_index = argument[1];
   _self.color = d3.scale.ordinal()
-    .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return i;}));
+    .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return parseInt(i);}).sort());
   _self.labels = _self.cls_argument["labels"];
   _self.svg.style("display", null);
   _self.color_by_new_index();
