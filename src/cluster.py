@@ -132,6 +132,7 @@ def compute_clustering(params):
         # X_train_selected = select.transform(X_train)
 
         sorted_labels = sort_labels(dataset, labels)
+        feature_selected_labels = feature_selection_labels(pd_dataset, labels)
 
         quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
         quality_silhouette_clusters = quality_metrics.silhouette_clusters(dataset, labels)
@@ -171,6 +172,7 @@ def compute_clustering(params):
             'n_clusters': n_clusters,
             'clustering_parameters': params,
             'sorted_labels': sorted_labels,
+            'cluster_feature_selection': feature_selected_labels,
             'clustering_id': clustering_key,
             'feature_selection': {
                 'names': list(pd_dataset.columns.values),
@@ -179,13 +181,7 @@ def compute_clustering(params):
             },
         }
 
-        # print clustering['feature_selection']
-        # print dataset.shape
-        # print dataset[0][0]
-        # print pd_dataset[0][list(pd_dataset.columns.values)[0]]
-        # print len(description[0].keys())
-        # print dataset[0][0]
-        # print description[0]
+        print json.dumps(clustering)
 
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
@@ -207,6 +203,7 @@ def model_from_params(params):
 def n_clusters_from_labels(labels):
     return len(set(labels))
 
+
 def dataset_from_name(dataset_name, include_description=False):
     if dataset_name == 'blobs':
         (dataset, labels) = sklearn.datasets.make_blobs(n_samples=500,
@@ -222,8 +219,6 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions = None
 
         pd_dataset = pd.DataFrame(data=dataset,columns=["x","y"])
-        # pd_dataset['label'] = labels
-        # print pd_dataset
 
         return (pd_dataset, descriptions)
 
@@ -437,6 +432,37 @@ def sort_labels(dataset, labels):
                                 in sorted(zip(distance_vec, point_indices))]
         sorted_labels.append(sorted_point_indices)
     return sorted_labels
+
+def feature_selection_labels(pd_dataset, labels):
+    '''
+    labels - A list of integers with the same size as the data. Each entry indicates to which
+             clustering the corresponding point should belong.
+    feature_selected_labels -
+    '''
+    feature_selected_labels = []
+    dataset = pd_dataset.as_matrix()
+    labels_set = set(labels)
+    n_clusters = n_clusters_from_labels(labels)
+    for l in labels_set:
+        new_labels = labels
+        for i in new_labels:
+            if new_labels[i] == l:
+                new_labels[i] = 1
+            else:
+                new_labels[i] = 0
+        X_train, X_test, y_train, y_test = train_test_split(dataset, new_labels,random_state=0,test_size=1)
+        select = SelectPercentile(percentile=50)
+        select.fit(X_train,y_train)
+
+        fs = {}
+        fs["cluster_label"] = str(l)
+        fs["names"] = list(pd_dataset.columns.values)
+        fs["scores"] = select.scores_.tolist()
+        fs["pvalues"] = select.pvalues_.tolist()
+
+        feature_selected_labels.append(fs)
+    print feature_selected_labels
+    return feature_selected_labels
 
 def get_env():
     env = lmdb.open(config.DB_FILENAME, map_size=config.LMDB_MAP_SIZE)

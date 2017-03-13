@@ -113,7 +113,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 								// x: x_position
 								// size: rect_size
 								// array: sorted_labels
-								console.log(d);
 								var array = [];
 								array = d["sorted_labels"].map(function(e,j){
 									var obj = {};

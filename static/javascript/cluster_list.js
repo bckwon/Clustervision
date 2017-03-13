@@ -173,6 +173,10 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.style("fill", "blue")
 						.text(function(d){return d["name"]+ ": " + d["value"];});
 
+	var cluster_feature_selection = data["clustering"][clustering_index]["cluster_feature_selection"][cluster_num];
+	// TODO: BC, use this information to show cluster-centric features selection
+	// console.log(cluster_feature_selection);
+
 	// Inliner + Outlier
 	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
 	var top_5 = sorted_labels.slice(0,5);
