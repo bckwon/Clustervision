@@ -150,6 +150,7 @@ ParallelCoordinates.prototype.highlight = function(argument){
       }
     }).style("stroke-width", function(d,i){
       if(i==index){
+        d3.select(this).moveToFront();
         return 2;
       }else{
         return 1;
@@ -870,7 +871,6 @@ ParallelCoordinates.prototype.shuffleHandler = function(argument) {
     array[_self.dimensions.indexOf(d)] = element;
   });
   _self.sortarray = array.slice();
-  console.log(_self.sortarray);
   // check if axes are flipped?
   _self.shuffle_dimension();
 };
@@ -917,6 +917,8 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
   _self.rescale_axes("Fit to Cluster");
   _self.redraw();
   _self.mean_and_95();
+  d3.selectAll("g.foreground").moveToFront();
+  d3.selectAll("path.line_path").moveToFront();
 };
 
 ParallelCoordinates.prototype.color_by_new_index = function() {

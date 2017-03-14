@@ -110,6 +110,10 @@ th, td{
     text-align: center;
 }
 
+tr.selected{
+    background-color: #e34a33;
+}
+
 .tick{
     font-size: 75%;
 }

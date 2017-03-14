@@ -228,8 +228,8 @@
             window.setTimeout('load_projection();', 100);
         } else {
             var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2.5);
-            setup_checkbox_list();
             var pc = new ParallelCoordinates(".canvas_middle_bottom_right", session, screen_width/2*.75, screen_height/2.5, sort_asc, sort_desc, remove_svg);
+            setup_checkbox_list();
         }
         initialize_values();
     }
@@ -372,11 +372,11 @@
         $('input.feature_checkbox').on("click", function(elm){
             var array = $('input.feature_checkbox:checked').map(function(){
                 return $(this).val();
-            })
+            });
             var table_array = table.rows.data().map(function(row_data){return row_data["Name"];});
             array = _.intersection(table_array, array);
             _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
-        })
+        });
     }
 
 

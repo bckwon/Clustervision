@@ -4,6 +4,7 @@ function Table(div_name, canvassize, datum) {
 	_self.data = datum;
 	_self.original_data = datum;
 	_self.attributes = d3.keys(datum[0]).sort();
+	_self.selected_item = [];
 
 	var data;
 	var attributes = []; 
@@ -22,8 +23,41 @@ function Table(div_name, canvassize, datum) {
 			.append("div")
 			.classed("wrap", true);
 
+		// right_click to open menu
+		_self.context_menu = [
+	        {
+	            title: 'Check',
+	            action: function(elm, d, i) {
+	              // Check _self.selcted_item
+
+	              // Fire checked items to PC
+
+	              _self.selected_item = [];
+	              _self.highlight_rows_by_name(_self.selected_item);
+	              console.log(_self.selected_item);
+	            },
+	            disabled: false
+	        },
+	        {
+	            title: 'Uncheck',
+	            action: function(elm, d, i) {
+	              // UnCheck _self.selcted_item
+
+	              // Fire checked items to PC
+
+	              _self.selected_item = [];
+	              _self.highlight_rows_by_name(_self.selected_item);
+	              console.log(_self.selected_item);
+	            },
+	            disabled: false
+	        }
+	    ];
+
+
 		// create the table
 		_self.table = wrapDiv.append("table");
+
+		_self.table.on("contextmenu", d3.contextMenu(_self.context_menu));
 
 		// create the table header
 		_self.table.append("tr")
@@ -100,14 +134,44 @@ function Table(div_name, canvassize, datum) {
 			})
 			.on("mouseover", function(k) {
 				d3.select(this).classed("hover", true);
+				_self.highlight_rows_by_name(_self.selected_item);
 				d3.select(this).style("background-color", ATTRIBUTE_HIGHLIGHT_COLOR);
+				// Color by selected item
 				_s.listenerMap['table_listener_for_parallel_coordinates'].fire(k["Name"]);
 			})
 			.on("mouseout", function(k) {
 				d3.select(this).classed("hover", false);
 				d3.select(this).style("background-color", ATTRIBUTE_DEHIGHLIGHT_COLOR);
+				_self.highlight_rows_by_name(_self.selected_item);
 				_s.listenerMap['table_listener_for_parallel_coordinates'].fire(null);
-			});
+			}).on("click", function(d,i){
+				d3.event.preventDefault();
+			    if (d3.event.shiftKey) {
+			    	console.log("shift_key_clicked");
+			    	if(_self.selected_item.length > 0){
+		    			var array = $('input.feature_checkbox').map(function(){
+			                return $(this).val();
+			            });
+    					var dimset = _.intersection(_self.rows.data().map(function(row_data){return row_data["Name"];}),array);
+    					var current_data_index = dimset.indexOf(d["Name"]);
+    					var anchor_index = (current_data_index < dimset.indexOf(_self.selected_item[_self.selected_item.length-1]))? dimset.indexOf(_self.selected_item[_self.selected_item.length-1]) : dimset.indexOf(_self.selected_item[0]);
+    					var filter_array = [anchor_index, current_data_index];
+    					filter_array = filter_array.sort();
+    					_self.selected_item = dimset.slice(filter_array[0], filter_array[1]+1);
+    					console.log(_self.selected_item);
+			    	}else{
+			    		console.log("selected item");
+			    		_self.selected_item = [d["Name"]];
+			    		console.log(_self.selected_item);
+			    	}
+			    }else{
+			    	console.log("!shift_key_clicked");
+			    	_self.selected_item = [d["Name"]];
+			    	console.log(_self.selected_item);
+			    }
+			    _self.highlight_rows_by_name(_self.selected_item);
+
+			})
 
 		// create the cells
 		_self.tableCells = _self.rows
@@ -134,9 +198,17 @@ function Table(div_name, canvassize, datum) {
 	_self.pc_shuffle_listener.subscribe($.proxy(_self.pcShuffleHandler, _self));
 }
 
+Table.prototype.send_checked_items_to_pc = function() {
+	var _self = this;
+	var array = $('input.feature_checkbox:checked').map(function(){
+	                return $(this).val();
+	            });
+    var dimset = _.intersection(_self.rows.data().map(function(row_data){return row_data["Name"];}),array);
+	_s.listenerMap['shuffle_listener_for_parallel_coordinates'].fire(dimset);
+};
+
 Table.prototype.pcShuffleHandler = function(argument) {
 	var _self = this;
-	console.log(argument);
 	_self.rows.sort(function(a,b){
 		return argument.indexOf(a["Name"]) - argument.indexOf(b["Name"]);
 	})
@@ -185,6 +257,24 @@ Table.prototype.highlight_rows = function(obj_array) {
 	} else {
 		d3.selectAll("tr").classed("selected", function(d) {
 			if (_self.array_contains(obj_array, d)) { return true; }
+		});
+	}
+}
+
+Table.prototype.highlight_rows_by_name = function(obj_array) {
+	var _self = this;
+	if (obj_array == undefined || obj_array.length == 0) {
+		_self.rows.classed("selected", false).style("background-color", "white"); 
+	} else {
+		_self.rows.classed("selected", function(d) {
+			console.log(d);
+			if (obj_array.indexOf(d["Name"]) > -1) { 
+				d3.select(this).style("background-color", "red");
+				return true; 
+			}else{
+				d3.select(this).style("background-color", "white");
+				return false;
+			}
 		});
 	}
 }
