@@ -6,7 +6,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.rect_size = 30;
 
 	_self.parameters = ["n_clusters", "alg_name"];
-	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_samples", "separation_clusters", "cohesion_clusters", "min_max_dist");
+	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist");
 	_self.radius = 7.5;
 	_self.buffer_coeff = 1.25;
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;

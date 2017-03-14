@@ -6,7 +6,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 	_self.rect_size = 15;
 
 	_self.parameters = ["n_clusters"];
-	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_samples", "separation_clusters", "cohesion_clusters");
+	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_clusters","silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist");
 	_self.radius = 7.5;
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
 
@@ -23,7 +23,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
             	console.log(d);
                 console.log(i);
             },
-            disabled: false 
+            disabled: false
         }
     ];
 

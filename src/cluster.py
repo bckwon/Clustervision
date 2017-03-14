@@ -156,6 +156,7 @@ def compute_clustering(params):
         clustering = {
             'quality': quality_sdbw, # quality_silhouette, # backward compatability
             'quality_metrics': {
+
                 'sdbw': quality_sdbw,
                 'silhouette_score': quality_silhouette,
                 'silhouette_clusters': quality_silhouette_clusters,
@@ -180,8 +181,6 @@ def compute_clustering(params):
                 'pvalues': select.pvalues_.tolist(),
             },
         }
-
-        print json.dumps(clustering)
 
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
@@ -461,7 +460,6 @@ def feature_selection_labels(pd_dataset, labels):
         fs["pvalues"] = select.pvalues_.tolist()
 
         feature_selected_labels.append(fs)
-    print feature_selected_labels
     return feature_selected_labels
 
 def get_env():
