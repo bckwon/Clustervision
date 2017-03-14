@@ -109,6 +109,7 @@ def get_clustering():
 
     # If no user choice is provided, find the query clustering by finding the
     # clustering with the highest quality that satisfies the user constraints.
+    qm = 'sdbw'
     if query_params is None:
         assert query_clustering is None
         # In the first round, the user's choice is not specified.
@@ -117,10 +118,11 @@ def get_clustering():
         for params in param_vec:
             clustering = cluster.load_clustering(params)
 
-            quality = clustering['quality']
+            quality = clustering['quality_metrics'][qm]
             if quality > best_quality and \
                constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
                 query_params = params
+                clustering['clustering_parameters']['chosen_by'] = qm
                 query_clustering = clustering
                 best_quality = quality
     else:
@@ -189,7 +191,9 @@ def get_clustering():
 
                 if best_score == float('-inf'):
                     break
-                print str(qm) + " " + str(best_params)
+                # print str(qm) + " " + str(best_params)
+                best_clustering['clustering_parameters']['chosen_by'] = qm
+                # best_params['quality_metric_responsible'] = qm
                 qm_choices.append(best_params)
                 param_choices.append(best_params)
                 clustering_choices.append(best_clustering)
