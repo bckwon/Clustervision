@@ -181,7 +181,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 				return _self.rect_size*(1.5+cluster_measures.length);
 			})
 			.attr("width", (_self.width-_self.margin*2))
-			.attr("height", _self.rect_size*3)
+			.attr("height", _self.rect_size*10)
 			.attr("requiredFeatures", "http://www.w3.org/1999/xhtml")
 			.append("xhtml:div")
 			.attr("xmlns", "http://www.w3.org/1999/xhtml")
@@ -247,7 +247,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 	_self.tableCells = _self.feat_body
 			.selectAll("td")
-			.data(function(d) { 
+			.data(function(d) {
 				var array = [];
 				attributes.forEach(function(a){
 					array.push(d[a]);
