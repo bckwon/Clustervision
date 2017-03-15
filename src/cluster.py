@@ -345,7 +345,7 @@ def dataset_from_name(dataset_name, include_description=False):
         return (data, descriptions)
     elif dataset_name == 'sutter':
         # data = np.load('data/snow_data/snow.npy').astype(float)
-        pdata = pd.read_csv('data/sutter_data/sutter3-7-2017-all.csv')
+        pdata = pd.read_csv('data/sutter_data/sutter3-15-2017-all.csv')
         data = pdata.as_matrix()
         # std = data.std(axis=0)
         # data = data[:, std != 0]
