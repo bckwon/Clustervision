@@ -145,7 +145,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 	// 				.style("stroke-width", "2.5px")
 
 	_self.cluster_title = _self.cluster_space.append("text")
-					.attr("dy", _self.rect_size*2)
+					.attr("dy", 0)
 					.text("Cluster " + cluster_num)
 					.style("font-size", "200%");
 
@@ -167,15 +167,96 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.data(cluster_measures).enter()
 					.append("text")
 						.attr("dy", function(d,i){
-							return _self.rect_size*(i+4);
+							return _self.rect_size*(i+2);
 						})
 						.attr("class", "cluster_measures")
 						.style("fill", "blue")
 						.text(function(d){return d["name"]+ ": " + d["value"];});
 
 	var cluster_feature_selection = data["clustering"][clustering_index]["cluster_feature_selection"][cluster_num];
-	// TODO: BC, use this information to show cluster-centric features selection
-	// console.log(cluster_feature_selection);
+
+	_self.foreign_space = _self.cluster_space.append("foreignObject")
+			.attr("x", 0)
+			.attr("y", function(d,i){
+				return _self.rect_size*(1.5+cluster_measures.length);
+			})
+			.attr("width", (_self.width-_self.margin*2))
+			.attr("height", _self.rect_size*3)
+			.attr("requiredFeatures", "http://www.w3.org/1999/xhtml")
+			.append("xhtml:div")
+			.attr("xmlns", "http://www.w3.org/1999/xhtml")
+			// .attr("width", (_self.width-_self.margin*2))
+			// .attr("height", _self.rect_size*3)
+			.style("width", "100%")
+			.style("height", "100%")
+			// .style("position", "relative")
+			// .attr("x", 0)
+			// .attr("y", function(d,i){
+			// 	return _self.rect_size*(1.5+cluster_measures.length);
+			// })
+			// .style("left", 0)
+			// .style("top", function(d,i){
+			// 	return _self.rect_size*(1.5+cluster_measures.length)+"px";
+			// })
+			.attr("class", "feature_selection_table")
+			.style("overflow-y", "hidden");
+
+	var table_data = [];
+	var numeric_attr = cluster_feature_selection["names"];
+	console.log(numeric_attr);
+    numeric_attr.forEach(function(d){
+        var obj = {};
+        obj["Name"] = d;
+        feature_index = cluster_feature_selection["names"].indexOf(d);
+        obj["Score"] = Math.round(cluster_feature_selection["scores"][feature_index],0);
+        if(isNaN(obj["Score"])){
+            obj["Score"] = 0;
+        }
+        if(cluster_feature_selection["pvalues"][feature_index] < .05){
+            obj["Score"] = obj["Score"].toString() + "*";
+        }else{
+            obj["Score"] = obj["Score"].toString();
+        }
+        // obj["P-Value"] = Math.round(cluster_feature_selection["pvalues"][feature_index],-2);
+        table_data.push(obj);
+    });
+
+    console.log(table_data);
+	// _self.feature_selection_table = new Table(".feature_selection_table", [_self.width, _self.rect_size*4], table_data);
+
+	var attributes = d3.keys(table_data[0]);
+	table_data = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);});
+
+	_self.feat_table = _self.foreign_space.append("table");
+
+	_self.feat_header = _self.feat_table.append("tr")
+							.attr("class", "feat_table_header")
+							.selectAll("th")
+						.data(attributes).enter()
+							.append("th")
+							.text(function(d) { return d; })
+							.classed("head", true)
+							.style("cursor", "pointer");
+
+	_self.feat_body = _self.feat_table.selectAll("tr.feat_table_element")
+							.data(table_data)
+							.enter()
+						.append("tr")
+							.attr("class", "feat_table_element")
+							.style("cursor", "pointer");
+
+	_self.tableCells = _self.feat_body
+			.selectAll("td")
+			.data(function(d) { 
+				var array = [];
+				attributes.forEach(function(a){
+					array.push(d[a]);
+				})
+				return array;
+			})
+			.enter()
+			.append("td")
+			.text(function(d) { return d; });
 
 	// Inliner + Outlier
 	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
@@ -189,7 +270,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.attr("class", "sample_items_space")
 						.attr("transform", function(d,i){
 							var x = i*_self.width/2;
-							var y = _self.rect_size*(4+cluster_measures.length);
+							var y = _self.rect_size*(5+cluster_measures.length);
 							return "translate("+x+","+y+")";
 						});
 
@@ -231,6 +312,8 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 							d3.selectAll("rect.sample_items").style("stroke", "black").style("stroke-width", "1px");
 							_s.listenerMap['cluster_list_listener_for_data_point'].fire();
 						});
+
+
 
 };
 
