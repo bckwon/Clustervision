@@ -5,8 +5,8 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.margin = 60;
 	_self.rect_size = 30;
 
-	_self.parameters = ["n_clusters", "alg_name"];
-	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_samples", "separation_clusters", "cohesion_clusters", "min_max_dist");
+	_self.parameters = ["n_clusters", "alg_name", "chosen_by"];
+	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist");
 	_self.radius = 7.5;
 	_self.buffer_coeff = 1.25;
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
@@ -238,7 +238,6 @@ ClusteringStripes.prototype.popup = function(list_index){
 	var list_desc = pop_space.selectAll("g.list_desc")
 							.data(function(d){
 								var cluster_param = d;
-
 								var array = _self.parameters.map(function(e){
 
 									var value = 0;

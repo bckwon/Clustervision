@@ -2,10 +2,12 @@
 
 DB_FILENAME = 'db.lmdb'         # Database filename
 LMDB_MAP_SIZE = 1e10            # Maximum size of the map file
-NUM_CHOICES = 10                # How many clusterings to show the user (including the previous best)
-L_INITIAL = 0.5                 # Initial value for MMR parameter lambda
-L_INCREMENT = 0.1               # L increases by this amount after each round.
-MIN_CLUSTERING_DIST = 0.01      # Minimum distance between any two clusterings shown to the user.
+USE_TOP_QUALITY_RESULTS = True  # Set to False if you want MMR Diversity-Quality
+NUM_CHOICES_PER_QM = 3          # Only for Top QM: How many top clusterings to show the user for each quality metric
+NUM_CHOICES = 10                # Only for MMR: How many clusterings to show the user (including the previous best)
+L_INITIAL = 0.5                 # Only for MMR: Initial value for MMR parameter lambda
+L_INCREMENT = 0.1               # Only for MMR: L increases by this amount after each round.
+MIN_CLUSTERING_DIST = 0.05      # Minimum distance between any two clusterings shown to the user.
 NUM_RANDOM_WEIGHTINGS = 1       # Number of random weightings to try (in addition to the original weighting)
 RANDOM_WEIGHTING_ALPHA = 0.3    # Parameter for Dirichlet distribution, used for randomly weighting the data. Increasing this value will lead to smoother weights. Decreasing this value will yield sparser weights.
 PARALLEL = False                # Compute the clusterings in parallel?

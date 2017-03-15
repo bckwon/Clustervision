@@ -109,6 +109,7 @@ def get_clustering():
 
     # If no user choice is provided, find the query clustering by finding the
     # clustering with the highest quality that satisfies the user constraints.
+    qm = 'sdbw'
     if query_params is None:
         assert query_clustering is None
         # In the first round, the user's choice is not specified.
@@ -117,10 +118,11 @@ def get_clustering():
         for params in param_vec:
             clustering = cluster.load_clustering(params)
 
-            quality = clustering['quality']
+            quality = clustering['quality_metrics'][qm]
             if quality > best_quality and \
                constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
                 query_params = params
+                clustering['clustering_parameters']['chosen_by'] = qm
                 query_clustering = clustering
                 best_quality = quality
     else:
@@ -134,31 +136,67 @@ def get_clustering():
         print 'Error: no clustering satisfied these constraints'
         return json.dumps([])
 
-    # Step 2: Run MMR to choose clusterings to show the user.
-    param_choices = [query_params]
-    clustering_choices = [query_clustering]
-    while len(param_choices) < min(len(param_vec), config.NUM_CHOICES):
-        best_score = float('-inf')
-        for params in param_vec:
-            if params not in param_choices:
-                clustering = cluster.load_clustering(params)
+    # Step 2a: Run MMR to choose clusterings to show the user.
+    if (config.USE_TOP_QUALITY_RESULTS == False):
+        param_choices = [query_params]
+        clustering_choices = [query_clustering]
+        while len(param_choices) < min(len(param_vec), config.NUM_CHOICES):
+            best_score = float('-inf')
+            for params in param_vec:
+                if params not in param_choices:
+                    clustering = cluster.load_clustering(params)
 
-                quality = clustering['quality']
-                dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
-                                for other_clustering in clustering_choices])
-                dist_to_closest_clustering = dist_vec
-                score = L * quality + (1. - L) * dist_to_closest_clustering
-                if score > best_score and \
-                   dist_to_closest_clustering > config.MIN_CLUSTERING_DIST and \
-                   constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
-                    best_score = score
-                    best_params = params
-                    best_clustering = clustering
-        if best_score == float('-inf'):
-            break
+                    quality = clustering['quality']
+                    dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
+                                    for other_clustering in clustering_choices])
+                    dist_to_closest_clustering = dist_vec
+                    score = L * quality + (1. - L) * dist_to_closest_clustering
+                    if score > best_score and \
+                       dist_to_closest_clustering > config.MIN_CLUSTERING_DIST and \
+                       constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
+                        best_score = score
+                        best_params = params
+                        best_clustering = clustering
+            if best_score == float('-inf'):
+                break
 
-        param_choices.append(best_params)
-        clustering_choices.append(best_clustering)
+            param_choices.append(best_params)
+            clustering_choices.append(best_clustering)
+    # Or Step 2b: Instead of MMR, choose top N from each quality metric
+    else:
+        quality_metrics = ['sdbw','silhouette_score','calinski_harabaz','davies_bouldin','cohesion','separation']
+
+        param_choices = [query_params]
+        clustering_choices = [query_clustering]
+        for qm in quality_metrics:
+            qm_choices = [query_params]
+            while len(qm_choices) <= min(len(param_vec), config.NUM_CHOICES_PER_QM):
+                best_score = float('-inf')
+                for params in param_vec:
+                    if params not in param_choices:
+                        clustering = cluster.load_clustering(params)
+
+                        quality = clustering['quality_metrics'][qm]
+                        dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
+                                        for other_clustering in clustering_choices])
+                        dist_to_closest_clustering = dist_vec
+                        score = quality # L * quality + (1. - L) * dist_to_closest_clustering
+
+                        if score > best_score and \
+                           dist_to_closest_clustering > config.MIN_CLUSTERING_DIST and \
+                           constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):
+                            best_score = score
+                            best_params = params
+                            best_clustering = clustering
+
+                if best_score == float('-inf'):
+                    break
+                # print str(qm) + " " + str(best_params)
+                best_clustering['clustering_parameters']['chosen_by'] = qm
+                # best_params['quality_metric_responsible'] = qm
+                qm_choices.append(best_params)
+                param_choices.append(best_params)
+                clustering_choices.append(best_clustering)
 
     session['choices'] = session.get('choices', []) + [param_choices]
     session['L'] += config.L_INCREMENT
