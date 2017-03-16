@@ -203,7 +203,6 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 	var table_data = [];
 	var numeric_attr = cluster_feature_selection["names"];
-	console.log(numeric_attr);
     numeric_attr.forEach(function(d){
         var obj = {};
         obj["Name"] = d;
@@ -221,7 +220,6 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
         table_data.push(obj);
     });
 
-    console.log(table_data);
 	// _self.feature_selection_table = new Table(".feature_selection_table", [_self.width, _self.rect_size*4], table_data);
 
 	var attributes = d3.keys(table_data[0]);

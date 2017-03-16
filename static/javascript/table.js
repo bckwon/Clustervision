@@ -28,34 +28,43 @@ function Table(div_name, canvassize, datum) {
 	        {
 	            title: 'Check',
 	            action: function(elm, d, i) {
-	              // Check _self.selcted_item
-
-	              // Fire checked items to PC
-
-	              _self.selected_item = [];
-	              _self.highlight_rows_by_name(_self.selected_item);
-	              console.log(_self.selected_item);
+					// $('input.feature_checkbox').prop("checked", false);
+					_self.selected_item.forEach(function(item, item_index){
+						$('input.feature_checkbox[value="'+item+'"]').prop("checked", true);
+					})
+					var table_array = _self.rows.data().map(function(row_data){return row_data["Name"];});
+					var array = $('input.feature_checkbox:checked').map(function(){
+		                return $(this).val();
+		            })
+		            array = _.intersection(table_array, array);
+  					_s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
+					_self.selected_item = [];
+					_self.highlight_rows_by_name(_self.selected_item);
 	            },
 	            disabled: false
 	        },
 	        {
 	            title: 'Uncheck',
 	            action: function(elm, d, i) {
-	              // UnCheck _self.selcted_item
-
-	              // Fire checked items to PC
-
+  					_self.selected_item.forEach(function(item, item_index){
+						$('input.feature_checkbox[value="'+item+'"]').prop("checked", false);
+					})
+  					var table_array = _self.rows.data().map(function(row_data){return row_data["Name"];});
+					var array = $('input.feature_checkbox:checked').map(function(){
+		                return $(this).val();
+		            })
+		            array = _.intersection(table_array, array);
+  					_s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
 	              _self.selected_item = [];
 	              _self.highlight_rows_by_name(_self.selected_item);
-	              console.log(_self.selected_item);
 	            },
 	            disabled: false
 	        }
 	    ];
 
-
+	    _self.score_scale = d3.scale.linear().domain(d3.extent(data, function(d){return parseFloat(d["Score"]);})).range([1, 100]);
 		// create the table
-		_self.table = wrapDiv.append("table");
+		_self.table = wrapDiv.append("table").attr("id", "feature_checkbox_table");
 
 		_self.table.on("contextmenu", d3.contextMenu(_self.context_menu));
 
@@ -145,9 +154,7 @@ function Table(div_name, canvassize, datum) {
 				_self.highlight_rows_by_name(_self.selected_item);
 				_s.listenerMap['table_listener_for_parallel_coordinates'].fire(null);
 			}).on("click", function(d,i){
-				d3.event.preventDefault();
 			    if (d3.event.shiftKey) {
-			    	console.log("shift_key_clicked");
 			    	if(_self.selected_item.length > 0){
 		    			var array = $('input.feature_checkbox').map(function(){
 			                return $(this).val();
@@ -158,34 +165,62 @@ function Table(div_name, canvassize, datum) {
     					var filter_array = [anchor_index, current_data_index];
     					filter_array = filter_array.sort();
     					_self.selected_item = dimset.slice(filter_array[0], filter_array[1]+1);
-    					console.log(_self.selected_item);
 			    	}else{
-			    		console.log("selected item");
 			    		_self.selected_item = [d["Name"]];
-			    		console.log(_self.selected_item);
 			    	}
+			    }else if(d3.event.metaKey || d3.event.ctrlKey){
+			    	if(_self.selected_item.indexOf(d["Name"])>-1){
+		    			_self.selected_item.splice(_self.selected_item.indexOf(d["Name"]),1)
+		    		}else{
+		    			_self.selected_item.push(d["Name"]);
+		    		}
 			    }else{
-			    	console.log("!shift_key_clicked");
-			    	_self.selected_item = [d["Name"]];
-			    	console.log(_self.selected_item);
+		    		if(_self.selected_item.indexOf(d["Name"])>-1 && _self.selected_item.length == 1){
+		    			_self.selected_item = [];
+		    		}else{
+		    			_self.selected_item = [d["Name"]];
+		    		}
 			    }
 			    _self.highlight_rows_by_name(_self.selected_item);
-
 			})
 
 		// create the cells
 		_self.tableCells = _self.rows
 			.selectAll("td")
-			.data(function(d) { 
+		.data(function(d) { 
 				var array = [];
 				_self.attributes.forEach(function(a){
 					array.push(d[a]);
 				})
 				return array;
 			})
-			.enter()
+		.enter()
 			.append("td")
-			.text(function(d) { return d; });
+			.text(function(d,i) { 
+				if(i==0){
+					return d;
+				}else{
+					return "";
+				}});
+
+		_self.tableCells.append("div")
+				.style("display", "block")
+				.style("height", function(d,i){
+					if(i==1){
+						return "17px";
+					}
+				})
+				.style("width", function(d,i){
+					if(i==1){
+						return _self.score_scale(parseFloat(d))+ "%";
+					}
+				})
+				.style("background-color", "#a6bddb")
+				.text(function(d,i){
+					if(i==1){
+						return d;
+					}
+				})
 	}
 	_self.add_checkbox();
 
@@ -267,9 +302,8 @@ Table.prototype.highlight_rows_by_name = function(obj_array) {
 		_self.rows.classed("selected", false).style("background-color", "white"); 
 	} else {
 		_self.rows.classed("selected", function(d) {
-			console.log(d);
 			if (obj_array.indexOf(d["Name"]) > -1) { 
-				d3.select(this).style("background-color", "red");
+				d3.select(this).style("background-color", "#e34a33");
 				return true; 
 			}else{
 				d3.select(this).style("background-color", "white");

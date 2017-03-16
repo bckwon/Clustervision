@@ -899,26 +899,54 @@ ParallelCoordinates.prototype.shuffle_dimension = function(first_argument) {
 
 ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
   var _self = this;
+
+
   _self.cls_argument = argument[0];
   _self.cls_index = argument[1];
   // _self.color = d3.scale.ordinal()
   //   .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return parseInt(i);}).sort());
+
   _self.labels = _self.cls_argument["labels"];
   _self.svg.style("display", null);
   _self.color_by_new_index();
-  _self.dimensions = _self.original_dimensions;
+
+  var feature_selection = _self.clustering[_self.cls_index]["feature_selection"];
+  var table_data = [];
+  _self.original_dimensions.forEach(function(d){
+    var obj = {};
+    obj["Name"] = d;
+    feature_index = feature_selection["names"].indexOf(d);
+    obj["Score"] = Math.round(feature_selection["scores"][feature_index],0);
+    if(isNaN(obj["Score"])){
+        obj["Score"] = 0;
+    }
+    if(feature_selection["pvalues"][feature_index] < .05){
+        obj["Score"] = obj["Score"].toString() + "*";
+    }else{
+        obj["Score"] = obj["Score"].toString();
+    }
+    // obj["P-Value"] = Math.round(feature_selection["pvalues"][feature_index],-2);
+    table_data.push(obj);
+  });
+
+  _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
   _self.sortarray = [];
   _self.temparray = [];
   for (var i = _self.dimensions.length - 1; i >= 0; i--) {
     _self.sortarray.push(0);
     _self.temparray.push(0);
   };
+
   _self.get_cluster_extent();
-  _self.rescale_axes("Fit to Cluster");
   _self.redraw();
+  _self.rescale_axes("Fit to Cluster");
   _self.mean_and_95();
   d3.selectAll("g.foreground").moveToFront();
   d3.selectAll("path.line_path").moveToFront();
+
+  // _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
+
+  // _self.checkboxHandler(_self.dimensions.slice());
 };
 
 ParallelCoordinates.prototype.color_by_new_index = function() {

@@ -343,7 +343,7 @@
             }else{
                 table_data.push({"Name": d});
             }
-        })
+        });
 
         var table = new Table(".canvas_middle_bottom_left", [screen_width/10, screen_height/2.5], table_data);
 
@@ -364,6 +364,9 @@
             var table_array = table.rows.data().map(function(row_data){return row_data["Name"];});
             array = _.intersection(table_array, array);
 
+            table.highlight_rows_by_name([]);
+            table.selected_item = [];
+
             _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
         })
 
@@ -377,6 +380,32 @@
             array = _.intersection(table_array, array);
             _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
         });
+        if(cluster_bool){
+            table.selected_item = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
+            $('input.feature_checkbox').prop("checked", false);
+            table.selected_item.forEach(function(item, item_index){
+                $('input.feature_checkbox[value="'+item+'"]').prop("checked", true);
+            })
+            var k = "Score";
+            table.rows.sort(function(a, b) {
+                if (isNaN(parseFloat(a[k])) || isNaN(parseFloat(b[k]))) {
+                    return d3.ascending(a[k], b[k]);
+                } else {
+                    if (+parseFloat(a[k]) > +parseFloat(b[k])) { return -1; }
+                    if (+parseFloat(a[k]) < +parseFloat(b[k])) { return 1; }
+                    return 0;
+                }
+            });
+
+            // var array = $('input.feature_checkbox:checked').map(function(){
+            //     return $(this).val();
+            // })
+            // var table_array = table.rows.data().map(function(row_data){return row_data["Name"];});
+            // array = _.intersection(table_array, array);
+            // _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
+
+            table.selected_item = [];
+        }
     }
 
 

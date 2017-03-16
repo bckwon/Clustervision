@@ -13,3 +13,4 @@ var MEAN_LINE_STROKE_WIDTH = 3;
 var MEAN_LINE_STROKE_COEFFICIENT = -0.25; // -1 (darkest) to 1 (lightest)
 var ATTRIBUTE_HIGHLIGHT_COLOR = "#fee8c8";
 var ATTRIBUTE_DEHIGHLIGHT_COLOR = "white";
+var NUM_OF_ATTRS_TO_BEGIN = 8; // default num for checked attrs at the beginning
