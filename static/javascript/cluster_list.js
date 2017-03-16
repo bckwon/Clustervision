@@ -126,6 +126,7 @@ ClusterList.prototype.reset_view = function() {
 	var _self = this;
 	_self.cluster_space.selectAll("*").remove();
 	_self.data_point_space.selectAll("*").remove();
+	d3.selectAll(".feature_selection_table").remove();
 	d3.select(".top_right").style("border-style", "none");
 	d3.select(".bottom_right").style("border-style", "none");
 };
@@ -134,6 +135,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 	var _self = this;
 
 	_self.cluster_space.selectAll("*").remove();
+	d3.selectAll(".feature_selection_table").remove();
 	d3.select(".top_right").style("border-style", "solid");
 	// _self.cluster_rect = _self.cluster_space.append("rect")
 	// 				.attr("width", _self.width)
@@ -173,24 +175,101 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.style("fill", "blue")
 						.text(function(d){return d["name"]+ ": " + d["value"];});
 
+	// Inliner + Outlier
+	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
+	var top_5 = sorted_labels.slice(0,5);
+	var bottom_5 = sorted_labels.slice(-5);
+	var in_and_out = [top_5, bottom_5];
+
+	_self.sample_items_space = _self.cluster_space.selectAll("g.sample_items_space")
+						.data(in_and_out).enter()
+					.append("g")
+						.attr("class", "sample_items_space")
+						.attr("transform", function(d,i){
+							var x = i*_self.width/2;
+							var y = _self.rect_size*(2+cluster_measures.length);
+							return "translate("+x+","+y+")";
+						});
+
+	_self.sample_item_text = _self.sample_items_space.selectAll("text")
+						.data(function(d){return d;}).enter()
+					.append("text")
+						.attr("dx", function(d,i){
+							return _self.rect_size*5/2;
+						})
+						.attr("dy", function(d,i){
+							return _self.rect_size*(i+.5);
+						})
+						.attr("class", "sample_items_text")
+						.style("fill", "black")
+						.style("alignment-baseline", "central")
+						.style("text-anchor", "middle")
+						.style("font-size", "80%")
+						.style("cursor", "pointer")
+						.text(function(d){return "Item#" + d[0] + ": " + d[1].toFixed(3);});
+
+	_self.sample_items = _self.sample_items_space.selectAll("rect")
+						.data(function(d){return d;}).enter()
+					.append("rect")
+						.attr("class", "sample_items")
+						.attr("y", function(d,i){return i*_self.rect_size;})
+						.attr("width", _self.rect_size*5)
+						.attr("height", _self.rect_size*.95)
+						.style("fill-opacity", 0)
+						.style("fill", "white")
+						.style("stroke", "black")
+						.style("stroke-width", "1px")
+						.style("cursor", "pointer")
+						.on("mouseenter", function(d,i){
+							d3.selectAll("rect.sample_items").style("stroke", "black").style("stroke-width", "1px");
+							d3.select(this).style("stroke", "red").style("stroke-width", "2.5px");
+							_s.listenerMap['cluster_list_listener_for_data_point'].fire(d[0]);
+						})
+						.on("mouseleave", function(d,i){
+							d3.selectAll("rect.sample_items").style("stroke", "black").style("stroke-width", "1px");
+							_s.listenerMap['cluster_list_listener_for_data_point'].fire();
+						});
+
+	d3.select(_self.canvas).select(".top_right").select("svg").attr("height", (_self.height/2 - _self.rect_size*3));
+
 	var cluster_feature_selection = data["clustering"][clustering_index]["cluster_feature_selection"][cluster_num];
 
-	_self.foreign_space = _self.cluster_space.append("foreignObject")
-			.attr("x", 0)
-			.attr("y", function(d,i){
-				return _self.rect_size*(1.5+cluster_measures.length);
-			})
-			.attr("width", (_self.width-_self.margin*2))
-			.attr("height", _self.rect_size*10)
-			.attr("requiredFeatures", "http://www.w3.org/1999/xhtml")
-			.append("xhtml:div")
+	// _self.foreign_space = _self.cluster_space
+	// 		.append("foreignObject")
+	// 		.attr("x", 0)
+	// 		.attr("y", function(d,i){
+	// 			return _self.rect_size*(1.5+cluster_measures.length);
+	// 		})
+	// 		.attr("width", (_self.width-_self.margin*2))
+	// 		.attr("height", _self.rect_size*10)
+	// 		.attr("requiredFeatures", "http://www.w3.org/1999/xhtml")
+	// 		.append("xhtml:div")
+	// 		.attr("xmlns", "http://www.w3.org/1999/xhtml")
+	// 		// .attr("width", (_self.width-_self.margin*2))
+	// 		// .attr("height", _self.rect_size*3)
+	// 		.style("width", "100%")
+	// 		.style("height",  _self.rect_size*3)
+	// 		// .style("position", "relative")
+	// 		// .attr("x", 0)
+	// 		// .attr("y", function(d,i){
+	// 		// 	return _self.rect_size*(1.5+cluster_measures.length);
+	// 		// })
+	// 		// .style("left", 0)
+	// 		// .style("top", function(d,i){
+	// 		// 	return _self.rect_size*(1.5+cluster_measures.length)+"px";
+	// 		// })
+	// 		.attr("class", "feature_selection_table")
+	// 		.style("overflow-y", "hidden");
+
+	_self.foreign_space = d3.select(".top_right")
+		.append("xhtml:div")
 			.attr("xmlns", "http://www.w3.org/1999/xhtml")
+			.style("position", "relative")
 			// .attr("width", (_self.width-_self.margin*2))
 			// .attr("height", _self.rect_size*3)
-			.style("width", "100%")
-			.style("height",  _self.rect_size*3)
+			.style("height",  _self.rect_size*3+"px")
 			// .style("position", "relative")
-			// .attr("x", 0)
+			.style("padding-left", (_self.margin+10)+"px")
 			// .attr("y", function(d,i){
 			// 	return _self.rect_size*(1.5+cluster_measures.length);
 			// })
@@ -199,7 +278,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 			// 	return _self.rect_size*(1.5+cluster_measures.length)+"px";
 			// })
 			.attr("class", "feature_selection_table")
-			.style("overflow-y", "hidden");
+			.style("overflow-y", "scroll");
 
 	var table_data = [];
 	var numeric_attr = cluster_feature_selection["names"];
@@ -255,61 +334,6 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 			.enter()
 			.append("td")
 			.text(function(d) { return d; });
-
-	// Inliner + Outlier
-	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
-	var top_5 = sorted_labels.slice(0,5);
-	var bottom_5 = sorted_labels.slice(-5);
-	var in_and_out = [top_5, bottom_5];
-
-	_self.sample_items_space = _self.cluster_space.selectAll("g.sample_items_space")
-						.data(in_and_out).enter()
-					.append("g")
-						.attr("class", "sample_items_space")
-						.attr("transform", function(d,i){
-							var x = i*_self.width/2;
-							var y = _self.rect_size*(5+cluster_measures.length);
-							return "translate("+x+","+y+")";
-						});
-
-	_self.sample_item_text = _self.sample_items_space.selectAll("text")
-						.data(function(d){return d;}).enter()
-					.append("text")
-						.attr("dx", function(d,i){
-							return _self.rect_size*5/2;
-						})
-						.attr("dy", function(d,i){
-							return _self.rect_size*(i+.5);
-						})
-						.attr("class", "sample_items_text")
-						.style("fill", "black")
-						.style("alignment-baseline", "central")
-						.style("text-anchor", "middle")
-						.style("font-size", "80%")
-						.style("cursor", "pointer")
-						.text(function(d){return "Item#" + d[0] + ": " + d[1].toFixed(3);});
-
-	_self.sample_items = _self.sample_items_space.selectAll("rect")
-						.data(function(d){return d;}).enter()
-					.append("rect")
-						.attr("class", "sample_items")
-						.attr("y", function(d,i){return i*_self.rect_size;})
-						.attr("width", _self.rect_size*5)
-						.attr("height", _self.rect_size*.95)
-						.style("fill-opacity", 0)
-						.style("fill", "white")
-						.style("stroke", "black")
-						.style("stroke-width", "1px")
-						.style("cursor", "pointer")
-						.on("mouseenter", function(d,i){
-							d3.selectAll("rect.sample_items").style("stroke", "black").style("stroke-width", "1px");
-							d3.select(this).style("stroke", "red").style("stroke-width", "2.5px");
-							_s.listenerMap['cluster_list_listener_for_data_point'].fire(d[0]);
-						})
-						.on("mouseleave", function(d,i){
-							d3.selectAll("rect.sample_items").style("stroke", "black").style("stroke-width", "1px");
-							_s.listenerMap['cluster_list_listener_for_data_point'].fire();
-						});
 
 
 
