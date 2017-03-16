@@ -345,7 +345,7 @@ def dataset_from_name(dataset_name, include_description=False):
         return (data, descriptions)
     elif dataset_name == 'sutter':
         # data = np.load('data/snow_data/snow.npy').astype(float)
-        pdata = pd.read_csv('data/sutter_data/sutter3-7-2017-all.csv')
+        pdata = pd.read_csv('data/sutter_data/sutter3-15-2017-all.csv')
         data = pdata.as_matrix()
         # std = data.std(axis=0)
         # data = data[:, std != 0]
@@ -443,12 +443,10 @@ def feature_selection_labels(pd_dataset, labels):
     labels_set = set(labels)
     n_clusters = n_clusters_from_labels(labels)
     for l in labels_set:
-        new_labels = labels
-        for i in new_labels:
-            if new_labels[i] == l:
-                new_labels[i] = 1
-            else:
-                new_labels[i] = 0
+        new_labels = pd.Series(labels)
+        new_labels.loc[new_labels != l] = "A"
+        new_labels.loc[new_labels == l] = "B"
+        
         X_train, X_test, y_train, y_test = train_test_split(dataset, new_labels,random_state=0,test_size=1)
         select = SelectPercentile(percentile=50)
         select.fit(X_train,y_train)
