@@ -209,6 +209,7 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		        return DESELECTED_CIRCLE_STROKE_WIDTH;
 		      }
 		    });
+		_self.selected_cluster_indices = argument.slice();
 	}
 };
 
@@ -347,7 +348,9 @@ Projection.prototype.draw = function(){
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							if(d3.event.metaKey || d3.event.ctrlKey){
 								// add a cluster to the list
-								_self.selected_cluster_indices.push(cluster_label);
+								if(_self.selected_cluster_indices.indexOf(cluster_label)==-1){
+									_self.selected_cluster_indices.push(cluster_label);
+								}
 							}else{
 								_self.selected_cluster_indices = [cluster_label];
 							}

@@ -334,8 +334,8 @@ ParallelCoordinates.prototype.redraw = function() {
         _s.listenerMap['pc_listener_for_data_point'].fire();
       })
       .on("click", function(d,i){
-        _self.highlight_by_cluster(_self.labels[i]);
-        _s.listenerMap['pc_listener_for_cluster_selection'].fire(_self.labels[i]);
+        // _self.highlight_by_cluster(_self.labels[i]);
+        // _s.listenerMap['pc_listener_for_cluster_selection'].fire(_self.labels[i]);
       })
 
   _self.foreground = foreground;
@@ -819,8 +819,9 @@ ParallelCoordinates.prototype.projectionClusterSelectionHandler = function(argum
   argument.forEach(function(d){
     d3.select("#area_path_"+d).moveToFront();
     d3.select("#line_path_"+d).moveToFront();
-  })
+  });
   d3.selectAll("g.dimension").moveToFront();
+  _self.selected_cluster_indices = argument.slice();
 };
 
 ParallelCoordinates.prototype.projectionHandler = function(argument){
@@ -1062,7 +1063,9 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
         d3.selectAll("g.dimension").moveToFront();
         if(d3.event.metaKey || d3.event.ctrlKey){
           // add a cluster to the list
-          _self.selected_cluster_indices.push(i);
+          if(_self.selected_cluster_indices.indexOf(i)==-1){
+            _self.selected_cluster_indices.push(i);            
+          }
         }else{
           _self.selected_cluster_indices = [i];
         }
@@ -1091,7 +1094,9 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
         d3.selectAll("g.dimension").moveToFront();
         if(d3.event.metaKey || d3.event.ctrlKey){
           // add a cluster to the list
-          _self.selected_cluster_indices.push(i);
+          if(_self.selected_cluster_indices.indexOf(i)==-1){
+            _self.selected_cluster_indices.push(i);            
+          }
         }else{
           _self.selected_cluster_indices = [i];
         }
