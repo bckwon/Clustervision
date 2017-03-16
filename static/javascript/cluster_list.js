@@ -188,7 +188,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 			// .attr("width", (_self.width-_self.margin*2))
 			// .attr("height", _self.rect_size*3)
 			.style("width", "100%")
-			.style("height", "100%")
+			.style("height",  _self.rect_size*3)
 			// .style("position", "relative")
 			// .attr("x", 0)
 			// .attr("y", function(d,i){
