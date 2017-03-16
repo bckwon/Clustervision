@@ -7,6 +7,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	var height = screen_height;
 	var margin = {x:20, y:80};
 	_self.cls_index = 0; // default
+	_self.selected_cluster_indices = [];
 	_self.margin = margin;
 	_self.width = width;
 	_self.height = height;
@@ -172,7 +173,7 @@ Projection.prototype.pcGroupHandler = function(argument) {
 
 Projection.prototype.pcClusterSelectionHandler = function(argument) {
 	var _self = this;
-	if(isNaN(argument)){
+	if(argument.length == 0){
 		_self.circ
 		    .style("opacity", function(d,i){
 		      return DESELECTED_CIRCLE_OPACITY;
@@ -182,26 +183,27 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		      return DESELECTED_CIRCLE_STROKE_WIDTH;
 		    });
 		d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
+		_self.selected_cluster_indices = [];
 	}else{
 		// fire to cluster_list
-		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument, _self.data]);
+		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument[argument.length-1], _self.data]);
 		_self.circ
 		    .style("opacity", function(d,i){
-		      if(argument == _self.labels[i]){
+		      if(argument.indexOf(_self.labels[i])>-1){
 		        return SELECTED_CIRCLE_OPACITY;
 		      }else{
 		        return DESELECTED_CIRCLE_OPACITY;
 		      }
 		    })
-				.style("stroke", function(d,i){
-		      if(argument == _self.labels[i]){
+			.style("stroke", function(d,i){
+		      if(argument.indexOf(_self.labels[i])>-1){
 		        return SELECTED_CIRCLE_STROKE_COLOR;
 		      }else{
 		        return DESELECTED_CIRCLE_STROKE_COLOR;
 		      }
 		    })
-				.style("stroke-width", function(d,i){
-		      if(argument == _self.labels[i]){
+			.style("stroke-width", function(d,i){
+		      if(argument.indexOf(_self.labels[i])>-1){
 		        return SELECTED_CIRCLE_STROKE_WIDTH;
 		      }else{
 		        return DESELECTED_CIRCLE_STROKE_WIDTH;
@@ -252,6 +254,7 @@ Projection.prototype.draw = function(){
 							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
 							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([]);
+							_self.selected_cluster_indices = [];
 						});
 
 	_self.title_box = _self.svg.append("rect")
@@ -342,11 +345,23 @@ Projection.prototype.draw = function(){
 							d3.select(this).moveToFront();
 							// d3.selectAll("circle.data_item_circ").style("stroke", "none").style("stroke-width", 1);
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
+							if(d3.event.metaKey || d3.event.ctrlKey){
+								// add a cluster to the list
+								_self.selected_cluster_indices.push(cluster_label);
+							}else{
+								_self.selected_cluster_indices = [cluster_label];
+							}
+
 							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data]);
-							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(cluster_label);
+
+							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(_self.selected_cluster_indices);
+
 							// d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
 							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
-							d3.selectAll("circle.data_item_circ[cluster_index='"+cluster_label+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
+
+							_self.selected_cluster_indices.forEach(function(clabel){
+								d3.selectAll("circle.data_item_circ[cluster_index='"+clabel+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
+							})
 						})
 						.on("contextmenu", d3.contextMenu(_self.context_menu));
 }

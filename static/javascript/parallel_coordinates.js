@@ -13,6 +13,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   _self.session = data;
   _self.highlight_axis = highlight_axis;
 
+  _self.selected_cluster_indices = [];
   _self.cls_index = 0;
   _self.clustering = _self.session["clustering"];
   _self.labels = _self.clustering[_self.cls_index]["labels"];
@@ -182,7 +183,7 @@ ParallelCoordinates.prototype.highlight = function(argument){
 
 ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
   var _self = this;
-  if(isNaN(argument)){
+  if(argument.length == 0){
     _self.foreground
         .style("visibility", "hidden")
         .style("opacity", function(d,i){
@@ -196,17 +197,18 @@ ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
         .style("opacity", function(d,i){
           return SELECTED_PATH_OPACITY;
         });
+    _self.selected_cluster_indices = [];
   }else{
     _self.foreground
         .style("visibility", function(d,i){
-          if(argument == _self.labels[i]){
+          if(argument.indexOf(_self.labels[i])>-1){
             return "visible";
           }else{
             return "hidden";
           }
         })
         .style("opacity", function(d,i){
-          if(argument == _self.labels[i]){
+          if(argument.indexOf(_self.labels[i])>-1){
             return SELECTED_PATH_OPACITY;
           }else{
             return DESELECTED_PATH_OPACITY;
@@ -214,7 +216,7 @@ ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
         });
     _self.area_path
         .style("opacity", function(d,i){
-          if(argument == i){
+          if(argument.indexOf(i)>-1){
             return SELECTED_PATH_OPACITY;
           }else{
             return DESELECTED_PATH_OPACITY;
@@ -222,7 +224,7 @@ ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
         });
     _self.line_path
         .style("opacity", function(d,i){
-          if(argument == i){
+          if(argument.indexOf(i)>-1){
             return SELECTED_PATH_OPACITY;
           }else{
             return DESELECTED_PATH_OPACITY;
@@ -291,10 +293,11 @@ ParallelCoordinates.prototype.redraw = function() {
             .attr("y", -(_self.m[0]+_self.m[2])*2)
             .style("opacity", 0)
             .on("click", function(){
-              _self.highlight_by_cluster();
+              _self.selected_cluster_indices = [];
+              _self.highlight_by_cluster([]);
               _s.listenerMap['projection_listener_for_data_point'].fire([]);
               // pc_listener_for_cluster_selection
-              _s.listenerMap['pc_listener_for_cluster_selection'].fire();
+              _s.listenerMap['pc_listener_for_cluster_selection'].fire([]);
               _self.clean_brush();
             }).on("contextmenu", d3.contextMenu(_self.context_menu));
 
@@ -813,8 +816,10 @@ ParallelCoordinates.prototype.projectionClusterSelectionHandler = function(argum
   _self.highlight_by_cluster(argument);
   var g = $('g.area_svg');
   g.append($('.line_path'));
-  d3.select("#area_path_"+argument).moveToFront();
-  d3.select("#line_path_"+argument).moveToFront();
+  argument.forEach(function(d){
+    d3.select("#area_path_"+d).moveToFront();
+    d3.select("#line_path_"+d).moveToFront();
+  })
   d3.selectAll("g.dimension").moveToFront();
 };
 
@@ -1055,8 +1060,14 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
         d3.select(this).moveToFront();
         d3.select("#line_path_"+i).moveToFront();
         d3.selectAll("g.dimension").moveToFront();
-        _s.listenerMap['pc_listener_for_cluster_selection'].fire(i);
-        _self.highlight_by_cluster(i);
+        if(d3.event.metaKey || d3.event.ctrlKey){
+          // add a cluster to the list
+          _self.selected_cluster_indices.push(i);
+        }else{
+          _self.selected_cluster_indices = [i];
+        }
+        _s.listenerMap['pc_listener_for_cluster_selection'].fire(_self.selected_cluster_indices);
+        _self.highlight_by_cluster(_self.selected_cluster_indices);
       });
 
   _self.line_path = _self.area_svg
@@ -1078,8 +1089,14 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
         d3.select("#area_path_"+i).moveToFront();
         d3.select(this).moveToFront();
         d3.selectAll("g.dimension").moveToFront();
-        _s.listenerMap['pc_listener_for_cluster_selection'].fire(i);
-        _self.highlight_by_cluster(i);
+        if(d3.event.metaKey || d3.event.ctrlKey){
+          // add a cluster to the list
+          _self.selected_cluster_indices.push(i);
+        }else{
+          _self.selected_cluster_indices = [i];
+        }
+        _s.listenerMap['pc_listener_for_cluster_selection'].fire(_self.selected_cluster_indices);
+        _self.highlight_by_cluster(_self.selected_cluster_indices);
       });
 
 };
