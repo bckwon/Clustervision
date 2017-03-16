@@ -7,6 +7,7 @@ NUM_CHOICES_PER_QM = 3          # Only for Top QM: How many top clusterings to s
 NUM_CHOICES = 10                # Only for MMR: How many clusterings to show the user (including the previous best)
 L_INITIAL = 0.5                 # Only for MMR: Initial value for MMR parameter lambda
 L_INCREMENT = 0.1               # Only for MMR: L increases by this amount after each round.
+COMPUTE_DISTANCE = False        # Remove clustering results that are too similar... slow, so useful to turn off when doing development
 MIN_CLUSTERING_DIST = 0.05      # Minimum distance between any two clusterings shown to the user.
 NUM_RANDOM_WEIGHTINGS = 1       # Number of random weightings to try (in addition to the original weighting)
 RANDOM_WEIGHTING_ALPHA = 0.3    # Parameter for Dirichlet distribution, used for randomly weighting the data. Increasing this value will lead to smoother weights. Decreasing this value will yield sparser weights.

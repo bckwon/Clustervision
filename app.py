@@ -175,13 +175,14 @@ def get_clustering():
                 for params in param_vec:
                     if params not in param_choices:
                         clustering = cluster.load_clustering(params)
-
                         quality = clustering['quality_metrics'][qm]
-                        dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
-                                        for other_clustering in clustering_choices])
-                        dist_to_closest_clustering = dist_vec
+                        if (config.COMPUTE_DISTANCE):
+                            dist_vec = min([cluster.clustering_distance(clustering, other_clustering) \
+                                            for other_clustering in clustering_choices])
+                            dist_to_closest_clustering = dist_vec
+                        else:
+                            dist_to_closest_clustering = 1
                         score = quality # L * quality + (1. - L) * dist_to_closest_clustering
-
                         if score > best_score and \
                            dist_to_closest_clustering > config.MIN_CLUSTERING_DIST and \
                            constraints.satisfies_constraints(clustering, same_cluster, diff_cluster):

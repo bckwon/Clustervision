@@ -344,14 +344,21 @@ def dataset_from_name(dataset_name, include_description=False):
         pd_dataset = pd.DataFrame(data=data)
         return (data, descriptions)
     elif dataset_name == 'sutter':
-        # data = np.load('data/snow_data/snow.npy').astype(float)
         pdata = pd.read_csv('data/sutter_data/sutter3-15-2017-all.csv')
         data = pdata.as_matrix()
-        # std = data.std(axis=0)
-        # data = data[:, std != 0]
-        # data -= data.mean(axis=0)[None, :]
-        # data /= data.std(axis=0)[None, :]
+        descriptions = []
+        col_names = list(pdata)
 
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        return (pdata, descriptions)
+    elif dataset_name == 'sutter-temporal':
+        pdata = pd.read_csv('data/sutter_temporal_data/sutter3-16-2017-all.csv')
+        data = pdata.as_matrix()
         descriptions = []
         col_names = list(pdata)
 
@@ -446,7 +453,7 @@ def feature_selection_labels(pd_dataset, labels):
         new_labels = pd.Series(labels)
         new_labels.loc[new_labels != l] = "A"
         new_labels.loc[new_labels == l] = "B"
-        
+
         X_train, X_test, y_train, y_test = train_test_split(dataset, new_labels,random_state=0,test_size=1)
         select = SelectPercentile(percentile=50)
         select.fit(X_train,y_train)
