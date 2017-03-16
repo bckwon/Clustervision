@@ -935,7 +935,10 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
     table_data.push(obj);
   });
 
-  _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
+  // _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
+  _self.dimensions = _self.original_dimensions;
+
+
   _self.sortarray = [];
   _self.temparray = [];
   for (var i = _self.dimensions.length - 1; i >= 0; i--) {
@@ -945,14 +948,14 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
 
   _self.get_cluster_extent();
   _self.redraw();
-  _self.rescale_axes("Fit to Cluster");
-  _self.mean_and_95();
-  d3.selectAll("g.foreground").moveToFront();
-  d3.selectAll("path.line_path").moveToFront();
+  // _self.rescale_axes("Fit to Cluster");
+  // _self.mean_and_95();
+  // d3.selectAll("g.foreground").moveToFront();
+  // d3.selectAll("path.line_path").moveToFront();
 
-  // _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
+  _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
 
-  // _self.checkboxHandler(_self.dimensions.slice());
+  _self.checkboxHandler(_self.dimensions.slice());
 };
 
 ParallelCoordinates.prototype.color_by_new_index = function() {

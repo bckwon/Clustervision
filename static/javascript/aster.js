@@ -147,6 +147,18 @@ Aster.prototype.highlight_circles = function(highglight_bool) {
 
 };
 
+
+Aster.prototype.highlight_wedge = function(argument) {
+  var _self = this;
+  _self.path.style("fill", function(d,i){
+    if(_self.keys[i]==argument){
+      return WEDGE_HIGHLIGHT_COLOR;
+    }else{
+      return COLOR_DARKGRAY;
+    }
+  });
+};
+
 function getAngle(d) {
   var ang = (180 / Math.PI * (d.startAngle + d.endAngle) / 2);
   return (ang > 180) ? ang : ang;

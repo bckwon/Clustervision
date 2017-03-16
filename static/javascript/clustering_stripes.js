@@ -183,6 +183,10 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 						_self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
 					});
 
+	// highlight_wedge
+	_self.asterplots.forEach(function(d,i){
+		d.highlight_wedge(_self.data[i]["clustering_parameters"]["chosen_by"]);
+	});
 }
 
 ClusteringStripes.prototype.popup = function(list_index){
