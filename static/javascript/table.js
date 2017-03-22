@@ -245,8 +245,16 @@ Table.prototype.send_checked_items_to_pc = function() {
 Table.prototype.pcShuffleHandler = function(argument) {
 	var _self = this;
 	_self.rows.sort(function(a,b){
-		return argument.indexOf(a["Name"]) - argument.indexOf(b["Name"]);
-	})
+		var a = argument.indexOf(a["Name"]);
+		var b = argument.indexOf(b["Name"]);
+		if(a==-1){
+			a=99999999;
+		}
+		if(b==-1){
+			b=99999999;
+		}
+		return d3.ascending(a,b);
+	});
 };
 
 Table.prototype.pcHandler = function(argument) {

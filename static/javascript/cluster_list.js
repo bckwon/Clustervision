@@ -103,6 +103,7 @@ ClusterList.prototype.projectionDataPointHandler = function(argument) {
 		var clustering_index = argument[1];
 		var cluster_num = argument[2];
 		var data = argument[3];
+		
 
 		// _self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
 		// _self.draw_data_point_in_html(data_item_index, clustering_index, cluster_num, data);
@@ -119,8 +120,9 @@ ClusterList.prototype.projectionClusterHandler = function(argument) {
 	var clustering_index = argument[1];
 	var cluster_num = argument[2];
 	var data = argument[3];
+	var cluster_indices_to_highlight = argument[4];
 
-	_self.draw_cluster_with_area_chart(data_item_index, clustering_index, cluster_num, data);
+	_self.draw_cluster_with_area_chart(data_item_index, clustering_index, cluster_num, data, cluster_indices_to_highlight);
 
 };
 
@@ -341,7 +343,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 };
 
-ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, clustering_index, cluster_num, data) {
+ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, clustering_index, cluster_num, data, cluster_indices_to_highlight) {
 	var _self = this;
 
 	_self.cluster_space.selectAll("*").remove();
@@ -451,7 +453,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 							.attr("height", function(d,i){return height*.9-y(d);})
 							.style("fill", function(d,i){return _self.color(i)})
 							.style("opacity", function(d,i){
-								if(i==cluster_num){
+								if(cluster_indices_to_highlight.indexOf(i)>-1){
 									return 1;
 								}else{
 									return .25;

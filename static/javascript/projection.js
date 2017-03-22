@@ -186,7 +186,7 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		_self.selected_cluster_indices = [];
 	}else{
 		// fire to cluster_list
-		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument[argument.length-1], _self.data]);
+		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument[argument.length-1], _self.data, _self.selected_cluster_indices]);
 		_self.circ
 		    .style("opacity", function(d,i){
 		      if(argument.indexOf(_self.labels[i])>-1){
@@ -355,7 +355,7 @@ Projection.prototype.draw = function(){
 								_self.selected_cluster_indices = [cluster_label];
 							}
 
-							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data]);
+							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data, _self.selected_cluster_indices]);
 
 							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(_self.selected_cluster_indices);
 
