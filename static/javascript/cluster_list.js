@@ -104,7 +104,8 @@ ClusterList.prototype.projectionDataPointHandler = function(argument) {
 		var data = argument[3];
 
 		// _self.draw_data_point(data_item_index, clustering_index, cluster_num, data);
-		_self.draw_data_point_in_html(data_item_index, clustering_index, cluster_num, data);
+		// _self.draw_data_point_in_html(data_item_index, clustering_index, cluster_num, data);
+		_self.draw_data_point_in_area_chart(data_item_index, clustering_index, cluster_num, data);
 	}else{
 		_self.reset_view();
 	}
@@ -118,7 +119,7 @@ ClusterList.prototype.projectionClusterHandler = function(argument) {
 	var cluster_num = argument[2];
 	var data = argument[3];
 
-	_self.draw_cluster(data_item_index, clustering_index, cluster_num, data);
+	_self.draw_cluster_with_area_chart(data_item_index, clustering_index, cluster_num, data);
 
 };
 
@@ -339,6 +340,470 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 };
 
+ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, clustering_index, cluster_num, data) {
+	var _self = this;
+
+	_self.cluster_space.selectAll("*").remove();
+	d3.selectAll(".feature_selection_table").remove();
+	d3.select(".top_right").style("border-style", "solid");
+
+	_self.cluster_title = _self.cluster_space.append("text")
+					.attr("dy", 0)
+					.text("Cluster " + cluster_num)
+					.style("font-size", "200%");
+
+	// Cluster Measures (individuals for text)
+	var cluster_measures = _self.parameters.map(function(d){
+		return {"name": d, "value": data["clustering"][clustering_index]["sorted_labels"][cluster_num].length, "context": data["clustering"][clustering_index]["sorted_labels"][cluster_num].map(function(e){return e.length;})};});
+	
+	var measures = _self.quality_metrics.map(function(d){
+		var value = data["clustering"][clustering_index]["quality_metrics"][d][cluster_num];
+		if(isInt(value)){
+			value = parseFloat(value);
+		}else if(isFloat(value)){
+			value = parseFloat(value).toFixed(3);
+		}
+		return {"name": d, "value": value, "context": data["clustering"][clustering_index]["quality_metrics"][d].map(function(e){return parseFloat(e);})};});
+
+	var cluster_measures = cluster_measures.concat(measures);
+
+	// get means per cluster for sihoulette score sample
+	var mean_sihoulette_array = [];
+	var indices_array = [];
+	data["clustering"][clustering_index]["sorted_labels"].forEach(function(s_label,s_index){
+		var index_array = s_label.map(function(d,i){return d[0]}).sort(d3.ascending);
+		var cluster_measure_for_label = cluster_measures[cluster_measures.length-1]["context"].filter(function(e,i){return index_array.indexOf(i) > -1});
+		mean_sihoulette_array.push(d3.mean(cluster_measure_for_label));
+		indices_array.push(index_array.length);
+	})
+
+	cluster_measures[0]["context"] = indices_array;
+	cluster_measures[cluster_measures.length-1]["context"] = mean_sihoulette_array;
+
+	// cluster_measures[cluster_measures.length-1]
+
+	_self.cluster_measures_g = _self.cluster_space.selectAll("g.measures")
+						.data(cluster_measures).enter()
+					.append("g").attr("class", "measures");
+
+	_self.cluster_measures_text = _self.cluster_measures_g
+						// .selectAll("text.measures")
+						// .data(cluster_measures).enter()
+					.append("text")
+						.attr("dx", function(d,i){
+							return -_self.rect_size;
+						})
+						.attr("dy", function(d,i){
+							return _self.rect_size*2*(i) + _self.rect_size*2;
+						})
+						.attr("class", "cluster_measures")
+						.style("fill", "blue")
+						.text(function(d){
+							var text = d["name"];
+							return upperCaseFirst(text.split('_')[0]);
+							// return d["name"]+ ": " + d["value"];
+						});
+
+	console.log(_self.quality_metrics);
+
+	// area
+	var height = _self.rect_size*2;
+
+	_self.cluster_measurement_area_path = _self.cluster_measures_g
+					.append("g")
+						.attr("transform", function(d,i){
+							return "translate("+ _self.rect_size*3 + ","+ (_self.rect_size*2*i + _self.rect_size*2/3) +")";
+						})
+				 	.each(function(each_gspace){
+			 			console.log(each_gspace["context"]);
+
+						var x = d3.scale.linear().domain([0, each_gspace["context"].length-1]).range([0, _self.width*.7]);
+
+						var y = d3.scale.linear().domain(d3.extent(each_gspace["context"])).range([height*.6, height*.2]);
+
+						var area = d3.svg.area()
+									.x(function(d,i){return x(i);})
+									.y0(height)
+									.y1(function(d,i){return y(d);})
+
+				 		d3.select(this)
+					 		.append("path")
+							.style("fill", function(d){
+								return COLOR_GRAY;
+							})
+							.attr("d", function(d){
+								return area(d["context"]);
+							});
+
+						var yAxis = d3.svg.axis()
+								    .scale(y)
+								    .orient("left")
+								    .ticks(2)
+
+						var xAxis = d3.svg.axis()
+								    .scale(x)
+								    .orient("bottom")
+								    .tickFormat(function(e){
+								        if(Math.floor(e) != e)
+								        {
+								            return;
+								        }
+								        return e;
+								    });
+
+						d3.select(this)
+							.append("g")
+						    .attr("class", "x axis")
+						    .attr("transform", "translate(0," + height*.7 + ")")
+						    .call(xAxis)
+						    .selectAll("path").remove();
+
+						d3.select(this)
+							.append("g")
+						    .attr("class", "y axis")
+						    .attr("transform", "translate("+_self.rect_size/3 +",0)")
+						    .call(yAxis)
+						    .selectAll("path").remove();
+
+						d3.select(this)
+							.append("circle")
+							.attr("cx", function(e){
+								var val = parseFloat(e["context"][cluster_num]);
+								if(val > x.domain()[x.domain().length-1]){
+									val = x.domain()[x.domain().length-1];
+								}
+								return x(cluster_num);})
+							.attr("cy", function(e){
+								var val = parseFloat(e["context"][cluster_num]);
+								return y(val);})
+							.attr("r", 3)
+							.style("stroke", COLOR_DARKGRAY)
+							.style("fill", function(d){
+								return _self.color(cluster_num);
+							});
+
+				 	})
+					
+					// .each(function(d,i){
+					// 	var index = d["index"];
+					// 	var name = d["name"];
+					// 	var x = data_point_scale_array[name][0];
+					// 	var y = data_point_scale_array[name][1];
+
+					// 	var area = d3.svg.area()
+				 //  			.x(function(z){return x(z.x);})
+				 //  			.y0(_self.hist_height)
+				 //  			.y1(function(z){return y(z.y);});
+
+				 //  		d3.select(this)
+					// 		.append("path")
+					// 		.style("fill", function(e, e_index){
+					// 			if(i==0){
+					// 				return COLOR_GRAY;
+					// 			}else{
+					// 				return _self.color(cluster_num);
+					// 			}
+					// 		})
+					// 		.attr("d", function(e){
+					// 		  	return area(e);
+					// 		});
+					// });
+
+	// Inliner + Outlier
+	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
+	var top_5 = sorted_labels.slice(0,5);
+	var bottom_5 = sorted_labels.slice(-5);
+	var in_and_out = [top_5, bottom_5];
+
+	var in_and_out_scale = d3.scale.linear().domain(d3.extent(sorted_labels, function(e){return parseFloat(e[1]);})).range([1, .1]);
+
+	_self.sample_items_space = _self.cluster_space.selectAll("g.sample_items_space")
+						.data(in_and_out).enter()
+					.append("g")
+						.attr("class", "sample_items_space")
+						.attr("transform", function(d,i){
+							var x = i*_self.width/2;
+							var y = _self.rect_size*(5+cluster_measures.length);
+							return "translate("+x+","+y+")";
+						});
+
+	_self.sample_items = _self.sample_items_space.selectAll("rect.sample_items")
+						.data(function(d){return d;}).enter()
+					.append("rect")
+						.attr("class", "sample_items")
+						.attr("y", function(d,i){return i*_self.rect_size;})
+						.attr("width", _self.rect_size*5)
+						.attr("height", _self.rect_size*.95)
+						.style("opacity", function(d,i){
+							console.log(d[1], in_and_out_scale(d[1]));
+							return in_and_out_scale(d[1]);
+						})
+						.style("fill", function(d,i){
+							return _self.color(cluster_num);
+						});
+
+	_self.sample_item_text = _self.sample_items_space.selectAll("text")
+						.data(function(d){return d;}).enter()
+					.append("text")
+						.attr("dx", function(d,i){
+							return _self.rect_size*5/2;
+						})
+						.attr("dy", function(d,i){
+							return _self.rect_size*(i+.5);
+						})
+						.attr("class", "sample_items_text")
+						.style("fill", "black")
+						.style("alignment-baseline", "central")
+						.style("text-anchor", "middle")
+						.style("font-size", "80%")
+						.style("cursor", "pointer")
+						.text(function(d){return "Item#" + d[0] + ": " + d[1].toFixed(3);});
+
+	_self.sample_hover_items = _self.sample_items_space.selectAll("rect.sample_hover_items")
+						.data(function(d){return d;}).enter()
+					.append("rect")
+						.attr("class", "sample_hover_items")
+						.attr("y", function(d,i){return i*_self.rect_size;})
+						.attr("width", _self.rect_size*5)
+						.attr("height", _self.rect_size*.95)
+						.style("fill-opacity", 0)
+						.style("stroke", "black")
+						.style("stroke-width", "1px")
+						.style("cursor", "pointer")
+						.on("mouseenter", function(d,i){
+							d3.selectAll("rect.sample_hover_items").style("stroke", "black").style("stroke-width", "1px");
+							d3.select(this).style("stroke", "red").style("stroke-width", "2.5px");
+							_s.listenerMap['cluster_list_listener_for_data_point'].fire(d[0]);
+						})
+						.on("mouseleave", function(d,i){
+							d3.selectAll("rect.sample_hover_items").style("stroke", "black").style("stroke-width", "1px");
+							_s.listenerMap['cluster_list_listener_for_data_point'].fire();
+						});
+
+	// d3.select(_self.canvas).select(".top_right").select("svg").attr("height", (_self.height/2 - _self.rect_size*3));
+
+	// var cluster_feature_selection = data["clustering"][clustering_index]["cluster_feature_selection"][cluster_num];
+
+
+	// _self.foreign_space = d3.select(".top_right")
+	// 	.append("xhtml:div")
+	// 		.attr("xmlns", "http://www.w3.org/1999/xhtml")
+	// 		.style("position", "relative")
+	// 		.style("height",  _self.rect_size*3+"px")
+	// 		.style("padding-left", (_self.margin+10)+"px")
+	// 		.attr("class", "feature_selection_table")
+	// 		.style("overflow-y", "scroll");
+
+	// var table_data = [];
+	// var numeric_attr = cluster_feature_selection["names"];
+ //    numeric_attr.forEach(function(d){
+ //        var obj = {};
+ //        obj["Name"] = d;
+ //        feature_index = cluster_feature_selection["names"].indexOf(d);
+ //        obj["Score"] = Math.round(cluster_feature_selection["scores"][feature_index],0);
+ //        if(isNaN(obj["Score"])){
+ //            obj["Score"] = 0;
+ //        }
+ //        if(cluster_feature_selection["pvalues"][feature_index] < .05){
+ //            obj["Score"] = obj["Score"].toString() + "*";
+ //        }else{
+ //            obj["Score"] = obj["Score"].toString();
+ //        }
+ //        table_data.push(obj);
+ //    });
+
+	// var attributes = d3.keys(table_data[0]);
+	// table_data = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);});
+
+	// _self.feat_table = _self.foreign_space.append("table");
+
+	// _self.feat_header = _self.feat_table.append("tr")
+	// 						.attr("class", "feat_table_header")
+	// 						.selectAll("th")
+	// 					.data(attributes).enter()
+	// 						.append("th")
+	// 						.text(function(d) { return d; })
+	// 						.classed("head", true)
+	// 						.style("cursor", "pointer");
+
+	// _self.feat_body = _self.feat_table.selectAll("tr.feat_table_element")
+	// 						.data(table_data)
+	// 						.enter()
+	// 					.append("tr")
+	// 						.attr("class", "feat_table_element")
+	// 						.style("cursor", "pointer");
+
+	// _self.tableCells = _self.feat_body
+	// 		.selectAll("td")
+	// 		.data(function(d) {
+	// 			var array = [];
+	// 			attributes.forEach(function(a){
+	// 				array.push(d[a]);
+	// 			})
+	// 			return array;
+	// 		})
+	// 		.enter()
+	// 		.append("td")
+	// 		.text(function(d) { return d; });
+
+};
+
+ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, clustering_index, cluster_num, data) {
+	var _self = this;
+
+	var data_point = data["data_description"][data_item_index];
+	var data_point_keys = d3.keys(data_point).sort(d3.ascending);
+
+	_self.data_point_space.selectAll("*").remove();
+	d3.select(".bottom_right").style("border-style", "solid");
+
+	_self.cluster_title = _self.data_point_space.append("div")
+					.text("Data Point " + data_item_index)
+					.style("font-size", "200%");
+
+	var data_point_measures = data_point_keys.map(function(d){return {"name": d, "value": data_point[d]};});
+
+	_self.data_point_measures = _self.data_point_space.selectAll("div.data_point_measures")
+						.data(data_point_measures).enter()
+					.append("div")
+						.attr("class", "data_point_measures")
+						.style("color", "blue");
+
+	var height = "40";
+	_self.hist_height = parseFloat(height)*.75;
+
+	_self.data_point_text = _self.data_point_measures.append("div").style("width", "20%").style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
+		// .style("line-height", height+"px")
+		.style("font-size", "67%")
+		.style("cursor", "pointer")
+		.attr("title", function(d){return d["name"];})
+		.text(function(d){return d["name"].substring(0,24);});
+		// .text(function(d){return d["name"]+ ": " + d["value"];});
+
+	_self.data_point_svg = _self.data_point_measures.append("div").style("width", "80%").style("height", height+"px").style("float", "left").append("svg").attr("width", _self.screen_width*.7).attr("height", height);
+	
+	var index_array = [];
+
+	data["clustering"][clustering_index]["labels"].forEach(function(d,i){
+		if(d == data["clustering"][clustering_index]["labels"][cluster_num]){
+			index_array.push(i);
+		}
+	});
+
+	index_array = data["clustering"][clustering_index]["sorted_labels"][cluster_num].map(function(d,i){return d[0]}).sort(d3.ascending);
+
+	var data_point_svg_array = {};
+	var data_point_scale_array = {};
+	data_point_keys.forEach(function(key_item, key_index){
+		var sample_datum = data["data_description"].map(function(d){return parseFloat(d[key_item])});
+		var data_array = sample_datum.filter(function(d,i){return index_array.indexOf(i) > -1;});
+		var outcome = _self.setupHist(sample_datum, data_array);
+		var da = outcome.slice(0,2);
+		var sa = outcome.slice(2);
+		data_point_svg_array[key_item] = da;
+		data_point_scale_array[key_item] = sa;
+	});
+
+	_self.data_point_area_canvas = _self.data_point_svg.selectAll("g.area_canvas")
+					.data(function(d,i){
+						data_point_svg_array[d["name"]].forEach(function(e){
+							e["index"] = i;
+							e["name"] = d["name"];
+						});
+						return data_point_svg_array[d["name"]];}).enter()
+				.append("g")
+					.attr("transform", "translate(0,0)")
+					.attr("class", "area_canvas");
+
+	_self.data_point_area_path = _self.data_point_area_canvas
+					.each(function(d,i){
+						var index = d["index"];
+						var name = d["name"];
+						var x = data_point_scale_array[name][0];
+						var y = data_point_scale_array[name][1];
+
+						var area = d3.svg.area()
+				  			.x(function(z){return x(z.x);})
+				  			.y0(_self.hist_height)
+				  			.y1(function(z){return y(z.y);});
+
+				  		d3.select(this)
+							.append("path")
+							.style("fill", function(e, e_index){
+								if(i==0){
+									return COLOR_GRAY;
+								}else{
+									return _self.color(cluster_num);
+								}
+							})
+							.attr("d", function(e){
+							  	return area(e);
+							});
+					});
+
+	_self.data_point_marker = _self.data_point_svg
+							.each(function(d,i){
+								var x = data_point_scale_array[d["name"]][0];
+								var y = data_point_scale_array[d["name"]][1];
+
+								var xAxis = d3.svg.axis()
+										    .scale(x)
+										    .orient("bottom");
+								d3.select(this)
+									.append("rect")
+									.attr("x", function(e){
+										var val = parseFloat(e["value"]);
+										if(val > x.domain()[x.domain().length-1]){
+											val = x.domain()[x.domain().length-1];
+										}
+										return x(val);})
+									.attr("y", 0)
+									.attr("width", 3)
+									.attr("height", _self.hist_height)
+									.style("fill", "blue");
+
+								d3.select(this)
+									.append("g")
+								    .attr("class", "x axis")
+								    .attr("transform", "translate(0," + _self.hist_height*.75 + ")")
+								    .call(xAxis)
+								    .selectAll("path").remove();
+							})
+
+
+};
+
+// Distribution Types:
+ClusterList.prototype.setupHist = function(data_all, data_highlighted){
+	var _self = this;
+
+	var extent_x = d3.extent(data_all);
+
+	var x = d3.scale.linear()
+				.domain(extent_x)
+				.range([0, (_self.width-_self.margin*4)]);
+
+	var values_all = d3.layout.histogram()
+		.bins(x.ticks(12))
+	(data_all);
+
+	var values_highlighted = d3.layout.histogram()
+			.bins(x.ticks(12))
+			(data_highlighted);
+
+	var max_y = d3.max(values_all, function(d){return d.y;});
+
+	x = x.domain(d3.extent(values_all, function(d){return d.x;}));
+
+	var y = d3.scale.linear()
+				.domain([0, max_y])
+				.range([_self.hist_height, 0]);
+
+	var output = [values_all, values_highlighted, x, y];
+
+	return output;
+}
+
 ClusterList.prototype.draw_data_point_in_html = function(data_item_index, clustering_index, cluster_num, data) {
 	var _self = this;
 
@@ -458,4 +923,8 @@ function isInt(n){
 function isFloat(n){
 	var n = parseFloat(n);
     return Number(n) === n && n % 1 !== 0;
+}
+
+function upperCaseFirst(str){
+    return str.charAt(0).toUpperCase() + str.substring(1);
 }
