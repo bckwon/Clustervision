@@ -13,6 +13,7 @@ function ClusterList(canvas, data, screen_width, screen_height){
 	_self.num_params = _self.parameters.length + _self.quality_metrics.length;
 	_self.radius = _self.rect_size/2;
 	_self.default = 0;
+	_self.default_data_point_sort = [1,0,0];
 
 	_self.display_data = _self.data[0]["sorted_labels"].map(function(d){return {"size": d.length, "array": d};});
 	_self.color = d3.scale.ordinal()
@@ -348,6 +349,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 	d3.select(".top_right").style("border-style", "solid");
 
 	_self.cluster_title = _self.cluster_space.append("text")
+					.attr("dx", -20)
 					.attr("dy", 0)
 					.text("Cluster " + cluster_num)
 					.style("font-size", "200%");
@@ -397,14 +399,12 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 							return _self.rect_size*2*(i) + _self.rect_size*2;
 						})
 						.attr("class", "cluster_measures")
-						.style("fill", "blue")
+						.style("fill", "black")
 						.text(function(d){
 							var text = d["name"];
 							return upperCaseFirst(text.split('_')[0]);
 							// return d["name"]+ ": " + d["value"];
 						});
-
-	console.log(_self.quality_metrics);
 
 	// area
 	var height = _self.rect_size*2;
@@ -415,9 +415,12 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 							return "translate("+ _self.rect_size*3 + ","+ (_self.rect_size*2*i + _self.rect_size*2/3) +")";
 						})
 				 	.each(function(each_gspace){
-			 			console.log(each_gspace["context"]);
+				 		// x for Area Chart
+						// var x = d3.scale.linear().domain([0, each_gspace["context"].length-1]).range([0, _self.width*.7]);
 
-						var x = d3.scale.linear().domain([0, each_gspace["context"].length-1]).range([0, _self.width*.7]);
+						// x for Bar Chart
+
+						var x = d3.scale.ordinal().domain(each_gspace["context"].map(function(d,i){return i;})).rangeRoundBands([0, _self.width*.7],.1);
 
 						var y = d3.scale.linear().domain(d3.extent(each_gspace["context"])).range([height*.6, height*.2]);
 
@@ -426,14 +429,35 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 									.y0(height)
 									.y1(function(d,i){return y(d);})
 
-				 		d3.select(this)
-					 		.append("path")
-							.style("fill", function(d){
-								return COLOR_GRAY;
+						// Area Chart
+				 		// d3.select(this)
+					 	// 	.append("path")
+							// .style("fill", function(d){
+							// 	return COLOR_GRAY;
+							// })
+							// .attr("d", function(d){
+							// 	return area(d["context"]);
+							// });
+
+						// Bar Chart
+						d3.select(this)
+							.selectAll("rect")
+							.data(function(d,i){
+								return d["context"];}).enter()
+						.append("rect")
+							.attr("x", function(d,i){return x(i);})
+							.attr("y", function(d,i){return y(d);})
+							.attr("width", x.rangeBand())
+							.attr("height", function(d,i){return height*.9-y(d);})
+							.style("fill", function(d,i){return _self.color(i)})
+							.style("opacity", function(d,i){
+								if(i==cluster_num){
+									return 1;
+								}else{
+									return .25;
+								}
 							})
-							.attr("d", function(d){
-								return area(d["context"]);
-							});
+							.attr("title", function(d){return d;})
 
 						var yAxis = d3.svg.axis()
 								    .scale(y)
@@ -465,22 +489,23 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 						    .call(yAxis)
 						    .selectAll("path").remove();
 
-						d3.select(this)
-							.append("circle")
-							.attr("cx", function(e){
-								var val = parseFloat(e["context"][cluster_num]);
-								if(val > x.domain()[x.domain().length-1]){
-									val = x.domain()[x.domain().length-1];
-								}
-								return x(cluster_num);})
-							.attr("cy", function(e){
-								var val = parseFloat(e["context"][cluster_num]);
-								return y(val);})
-							.attr("r", 3)
-							.style("stroke", COLOR_DARKGRAY)
-							.style("fill", function(d){
-								return _self.color(cluster_num);
-							});
+						// Circle for highlighting Area
+						// d3.select(this)
+						// 	.append("circle")
+						// 	.attr("cx", function(e){
+						// 		var val = parseFloat(e["context"][cluster_num]);
+						// 		if(val > x.domain()[x.domain().length-1]){
+						// 			val = x.domain()[x.domain().length-1];
+						// 		}
+						// 		return x(cluster_num);})
+						// 	.attr("cy", function(e){
+						// 		var val = parseFloat(e["context"][cluster_num]);
+						// 		return y(val);})
+						// 	.attr("r", 3)
+						// 	.style("stroke", COLOR_DARKGRAY)
+						// 	.style("fill", function(d){
+						// 		return _self.color(cluster_num);
+						// 	});
 
 				 	})
 					
@@ -535,7 +560,6 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 						.attr("width", _self.rect_size*5)
 						.attr("height", _self.rect_size*.95)
 						.style("opacity", function(d,i){
-							console.log(d[1], in_and_out_scale(d[1]));
 							return in_and_out_scale(d[1]);
 						})
 						.style("fill", function(d,i){
@@ -661,16 +685,39 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 					.text("Data Point " + data_item_index)
 					.style("font-size", "200%");
 
+	var width_array = ["20%", "60%", "20%"];
+	var height = "40";
+	var width_coeff = "60%";
+	var width_in_decimal = parseFloat(width_coeff)/100;
+	var width = (_self.width)*width_in_decimal;
+	_self.hist_height = parseFloat(height)*.75;
+	_self.hist_width = width;
+
+	_self.cluster_sort_header = _self.data_point_space.append("div")
+									.selectAll("div.sort_cluster_header")
+									.data(["Name", "Attribute Value", "Feature Score"]).enter()
+								.append("div")
+									.attr("class", "sort_cluster_header")
+									.style("width", function(d,i){return width_array[i];})
+									.style("height", function(d,i){return _self.hist_height+"px";})
+									.style("line-height", "24px")
+									.style("vertical-align", "middle")
+									.style("float", "left")
+									.style("cursor", "pointer")
+									.style("font-size", "75%")
+									.style("text-align", "center")
+									.text(function(d){return d;});
+
+
 	var data_point_measures = data_point_keys.map(function(d){return {"name": d, "value": data_point[d]};});
 
 	_self.data_point_measures = _self.data_point_space.selectAll("div.data_point_measures")
 						.data(data_point_measures).enter()
 					.append("div")
 						.attr("class", "data_point_measures")
-						.style("color", "blue");
-
-	var height = "40";
-	_self.hist_height = parseFloat(height)*.75;
+						.style("top", function(d,i){return parseFloat(height)*i+"px";})
+						.style("position", "relative")
+						.style("color", "black");
 
 	_self.data_point_text = _self.data_point_measures.append("div").style("width", "20%").style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
 		// .style("line-height", height+"px")
@@ -680,7 +727,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 		.text(function(d){return d["name"].substring(0,24);});
 		// .text(function(d){return d["name"]+ ": " + d["value"];});
 
-	_self.data_point_svg = _self.data_point_measures.append("div").style("width", "80%").style("height", height+"px").style("float", "left").append("svg").attr("width", _self.screen_width*.7).attr("height", height);
+	_self.data_point_svg = _self.data_point_measures.append("div").style("width", width_coeff).style("height", height+"px").style("float", "left").append("svg").attr("width", width).attr("height", height);
 	
 	var index_array = [];
 
@@ -748,7 +795,14 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 
 								var xAxis = d3.svg.axis()
 										    .scale(x)
-										    .orient("bottom");
+										    .orient("bottom")
+										    .tickFormat(function(e){
+										        if(Math.floor(e) != e)
+										        {
+										            return;
+										        }
+										        return e;
+										    });
 								d3.select(this)
 									.append("rect")
 									.attr("x", function(e){
@@ -760,7 +814,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 									.attr("y", 0)
 									.attr("width", 3)
 									.attr("height", _self.hist_height)
-									.style("fill", "blue");
+									.style("fill", "black");
 
 								d3.select(this)
 									.append("g")
@@ -768,9 +822,101 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 								    .attr("transform", "translate(0," + _self.hist_height*.75 + ")")
 								    .call(xAxis)
 								    .selectAll("path").remove();
-							})
+							});
 
+	var cluster_feature_selection = data["clustering"][clustering_index]["cluster_feature_selection"][cluster_num];
 
+	var table_data = [];
+	var numeric_attr = cluster_feature_selection["names"];
+	var table_obj = {};
+    numeric_attr.forEach(function(d){
+        var obj = {};
+        obj["Name"] = d;
+        feature_index = cluster_feature_selection["names"].indexOf(d);
+        obj["Score"] = Math.round(cluster_feature_selection["scores"][feature_index],0);
+        if(isNaN(obj["Score"])){
+            obj["Score"] = 0;
+        }
+        if(cluster_feature_selection["pvalues"][feature_index] < .05){
+            obj["Score"] = obj["Score"].toString() + "*";
+        }else{
+            obj["Score"] = obj["Score"].toString();
+        }
+        table_data.push(obj);
+        table_obj[obj["Name"]] = obj["Score"];
+    });
+
+	_self.feature_selection_div = _self.data_point_measures.append("div").style("width", "20%").style("height", height+"px").style("float", "left").style("width", "20%").style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
+		.style("font-size", "67%")
+		.style("cursor", "pointer")
+		.attr("title", function(d){return d["name"];})
+		.text(function(d){return table_obj[d["name"]];});
+
+	sortDPMTable(_self.default_data_point_sort);
+
+	_self.cluster_sort_header.on("click", function(d,i){
+		if(i==0){
+			// sort by name
+			_self.default_data_point_sort = [1,0,0];
+			
+		}else if(i==1){
+			// sort by attribute value
+			_self.default_data_point_sort = [0,1,0];
+		}else if(i==2){
+			// sort by feature score
+			_self.default_data_point_sort = [0,0,1];
+		}
+		sortDPMTable(_self.default_data_point_sort, 250);
+	});
+
+	function sortDPMTable(array, time){
+		var time = time || 0;
+		if(array.indexOf(1)==0){
+			d3.selectAll("div.data_point_measures").sort(function(a,b){
+				return d3.ascending(a["name"], b["name"]);
+			})
+			.transition().duration(time)
+			.style("top",function(d, i) {
+                	return i*parseFloat(height) + "px";
+            	}
+            );
+		}else if(array.indexOf(1)==1){
+			d3.selectAll("div.data_point_measures").sort(function(a,b){
+				return d3.descending(parseFloat(a["value"]), parseFloat(b["value"]));
+			})
+			.transition().duration(time)
+			.style("top",function(d, i) {
+                	return i*parseFloat(height) + "px";
+            	}
+            );
+		}else if(array.indexOf(1)==2){
+			d3.selectAll("div.data_point_measures").sort(function(a,b){
+				var a_val = parseFloat(table_obj[a["name"]]);
+				var b_val = parseFloat(table_obj[b["name"]]);
+
+				if(a_val == null || isNaN(a_val)){
+					a_val = -999999;
+				}
+
+				if(b_val == null || isNaN(b_val)){
+					b_val = -999999;
+				}
+				return d3.descending(a_val, b_val);
+			})
+			.transition().duration(time)
+			.style("top",function(d, i) {
+                	return i*parseFloat(height) + "px";
+            	}
+            );
+		}
+		_self.cluster_sort_header.style("border", function(d,i){
+			if(array[i]==1){
+				return "1px solid " + COLOR_DARKGRAY;
+			}else{
+				return "none";
+			}
+		})
+	}
 };
 
 // Distribution Types:
@@ -781,7 +927,7 @@ ClusterList.prototype.setupHist = function(data_all, data_highlighted){
 
 	var x = d3.scale.linear()
 				.domain(extent_x)
-				.range([0, (_self.width-_self.margin*4)]);
+				.range([5, _self.hist_width-5]);
 
 	var values_all = d3.layout.histogram()
 		.bins(x.ticks(12))
