@@ -424,7 +424,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 
 						var x = d3.scale.ordinal().domain(each_gspace["context"].map(function(d,i){return i;})).rangeRoundBands([0, _self.width*.7],.1);
 
-						var y = d3.scale.linear().domain(d3.extent(each_gspace["context"])).range([height*.6, height*.2]);
+						var y = d3.scale.linear().domain(d3.extent(each_gspace["context"])).range([_self.hist_height, _self.hist_height*.2]);
 
 						var area = d3.svg.area()
 									.x(function(d,i){return x(i);})
@@ -458,13 +458,81 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 								}else{
 									return .25;
 								}
+							});
+
+						// Bar Chart Labels
+						d3.select(this)
+							.selectAll("text.bar_label")
+							.data(function(d,i){
+								return d["context"];}).enter()
+						.append("text")
+							.attr("class", "bar_label")
+							.attr("x", function(d,i){return x(i)+x.rangeBand()/2;})
+							.attr("y", function(d,i){
+								var val = y(d);
+								if(y(d) + 12 < y.range()[0]){
+									val = y.range()[0] - 12;
+								}
+								return val;})
+							.style("vertical-align", "text-bottom")
+							.style("text-anchor", "middle")
+							.style("font-size", function(d,i){
+								if(each_gspace["context"].length<10){
+									return 12;
+								}else{
+									return 9;
+								}
 							})
-							.attr("title", function(d){return d;})
+							.style("fill", function(d,i){
+								var val = invertColor(d3.rgb(_self.color(i)).toString());
+								if(y(d) + 12 > y.range()[0]){
+									val = "black";
+								}
+								val = "black";
+								return val;})
+							.text(function(d,i){
+								if(cluster_num==i){
+									return d.toFixed(2);
+								}else{
+									return "";
+								}
+							})
+
+
+						var max_line_space = d3.select(this)
+							.append("g")
+							.attr("class", "max_line_space")
+							.attr("transform", "translate(0,"+y(y.domain()[1])+")");
+
+						max_line_space.append("line")
+							.style("stroke", COLOR_GRAY)
+							.style("stroke-width", 1)
+							.style("stroke-dasharray", "5, 5")
+							.attr("y1", 0)
+							.attr("y2", 0)
+							.attr("x1", x(x.domain()[0]))
+							.attr("x2", (x(x.domain()[x.domain().length-1])+x.rangeBand()));
+
+						max_line_space.append("text")
+							.style("alignment-baseline", "middle")
+							.style("text-anchor", "end")
+							.style("font-size", 10)
+							.style("fill", COLOR_DARKDARKGRAY)
+							.text(y.domain()[1].toFixed(2));
+
+						// max_line_space
+						// 	.append("text")
+						// 	.attr("y", y.range()[0])
+						// 	.style("alignment-baseline", "baseline")
+						// 	.style("text-anchor", "end")
+						// 	.style("font-size", 10)
+						// 	.style("fill", COLOR_DARKDARKGRAY)
+						// 	.text(y.domain()[0].toFixed(1));
 
 						var yAxis = d3.svg.axis()
 								    .scale(y)
 								    .orient("left")
-								    .ticks(2)
+								    .tickValues(y.range().reverse())
 
 						var xAxis = d3.svg.axis()
 								    .scale(x)
@@ -484,12 +552,12 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 						    .call(xAxis)
 						    .selectAll("path").remove();
 
-						d3.select(this)
-							.append("g")
-						    .attr("class", "y axis")
-						    .attr("transform", "translate("+_self.rect_size/3 +",0)")
-						    .call(yAxis)
-						    .selectAll("path").remove();
+						// d3.select(this)
+						// 	.append("g")
+						//     .attr("class", "y axis")
+						//     .attr("transform", "translate("+_self.rect_size/3 +","+y(y.domain()[1]) +")")
+						//     .call(yAxis)
+						//     .selectAll("path").remove();
 
 						// Circle for highlighting Area
 						// d3.select(this)
@@ -980,7 +1048,7 @@ ClusterList.prototype.setupHist = function(data_all, data_highlighted){
 
 	var y = d3.scale.linear()
 				.domain([0, max_y])
-				.range([_self.hist_height, 0]);
+				.range([_self.hist_height, _self.hist_height*.2]);
 
 	var output = [values_all, values_highlighted, x, y];
 
@@ -1110,4 +1178,15 @@ function isFloat(n){
 
 function upperCaseFirst(str){
     return str.charAt(0).toUpperCase() + str.substring(1);
+}
+
+function invertColor(hexTripletColor) {
+    var color = hexTripletColor;
+    color = color.substring(1);           
+    color = parseInt(color, 16);          
+    color = 0xFFFFFF ^ color;             
+    color = color.toString(16);           
+    color = ("000000" + color).slice(-6); 
+    color = "#" + color;                  
+    return color;
 }

@@ -2,6 +2,7 @@ var COLOR_GREEN = "#8cd211";
 var COLOR_RED = "#ff5050";
 var COLOR_GRAY = "#e0e0e0";
 var COLOR_DARKGRAY = "#aeaeae";
+var COLOR_DARKDARKGRAY = "#404040";
 var COLOR_CASE = "#d8b365";
 var COLOR_CONTROL = "#66c2a5";
 
