@@ -187,6 +187,7 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		_self.selected_cluster_indices = [];
 	}else{
 		// fire to cluster_list
+		_self.selected_cluster_indices = argument.slice();
 		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument[argument.length-1], _self.data, _self.selected_cluster_indices]);
 		_self.circ
 		    .style("opacity", function(d,i){
@@ -210,7 +211,6 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		        return DESELECTED_CIRCLE_STROKE_WIDTH;
 		      }
 		    });
-		_self.selected_cluster_indices = argument.slice();
 	}
 };
 
@@ -370,7 +370,6 @@ Projection.prototype.draw = function(){
 						.on("contextmenu", d3.contextMenu(_self.context_menu))
 						.on("dblclick", function(d,i){
 							_self.dblclicked = !_self.dblclicked;
-							console.log(_self.dblclicked);
 							if(_self.dblclicked){
 								d3.select(this).moveToFront();
 								d3.select(this).style("fill", "black");

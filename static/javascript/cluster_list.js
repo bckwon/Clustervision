@@ -345,6 +345,8 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, clustering_index, cluster_num, data, cluster_indices_to_highlight) {
 	var _self = this;
+	var height = _self.rect_size*2;
+	_self.hist_height = parseFloat(height)*.75;
 
 	_self.cluster_space.selectAll("*").remove();
 	d3.selectAll(".feature_selection_table").remove();
@@ -409,8 +411,6 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 						});
 
 	// area
-	var height = _self.rect_size*2;
-
 	_self.cluster_measurement_area_path = _self.cluster_measures_g
 					.append("g")
 						.attr("transform", function(d,i){
@@ -877,7 +877,6 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 										        return e;
 										    });
 
-								// console.log(sample_datum_obj[d["name"]]);
 								var mean_value = d3.mean(sample_datum_obj[d["name"]]);
 
 								d3.select(this)
