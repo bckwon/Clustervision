@@ -6,6 +6,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	var width = screen_width;
 	var height = screen_height;
 	var margin = {x:20, y:80};
+	_self.dblclicked = false;
 	_self.cls_index = 0; // default
 	_self.selected_cluster_indices = [];
 	_self.margin = margin;
@@ -366,5 +367,39 @@ Projection.prototype.draw = function(){
 								d3.selectAll("circle.data_item_circ[cluster_index='"+clabel+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
 							})
 						})
-						.on("contextmenu", d3.contextMenu(_self.context_menu));
+						.on("contextmenu", d3.contextMenu(_self.context_menu))
+						.on("dblclick", function(d,i){
+							_self.dblclicked = !_self.dblclicked;
+							console.log(_self.dblclicked);
+							if(_self.dblclicked){
+								d3.select(this).moveToFront();
+								d3.select(this).style("fill", "black");
+								d3.select(this).attr("r", _self.radius*1.5);
+							  	_self.circ
+							  		.on("mouseenter", null)
+							  		.on("mouseleave", null);
+							}else{
+								d3.select(this)
+									.attr("r", _self.radius)
+									.style("fill", function(){
+										return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
+									});
+								_self.circ
+							  		.on("mouseenter", function(d,i){
+										d3.select(this).moveToFront();
+										var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
+										_s.listenerMap['projection_listener_for_data_point'].fire([i, _self.cls_index, cluster_label, _self.data]);
+										_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([i, _self.cls_index, cluster_label, _self.data]);
+										_self.circ.style("fill", function(d,i){
+											return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
+										});
+										d3.select(this).style("fill", "red");
+									})
+									.on("mouseleave", function(d,i){
+										_self.circ.style("fill", function(d,i){
+											return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
+										});
+									});
+							}
+						})
 }
