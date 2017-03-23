@@ -51,13 +51,13 @@ COLOR_RANGE = ["#5392ff", // blue40
 "#fe8500", //orange30
 "#ff509e", //magenta40
 "#d2b5f0", //violet20
-"#2e3f8f", //ultramarine70
+"#e7e9f7", //ultramarine1
 "#00b6cb", //aqua30
 "#89eda0", //green10
-"#5b421c", //gold70
+"#9c6d1e", //gold50
 "#fe6100", //peach40
 "#f5cedb", //magenta10
-"#44216a", //violet80
+"#9753e1", //violet50
 "#fbeaae"]; //yellow1
 
 var category_adam = d3.scale.ordinal()
