@@ -453,8 +453,10 @@ def feature_selection_labels(pd_dataset, labels):
         new_labels = pd.Series(labels)
         new_labels.loc[new_labels != l] = "A"
         new_labels.loc[new_labels == l] = "B"
+        new_labels[new_labels == "A"] = 0
+        new_labels[new_labels == "B"] = 1
 
-        X_train, X_test, y_train, y_test = train_test_split(dataset, new_labels,random_state=0,test_size=1)
+        X_train, X_test, y_train, y_test = train_test_split(dataset, new_labels.as_matrix(),random_state=0,test_size=1)
         select = SelectPercentile(percentile=50)
         select.fit(X_train,y_train)
 
@@ -465,6 +467,7 @@ def feature_selection_labels(pd_dataset, labels):
         fs["pvalues"] = select.pvalues_.tolist()
 
         feature_selected_labels.append(fs)
+
     return feature_selected_labels
 
 def get_env():
