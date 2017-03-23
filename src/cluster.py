@@ -369,6 +369,19 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions.append(d)
 
         return (pdata, descriptions)
+    elif dataset_name == 'sutter-binary':
+        pdata = pd.read_csv('data/sutter_binary_data/sutter3-23-2017-all-binary.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        return (pdata, descriptions)
     elif dataset_name == 'bobross':
         pdata = pd.read_csv('data/bobross_data/elements-by-episode.csv')
 
