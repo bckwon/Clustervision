@@ -743,6 +743,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 
 	var data_point_svg_array = {};
 	var data_point_scale_array = {};
+	var sample_datum_obj = {};
 	data_point_keys.forEach(function(key_item, key_index){
 		var sample_datum = data["data_description"].map(function(d){return parseFloat(d[key_item])});
 		var data_array = sample_datum.filter(function(d,i){return index_array.indexOf(i) > -1;});
@@ -751,6 +752,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 		var sa = outcome.slice(2);
 		data_point_svg_array[key_item] = da;
 		data_point_scale_array[key_item] = sa;
+		sample_datum_obj[key_item] = data_array;
 	});
 
 	_self.data_point_area_canvas = _self.data_point_svg.selectAll("g.area_canvas")
@@ -778,6 +780,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 
 				  		d3.select(this)
 							.append("path")
+							.style("opacity", SELECTED_PATH_OPACITY)
 							.style("fill", function(e, e_index){
 								if(i==0){
 									return COLOR_GRAY;
@@ -805,18 +808,50 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 										        }
 										        return e;
 										    });
+
+								// console.log(sample_datum_obj[d["name"]]);
+								var mean_value = d3.mean(sample_datum_obj[d["name"]]);
+
 								d3.select(this)
-									.append("rect")
-									.attr("x", function(e){
+									.append("line")
+									.attr("x1", function(e){
+										var val = mean_value;
+										if(val > x.domain()[x.domain().length-1]){
+											val = x.domain()[x.domain().length-1];
+										}
+										return x(val);})
+									.attr("x2", function(e){
+										var val = mean_value;
+										if(val > x.domain()[x.domain().length-1]){
+											val = x.domain()[x.domain().length-1];
+										}
+										return x(val);})
+									.attr("y1", 0)
+									.attr("y2", _self.hist_height)
+									.style("stroke", function(){
+										return _self.color(cluster_num);
+									})
+									.attr("stroke-width", 3)
+									.attr("stroke-dasharray", "5, 5")
+
+								d3.select(this)
+									.append("line")
+									.attr("x1", function(e){
 										var val = parseFloat(e["value"]);
 										if(val > x.domain()[x.domain().length-1]){
 											val = x.domain()[x.domain().length-1];
 										}
 										return x(val);})
-									.attr("y", 0)
-									.attr("width", 3)
-									.attr("height", _self.hist_height)
-									.style("fill", "black");
+									.attr("x2", function(e){
+										var val = parseFloat(e["value"]);
+										if(val > x.domain()[x.domain().length-1]){
+											val = x.domain()[x.domain().length-1];
+										}
+										return x(val);})
+									.attr("y1", 0)
+									.attr("y2", _self.hist_height)
+									.style("stroke-width", 3)
+									.style("stroke", "black");
 
 								d3.select(this)
 									.append("g")
