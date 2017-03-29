@@ -26,6 +26,9 @@ import string
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectPercentile
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import chi2
 
 from tqdm import tqdm
 from multiprocessing import Pool
@@ -35,7 +38,7 @@ def compute_all_clusterings(dataset_name, k_range):
     if k_range is None:
         k_range = [2, 20]
 
-    cluster_range = [2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+    cluster_range = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
 
     for n_clusters in cluster_range:
         # KMeans
@@ -127,7 +130,7 @@ def compute_clustering(params):
 
         X_train, X_test, y_train, y_test = train_test_split(dataset, labels,random_state=0,test_size=1)
 
-        select = SelectPercentile(percentile=50)
+        select = SelectPercentile(f_classif, percentile=50)
         select.fit(X_train,y_train)
         # X_train_selected = select.transform(X_train)
 
@@ -141,6 +144,8 @@ def compute_clustering(params):
         quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
 
         quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(dataset, labels)
+
+        quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(dataset, labels)
 
         quality_neg_cohesion = quality_metrics.neg_cohesion(dataset, labels)
         quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(dataset, labels)
@@ -163,6 +168,7 @@ def compute_clustering(params):
                 'silhouette_samples': quality_silhouette_samples,
                 'calinski_harabaz': quality_calinski_harabaz,
                 'davies_bouldin': quality_neg_davies_bouldin,
+                'gap_statistic': quality_neg_gap_statistic,
                 'cohesion': quality_neg_cohesion,
                 'cohesion_clusters': quality_neg_cohesion_clusters,
                 'separation': quality_separation,
@@ -383,7 +389,7 @@ def dataset_from_name(dataset_name, include_description=False):
 
         return (pdata, descriptions)
     elif dataset_name == 'bobross':
-        pdata = pd.read_csv('data/bobross_data/elements-by-episode.csv')
+        pdata = pd.read_csv('data/bobross_data/elements-by-episode-filtered.csv')
 
         pdata.drop(pdata.columns[[0,1]], axis=1, inplace=True)
 
@@ -470,7 +476,7 @@ def feature_selection_labels(pd_dataset, labels):
         new_labels[new_labels == "B"] = 1
 
         X_train, X_test, y_train, y_test = train_test_split(dataset, new_labels.as_matrix(),random_state=0,test_size=1)
-        select = SelectPercentile(percentile=50)
+        select = SelectPercentile(f_classif, percentile=50)
         select.fit(X_train,y_train)
 
         fs = {}

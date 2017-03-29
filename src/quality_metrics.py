@@ -27,6 +27,10 @@ def silhouette_clusters(X, labels):
 def neg_davies_bouldin(X, labels):
     return -1.0 * clusterhelpers_db_gs.davies_bouldin(X, labels)
 
+def neg_gap_statistic(X, labels):
+    u,v = clusterhelpers_db_gs.gap_statistic(X, labels)
+    return -1.0 * v
+
 def neg_s_Dbw(X, labels):
     return -1.0 * SDbw.SDbw(X,labels)
 

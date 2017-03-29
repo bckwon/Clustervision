@@ -164,7 +164,7 @@ def get_clustering():
             clustering_choices.append(best_clustering)
     # Or Step 2b: Instead of MMR, choose top N from each quality metric
     else:
-        quality_metrics = ['sdbw','silhouette_score','calinski_harabaz','davies_bouldin','cohesion','separation']
+        quality_metrics = ['sdbw','silhouette_score','calinski_harabaz','davies_bouldin','gap_statistic']
 
         param_choices = [query_params]
         clustering_choices = [query_clustering]
