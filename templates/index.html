@@ -29,7 +29,7 @@
 <script src="{{ url_for('static', filename='javascript/cluster_view.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/projection.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
-<title>Cluster Analysis</title>
+<title>Clustervision</title>
 </head>
 
 {% include "partials/navigation.html" ignore missing %}
@@ -458,9 +458,9 @@
 
     function setup_slider(){
 
-        var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
+        // var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
 
-        addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
+        // addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
 
         var btn_group_k = d3.select(".canvas_left").append("div").attr("class", "k_slider").style("position", "absolute").style("top", "25px").style("background", "white").style("width", "100%");
 
@@ -469,9 +469,9 @@
         btn_group_k.append("div").attr("id", "k_slider").style("position", "absolute").style("left", "25%").style("width", "50%").style("top", "4px");
         btn_group_k.append("div").attr("id", "k_slider_title").style("position", "absolute").style("left", "80%").style("width", "25%").style("color", "blue").text(chosen_k[0] + " - " + chosen_k[1]);
 
-        d3.select("span.lambda_input_slider_text#lambda_input_text")
-        .style("color", "blue")
-        .text(chosen_lambda);
+        // d3.select("span.lambda_input_slider_text#lambda_input_text")
+        // .style("color", "blue")
+        // .text(chosen_lambda);
 
         $( "#k_slider" ).slider({
             range: true,
@@ -486,18 +486,18 @@
             }
         });
 
-        var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
-                                    .attr("value", chosen_lambda)
-                                    .attr("min", 0)
-                                    .attr("max", 1)
-                                    .attr("step", .05)
-                                    .on("input", function(d){
-                                        chosen_lambda = parseFloat(d3.select(this).property("value"));
-                                        d3.select("span.lambda_input_slider_text#lambda_input_text")
-                                        .text(chosen_lambda);
-                                    });
+        // var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
+        //                             .attr("value", chosen_lambda)
+        //                             .attr("min", 0)
+        //                             .attr("max", 1)
+        //                             .attr("step", .05)
+        //                             .on("input", function(d){
+        //                                 chosen_lambda = parseFloat(d3.select(this).property("value"));
+        //                                 d3.select("span.lambda_input_slider_text#lambda_input_text")
+        //                                 .text(chosen_lambda);
+        //                             });
 
-        $('#lambda_input').val(chosen_lambda);
+        // $('#lambda_input').val(chosen_lambda);
     }
 
 </script>

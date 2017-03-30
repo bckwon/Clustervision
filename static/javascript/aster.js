@@ -131,19 +131,33 @@ Aster.prototype.highlight_circles = function(highglight_bool) {
 
   _self.path.style("stroke", function(d,i){
     if(highglight_bool){
-      return "orange";
+      return CLUSTERING_RESULT_SELECTED_COLOR;
     }else{
       return COLOR_DARKGRAY;
     }
-  });
+  })
+  // .style("stroke-width", function(d,i){
+  //   if(highglight_bool){
+  //     return CLUSTERING_RESULT_SELECTED_STROKE_WIDTH;
+  //   }else{
+  //     return 1;
+  //   }
+  // });
 
   _self.outerPath.style("stroke", function(d,i){
     if(highglight_bool){
-      return "orange";
+      return CLUSTERING_RESULT_SELECTED_COLOR;
     }else{
       return "gray";
     }
-  });
+  })
+  // .style("stroke-width", function(d,i){
+  //   if(highglight_bool){
+  //     return CLUSTERING_RESULT_SELECTED_STROKE_WIDTH;
+  //   }else{
+  //     return 1;
+  //   }
+  // });
 
 };
 

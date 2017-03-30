@@ -58,7 +58,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
             		.attr("height",_self.rect_size)
             		.style("fill", "none")
             		.style("stroke", "#e34a33")
-            		.style("stroke-width", 2.5);
+            		.style("stroke-width", 1);
             },
             disabled: false
         }
@@ -76,8 +76,8 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 							})
 							.style("cursor", "pointer")
 							.on("click", function(d,i){
-								d3.selectAll(".clustering_container").style("stroke", "black");
-								d3.select(this).selectAll(".clustering_container").style("stroke", "orange");
+								d3.selectAll(".clustering_container").style("stroke", "black").style("stroke-width", 1);
+								d3.select(this).selectAll(".clustering_container").style("stroke", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke-width", CLUSTERING_RESULT_SELECTED_STROKE_WIDTH);
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_parallel_coordinates'].fire([d,i]);
@@ -105,7 +105,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 					.attr("height", _self.rect_size)
 					.style("fill", "none")
 					.style("stroke", "black")
-					.style("stroke-width", "2.5px")
+					.style("stroke-width", "1px")
 					.style("cursor", "pointer")
 
 	_self.cluster_rect = _self.list_space.selectAll("rect.cluster_rect")
@@ -149,7 +149,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 					.attr("r", _self.radius)
 					.style("fill", "white")
 					.style("stroke", "black")
-					.style("stroke-width", "2.5px")
+					.style("stroke-width", "1px")
 					.style("cursor", "pointer")
 
 

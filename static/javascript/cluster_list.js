@@ -153,6 +153,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 	_self.cluster_title = _self.cluster_space.append("text")
 					.attr("dy", 0)
 					.text("Cluster " + cluster_num)
+					// .style("fill", _self.color(cluster_num))
 					.style("font-size", "200%");
 
 	var cluster_measures = _self.parameters.map(function(d){
@@ -179,7 +180,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.style("fill", "blue")
 						.text(function(d){return d["name"]+ ": " + d["value"];});
 
-	// Inliner + Outlier
+	// Inlier + Outlier
 	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
 	var top_5 = sorted_labels.slice(0,5);
 	var bottom_5 = sorted_labels.slice(-5);
@@ -356,6 +357,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 					.attr("dx", -20)
 					.attr("dy", 0)
 					.text("Cluster " + cluster_num)
+					.style("fill", _self.color(cluster_num))
 					.style("font-size", "200%");
 
 	// Cluster Measures (individuals for text)
@@ -604,11 +606,12 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 					// 		});
 					// });
 
-	// Inliner + Outlier
+	// Inlier + Outlier
 	var sorted_labels = data["clustering"][clustering_index]["sorted_labels"][cluster_num];
 	var top_5 = sorted_labels.slice(0,5);
 	var bottom_5 = sorted_labels.slice(-5);
 	var in_and_out = [top_5, bottom_5];
+	var in_and_out_title = ["Inliers", "Outliers"];
 
 	var in_and_out_scale = d3.scale.linear().domain(d3.extent(sorted_labels, function(e){return parseFloat(e[1]);})).range([1, .1]);
 
@@ -618,9 +621,28 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 						.attr("class", "sample_items_space")
 						.attr("transform", function(d,i){
 							var x = i*_self.width/2;
-							var y = _self.rect_size*(5+cluster_measures.length);
+							var y = _self.rect_size*(6+cluster_measures.length);
 							return "translate("+x+","+y+")";
 						});
+
+	_self.sample_items_title = _self.sample_items_space.selectAll("text.sample_items_title")
+						.data(function(d,i){return [in_and_out_title[i]];}).enter()
+					.append("text")
+						.attr("dx", function(d,i){
+							return _self.rect_size*5/2;
+						})
+						.attr("dy", function(d,i){
+							return -_self.rect_size/2;
+						})
+						.attr("class", "sample_items_title")
+						.style("fill", "black")
+						.style("font-weight", "bold")
+						.style("alignment-baseline", "central")
+						.style("text-anchor", "middle")
+						.style("font-size", "80%")
+						.style("cursor", "pointer")
+						.text(function(d,i){
+							return d;});
 
 	_self.sample_items = _self.sample_items_space.selectAll("rect.sample_items")
 						.data(function(d){return d;}).enter()
@@ -636,7 +658,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 							return _self.color(cluster_num);
 						});
 
-	_self.sample_item_text = _self.sample_items_space.selectAll("text")
+	_self.sample_item_text = _self.sample_items_space.selectAll("text.sample_items_text")
 						.data(function(d){return d;}).enter()
 					.append("text")
 						.attr("dx", function(d,i){
@@ -755,9 +777,9 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 					.text("Data Point " + data_item_index)
 					.style("font-size", "200%");
 
-	var width_array = ["20%", "60%", "20%"];
+	var width_array = ["20%", "60%", "10%", "10%"];
 	var height = "40";
-	var width_coeff = "60%";
+	var width_coeff = width_array[1];
 	var width_in_decimal = parseFloat(width_coeff)/100;
 	var width = (_self.width)*width_in_decimal;
 	_self.hist_height = parseFloat(height)*.75;
@@ -765,7 +787,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 
 	_self.cluster_sort_header = _self.data_point_space.append("div")
 									.selectAll("div.sort_cluster_header")
-									.data(["Name", "Attribute Value", "Feature Score"]).enter()
+									.data(["Name", "Attribute Value",  "C.Avg.", "F"]).enter()
 								.append("div")
 									.attr("class", "sort_cluster_header")
 									.style("width", function(d,i){return width_array[i];})
@@ -786,7 +808,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 					.append("div")
 						.attr("class", "data_point_measures")
 						.style("top", function(d,i){return parseFloat(height)*i+"px";})
-						.style("position", "relative")
+						// .style("position", "relative")
 						.style("color", "black");
 
 	_self.data_point_text = _self.data_point_measures.append("div").style("width", "20%").style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
@@ -812,10 +834,25 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 	var data_point_svg_array = {};
 	var data_point_scale_array = {};
 	var sample_datum_obj = {};
+	var data_point_categorical = {};
+	var data_point_binary = {};
 	data_point_keys.forEach(function(key_item, key_index){
 		var sample_datum = data["data_description"].map(function(d){return parseFloat(d[key_item])});
 		var data_array = sample_datum.filter(function(d,i){return index_array.indexOf(i) > -1;});
-		var outcome = _self.setupHist(sample_datum, data_array);
+		data_point_categorical[key_item] = true;
+		sample_datum.forEach(function(d,i){
+			if(!Number.isInteger(d)){
+				data_point_categorical[key_item] = false;
+			}
+		});
+
+		if(data_point_categorical[key_item] && _.uniq(sample_datum).length < 5){
+			data_point_binary[key_item] = true;
+		}else{
+			data_point_binary[key_item] = false;
+		}
+
+		var outcome = _self.setupHist(sample_datum, data_array, data_point_binary[key_item]);
 		var da = outcome.slice(0,2);
 		var sa = outcome.slice(2);
 		data_point_svg_array[key_item] = da;
@@ -846,7 +883,44 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 				  			.y0(_self.hist_height)
 				  			.y1(function(z){return y(z.y);});
 
-				  		d3.select(this)
+				  		if(data_point_binary[name]){
+
+				  			var rect_width = x.rangeBand();
+
+				  			d3.select(this)
+				  			.selectAll("rect")
+				  			.data(function(e, e_index){
+				  				e.forEach(function(f){
+				  					if(i==0){
+				  						f["type"] = "total";
+				  					}else{
+				  						f["type"] = "cluster";
+				  					}
+				  				})
+				  				return e;}).enter()
+							.append("rect")
+							.style("opacity", SELECTED_PATH_OPACITY)
+							.style("fill", function(e, e_index){
+								if(e["type"]=="total"){
+									return COLOR_GRAY;
+								}else{
+									return _self.color(cluster_num);
+								}
+							})
+							.attr("x", function(e){
+							  	return x(e.x);
+							})
+							.attr("y", function(e){
+							  	return y(e.y);
+							})
+							.attr("width", function(e){
+							  	return rect_width;
+							})
+							.attr("height", function(e){
+							  	return _self.hist_height - y(e.y);
+							})
+				  		}else{
+				  			d3.select(this)
 							.append("path")
 							.style("opacity", SELECTED_PATH_OPACITY)
 							.style("fill", function(e, e_index){
@@ -859,6 +933,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 							.attr("d", function(e){
 							  	return area(e);
 							});
+				  		}
 					});
 
 	_self.data_point_marker = _self.data_point_svg
@@ -879,46 +954,52 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 
 								var mean_value = d3.mean(sample_datum_obj[d["name"]]);
 
-								d3.select(this)
-									.append("line")
-									.attr("x1", function(e){
-										var val = mean_value;
-										if(val > x.domain()[x.domain().length-1]){
-											val = x.domain()[x.domain().length-1];
-										}
-										return x(val);})
-									.attr("x2", function(e){
-										var val = mean_value;
-										if(val > x.domain()[x.domain().length-1]){
-											val = x.domain()[x.domain().length-1];
-										}
-										return x(val);})
-									.attr("y1", 0)
-									.attr("y2", _self.hist_height)
-									.style("stroke", function(){
-										return _self.color(cluster_num);
-									})
-									.attr("stroke-width", 3)
-									.attr("stroke-dasharray", "5, 5")
+								if(!data_point_binary[d["name"]]){
+									d3.select(this)
+										.append("line")
+										.attr("class", "marker_line")
+										.attr("x1", function(e){
+											var val = mean_value;
+											if(val > x.domain()[x.domain().length-1]){
+												val = x.domain()[x.domain().length-1];
+											}
+											return x(val);})
+										.attr("x2", function(e){
+											var val = mean_value;
+											if(val > x.domain()[x.domain().length-1]){
+												val = x.domain()[x.domain().length-1];
+											}
+											return x(val);})
+										.attr("y1", 0)
+										.attr("y2", _self.hist_height)
+										.style("stroke", function(){
+											return _self.color(cluster_num);
+										})
+										.attr("stroke-width", 3)
+										.attr("stroke-dasharray", "5, 5")
 
-								d3.select(this)
-									.append("line")
-									.attr("x1", function(e){
-										var val = parseFloat(e["value"]);
-										if(val > x.domain()[x.domain().length-1]){
-											val = x.domain()[x.domain().length-1];
-										}
-										return x(val);})
-									.attr("x2", function(e){
-										var val = parseFloat(e["value"]);
-										if(val > x.domain()[x.domain().length-1]){
-											val = x.domain()[x.domain().length-1];
-										}
-										return x(val);})
-									.attr("y1", 0)
-									.attr("y2", _self.hist_height)
-									.style("stroke-width", 3)
-									.style("stroke", "black");
+									d3.select(this)
+										.append("line")
+										.attr("class", "marker_line")
+										.attr("x1", function(e){
+											var val = parseFloat(e["value"]);
+											if(val > x.domain()[x.domain().length-1]){
+												val = x.domain()[x.domain().length-1];
+											}
+											return x(val);})
+										.attr("x2", function(e){
+											var val = parseFloat(e["value"]);
+											if(val > x.domain()[x.domain().length-1]){
+												val = x.domain()[x.domain().length-1];
+											}
+											return x(val);})
+										.attr("y1", 0)
+										.attr("y2", _self.hist_height)
+										.style("stroke-width", 3)
+										.style("stroke", "black");
+								}else{
+									d3.select(this).selectAll("line.marker_line").remove();
+								}
 
 								d3.select(this)
 									.append("g")
@@ -950,25 +1031,38 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
         table_obj[obj["Name"]] = obj["Score"];
     });
 
-	_self.feature_selection_div = _self.data_point_measures.append("div").style("width", "20%").style("height", height+"px").style("float", "left").style("width", "20%").style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
+	_self.feature_selection_cluster_div = _self.data_point_measures.append("div").style("height", height+"px").style("float", "left").style("width", width_array[2]).style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
+		.style("font-size", "67%")
+		.style("color", function(d){
+			return _self.color(cluster_num);
+		})
+		.style("cursor", "pointer")
+		.attr("title", function(d){return d["name"];})
+		.text(function(d){return d3.mean(sample_datum_obj[d["name"]]).toFixed(1);});
+
+	_self.feature_selection_div = _self.data_point_measures.append("div").style("height", height+"px").style("float", "left").style("width", width_array[3]).style("height", height+"px").style("float", "left").style("word-wrap", "break-word").style("vertical-align", "middle").style("text-align", "center")
 		.style("font-size", "67%")
 		.style("cursor", "pointer")
 		.attr("title", function(d){return d["name"];})
 		.text(function(d){return table_obj[d["name"]];});
+
+	// var mean_value = d3.mean(sample_datum_obj[d["name"]]);
 
 	sortDPMTable(_self.default_data_point_sort);
 
 	_self.cluster_sort_header.on("click", function(d,i){
 		if(i==0){
 			// sort by name
-			_self.default_data_point_sort = [1,0,0];
+			_self.default_data_point_sort = [1,0,0,0];
 			
 		}else if(i==1){
 			// sort by attribute value
-			_self.default_data_point_sort = [0,1,0];
+			_self.default_data_point_sort = [0,1,0,0];
 		}else if(i==2){
 			// sort by feature score
-			_self.default_data_point_sort = [0,0,1];
+			_self.default_data_point_sort = [0,0,1,0];
+		}else if(i==3){
+			_self.default_data_point_sort = [0,0,0,1];
 		}
 		sortDPMTable(_self.default_data_point_sort, 250);
 	});
@@ -994,6 +1088,25 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
             	}
             );
 		}else if(array.indexOf(1)==2){
+			d3.selectAll("div.data_point_measures").sort(function(a,b){
+				var a_val = parseFloat(d3.mean(sample_datum_obj[a["name"]]));
+				var b_val = parseFloat(d3.mean(sample_datum_obj[b["name"]]));
+
+				if(a_val == null || isNaN(a_val)){
+					a_val = -999999;
+				}
+
+				if(b_val == null || isNaN(b_val)){
+					b_val = -999999;
+				}
+				return d3.descending(a_val, b_val);
+			})
+			.transition().duration(time)
+			.style("top",function(d, i) {
+                	return i*parseFloat(height) + "px";
+            	}
+            );
+		}else if(array.indexOf(1)==3){
 			d3.selectAll("div.data_point_measures").sort(function(a,b){
 				var a_val = parseFloat(table_obj[a["name"]]);
 				var b_val = parseFloat(table_obj[b["name"]]);
@@ -1024,26 +1137,44 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 };
 
 // Distribution Types:
-ClusterList.prototype.setupHist = function(data_all, data_highlighted){
+ClusterList.prototype.setupHist = function(data_all, data_highlighted, categorical){
 	var _self = this;
 
-	var extent_x = d3.extent(data_all);
+	if(categorical){
+		var x = d3.scale.ordinal()
+				.domain(_.uniq(data_all).sort())
+				.rangeRoundBands([0, _self.hist_width],.1);
 
-	var x = d3.scale.linear()
+		var new_domain = x.domain().slice();
+
+		new_domain.push(x.domain()[x.domain().length-1]+1)
+
+		var values_all = d3.layout.histogram()
+			.bins(new_domain)
+			(data_all);
+
+		var values_highlighted = d3.layout.histogram()
+			.bins(new_domain)
+			(data_highlighted);
+
+	}else{
+		var extent_x = d3.extent(data_all);
+		var x = d3.scale.linear()
 				.domain(extent_x)
 				.range([5, _self.hist_width-5]);
 
-	var values_all = d3.layout.histogram()
-		.bins(x.ticks(12))
-	(data_all);
+		var values_all = d3.layout.histogram()
+			.bins(x.ticks(12))
+			(data_all);
 
-	var values_highlighted = d3.layout.histogram()
+		var values_highlighted = d3.layout.histogram()
 			.bins(x.ticks(12))
 			(data_highlighted);
 
-	var max_y = d3.max(values_all, function(d){return d.y;});
+		x = x.domain(d3.extent(values_all, function(d){return d.x;}));
+	}
 
-	x = x.domain(d3.extent(values_all, function(d){return d.x;}));
+	var max_y = d3.max(values_all, function(d){return d.y;});
 
 	var y = d3.scale.linear()
 				.domain([0, max_y])

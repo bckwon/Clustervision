@@ -265,13 +265,13 @@ Projection.prototype.draw = function(){
 						.attr("width", 240)
 						.attr("height", 25)
 						.style("fill", "none")
-						.style("stroke", "orange")
+						.style("stroke", CLUSTERING_RESULT_SELECTED_COLOR)
 						.style("stroke-width", "2.5px");
 
 	_self.title = _self.svg.append("text")
 						.attr("dx", 240/2)
 						.attr("dy", -30)
-						.text("Clustering Result: #" + _self.cls_index)
+						.text("Clustering: #" + _self.cls_index)
 						.style("text-anchor", "middle")
 						.style("alignment-baseline", "middle")
 						.style("font-size", "150%")
