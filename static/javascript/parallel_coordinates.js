@@ -483,7 +483,8 @@ ParallelCoordinates.prototype.redraw = function() {
 
       g_axis.append("svg:image")
         .attr("x", function(d, i){
-          var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
+          // var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
+          var x = 10; //hard-fix position of sorting icon
           return x;
         })
         .attr("y", -20).attr("width", 10).attr("height", 10)
