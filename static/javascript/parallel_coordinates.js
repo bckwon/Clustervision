@@ -37,7 +37,7 @@ function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_a
   }
   var original_data = datum;
 
-  var m = [50, 10, 10, 30],
+  var m = [60, 10, 10, 30],
       w = screen_width - m[1] - m[3],
       h = screen_height - m[0] - m[2];
 
@@ -281,6 +281,14 @@ ParallelCoordinates.prototype.redraw = function() {
               _self.mean_and_95();
             },
             disabled: false
+        },
+        {
+            title: 'Zoom Out Axes (25%)',
+            action: function(elm, d, i) {
+              _self.rescale_axes("Align");
+              _self.mean_and_95();
+            },
+            disabled: false
         }
     ];
 
@@ -422,14 +430,20 @@ ParallelCoordinates.prototype.redraw = function() {
     });
 
   _self.g_axis_text = g_axis.append("svg:text")
-  .style("text-anchor", "middle")
-  .attr("y", -9)
   .attr("class", "axis_label")
   .attr("id", function(d, i){
     return "Axis-" + (i+1);
   })
+  // .attr("y", -9)
+  // .style("text-anchor", "middle")
+  // .text(function(d, i){
+  //       return d.charAt(0);
+  //   })
+  .attr("y", -9)
+  .attr("transform", "rotate(-45)")
+  .style("text-anchor", "start")
   .text(function(d, i){
-        return d.charAt(0);
+        return d;
     })
   .style("font-size", "75%")
   .on("mouseenter", function(d,i){
@@ -761,6 +775,17 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
     _self.current_extent = _self.extent;
   }else if(argument == "Fit to Cluster"){
     _self.current_extent = _self.cluster_extent;
+  }else if(argument == "Align"){
+    _self.current_extent = _self.extent;
+    var keys = d3.keys(_self.current_extent);
+    keys.forEach(function(d){
+      var extent = _self.current_extent[d].slice();
+      var diff = extent[1] - extent[0];
+      var coeff = .25;
+      extent[0] = extent[0] - diff*coeff;
+      extent[1] = extent[1] + diff*coeff;
+      _self.current_extent[d] = extent;
+    });
   }
 
   _self.dimensions.forEach(function(d,i){
@@ -840,18 +865,19 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
       return "75%";
     }
   }).style("text-anchor", function(d,i){
-    if(argument == d){
-      return "end";
-    }else{
-      return "middle";
-    }
+    // if(argument == d){
+    //   return "end";
+    // }else{
+    //   return "middle";
+    // }
+    return "start";
   }).text(function(d,i){
-    if(argument == d){
-      return d.charAt(0);
-      // return d;
-    }else{
-      return d.charAt(0);
-    }
+    // if(argument == d){
+    //   return d.charAt(0);
+    // }else{
+    //   return d.charAt(0);
+    // }
+    return d;
   });
   d3.selectAll("rect.rect_for_highlight").remove();
 

@@ -60,6 +60,7 @@
     var chosen_dr_method = "tsne";
     var session = {};
     var chosen_constraints = {same_cluster: [], diff_cluster: []};
+    var max_k = [2, 100];
     var chosen_k = [2, 20];
     // chosen_constraints["same_cluster"] = [];
     // chosen_constraints["diff_cluster"] = [];
@@ -154,6 +155,10 @@
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
 	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
 	            // var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
+
+                // sort by quality metrics
+                parsed_data = sort_by_normalized_quality_metrics(parsed_data);
+
                 if(parsed_data.length > 0){
                     var CR = new ClusteringStripes(".canvas_left", parsed_data, screen_width/4.5, (screen_height*8/10));
     	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
@@ -181,6 +186,31 @@
                 }
 	        }
 	    });
+    }
+
+    function sort_by_normalized_quality_metrics(data){
+        var new_data = data.slice();
+
+        var quality_metrics = _.without(Object.keys(data[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist", "separation", "cohesion");
+
+        var scale = {}
+        quality_metrics.forEach(function(d){
+            scale[d] = d3.scale.linear().domain(d3.extent(data, function(e){
+                return parseFloat(e["quality_metrics"][d]);
+            })).range([0,1]);
+        });
+
+        new_data = new_data.sort(function(a,b){
+            var a_sum = 0;
+            var b_sum = 0;
+            quality_metrics.forEach(function(d){
+                a_sum = a_sum + scale[d](a["quality_metrics"][d]);
+                b_sum = b_sum + scale[d](b["quality_metrics"][d])
+            });
+            return d3.descending(a_sum, b_sum);
+        });
+
+        return new_data;
     }
 
     function fetch_dataset() {
@@ -462,12 +492,12 @@
 
         // addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
 
-        var btn_group_k = d3.select(".canvas_left").append("div").attr("class", "k_slider").style("position", "absolute").style("top", "25px").style("background", "white").style("width", "100%");
+        var btn_group_k = d3.select(".canvas_left").append("div").attr("class", "k_slider").style("position", "absolute").style("top", "20px").style("background", "white").style("width", "100%");
 
         btn_group_k.append("div")
-                    .text("Specify K: ").style("position", "absolute").style("left", "0%").style("width", "25%");
+                    .text("Number of Clusters: ").style("position", "absolute").style("left", "2.5%").style("width", "25%").style("top", "-50%");
         btn_group_k.append("div").attr("id", "k_slider").style("position", "absolute").style("left", "25%").style("width", "50%").style("top", "4px");
-        btn_group_k.append("div").attr("id", "k_slider_title").style("position", "absolute").style("left", "80%").style("width", "25%").style("color", "blue").text(chosen_k[0] + " - " + chosen_k[1]);
+        btn_group_k.append("div").attr("id", "k_slider_title").style("position", "absolute").style("left", "77.5%").style("width", "15%").style("color", "blue").text(chosen_k[0] + " - " + chosen_k[1]);
 
         // d3.select("span.lambda_input_slider_text#lambda_input_text")
         // .style("color", "blue")
@@ -475,8 +505,8 @@
 
         $( "#k_slider" ).slider({
             range: true,
-            min: 2,
-            max: 20,
+            min: max_k[0],
+            max: max_k[1],
             step: 2,
             values: chosen_k,
             slide: function( event, ui ) {
@@ -485,6 +515,9 @@
                 chosen_k = ui.values;
             }
         });
+
+        // Added this line to add the button
+        addButton(".k_slider", "Rerun", "btn btn-default btn-xs", "right");
 
         // var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
         //                             .attr("value", chosen_lambda)

@@ -211,7 +211,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 						.style("text-anchor", "middle")
 						.style("font-size", "80%")
 						.style("cursor", "pointer")
-						.text(function(d){return "Item#" + d[0] + ": " + d[1].toFixed(3);});
+						.text(function(d){return "#" + d[0] + ": " + d[1].toFixed(3);});
 
 	_self.sample_items = _self.sample_items_space.selectAll("rect")
 						.data(function(d){return d;}).enter()
@@ -362,7 +362,9 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 
 	// Cluster Measures (individuals for text)
 	var cluster_measures = _self.parameters.map(function(d){
-		return {"name": d, "value": data["clustering"][clustering_index]["sorted_labels"][cluster_num].length, "context": data["clustering"][clustering_index]["sorted_labels"][cluster_num].map(function(e){return e.length;})};});
+		// var name = d;
+		var name = "Members";
+		return {"name": name, "value": data["clustering"][clustering_index]["sorted_labels"][cluster_num].length, "context": data["clustering"][clustering_index]["sorted_labels"][cluster_num].map(function(e){return e.length;})};});
 	
 	var measures = _self.quality_metrics.map(function(d){
 		var value = data["clustering"][clustering_index]["quality_metrics"][d][cluster_num];
@@ -494,7 +496,11 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 								return val;})
 							.text(function(d,i){
 								if(cluster_num==i){
-									return d.toFixed(2);
+									if(Number.isInteger(d)){
+										return d;
+									}else{
+										return d.toFixed(2);
+									}
 								}else{
 									return "";
 								}
@@ -515,12 +521,19 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 							.attr("x1", x(x.domain()[0]))
 							.attr("x2", (x(x.domain()[x.domain().length-1])+x.rangeBand()));
 
+						var max_line_number = y.domain()[1];
+						if(Number.isInteger(max_line_number)){
+							max_line_number = max_line_number;
+						}else{
+							max_line_number = max_line_number.toFixed(2);
+						}
+
 						max_line_space.append("text")
 							.style("alignment-baseline", "middle")
 							.style("text-anchor", "end")
 							.style("font-size", 10)
 							.style("fill", COLOR_DARKDARKGRAY)
-							.text(y.domain()[1].toFixed(2));
+							.text(max_line_number);
 
 						// max_line_space
 						// 	.append("text")
@@ -673,7 +686,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 						.style("text-anchor", "middle")
 						.style("font-size", "80%")
 						.style("cursor", "pointer")
-						.text(function(d){return "Item#" + d[0] + ": " + d[1].toFixed(3);});
+						.text(function(d){return "#" + d[0] + ": " + d[1].toFixed(3);});
 
 	_self.sample_hover_items = _self.sample_items_space.selectAll("rect.sample_hover_items")
 						.data(function(d){return d;}).enter()
