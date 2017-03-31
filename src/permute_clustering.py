@@ -1,6 +1,7 @@
 #!/bin/python
 import numpy as np
 import networkx as nx
+from scipy.optimize import linear_sum_assignment
 
 def permute_clustering_vec(clustering_vec):
     new_clustering_vec = [clustering_vec[0]]
@@ -12,7 +13,45 @@ def permute_clustering_vec(clustering_vec):
         new_clustering_vec.append(clustering)
     return new_clustering_vec
 
+def compute_cost_matrix(a, b):
+    assert len(a) == len(b)
+    assert set(a) == set(range(len(set(a))))
+    assert set(b) == set(range(len(set(b))))
+
+    a = np.array(a)
+    b = np.array(b)
+    num_a = len(set(a))
+    num_b = len(set(b))
+    assert len(set(a).intersection(set(b))) == min(num_a, num_b)
+    cost = np.zeros((num_a, min(num_a, num_b)))
+    for label_a in set(a):
+        for label_b in set(b).intersection(set(a)):
+            mask_cluster_before = (a == label_a)
+            mask_cluster_after = (b == label_b)
+            mask_cluster_both = np.logical_and(mask_cluster_before, mask_cluster_after)
+            cost[label_a, label_b] = np.sum(mask_cluster_before) - np.sum(mask_cluster_both)
+    return cost
+
 def permute_clustering(a, b, sorted_labels=None):
+    cost = compute_cost_matrix(a, b)
+    (row_indices, col_indices) = linear_sum_assignment(cost)
+    permutation = dict(zip(row_indices, col_indices))
+
+    # Some labels may not be included if A has fewer clusters than B
+    # To handle these clusters, we arbitrarily assign them new clusters
+    missing_labels = [label for label in set(a) if label not in permutation.keys()]
+    free_labels = set(a) - set(permutation.values())
+    for (label_a, label_b) in zip(missing_labels, free_labels):
+        permutation[label_a] = label_b
+    if sorted_labels is None:
+        return [permutation[node] for node in a]
+    else:
+        inv_permutation = {value: key for (key, value) in permutation.items()}
+        permuted_sorted_labels = [sorted_labels[inv_permutation[label]] for label in sorted(set(a))]
+        return ([permutation[node] for node in a], permuted_sorted_labels)
+
+
+def permute_clustering_DEPRECATED(a, b, sorted_labels=None):
     '''Permutes the labels in clustering A such that is becomes more similar to clustering B. The clustering A remains the same, even though the labels are permuted.
     Arguments:
         a (list) cluster labels for the first clustering.
@@ -30,7 +69,7 @@ def permute_clustering(a, b, sorted_labels=None):
     G.add_node(start)
     G.add_node(end)
     for label_a in set(a):
-        for label_b in set(a).union(set(a)): # We restrict the range of the permutation to not increase the number of labels
+        for label_b in set(a).intersection(set(a)): # We restrict the range of the permutation to not increase the number of labels
             node_a = 'start_%d' % label_a
             node_b = 'end_%d' % label_b
             G.add_node(node_a)
@@ -68,6 +107,36 @@ def permute_clustering(a, b, sorted_labels=None):
         return ([permutation[node] for node in a], permuted_sorted_labels)
 
 if __name__ == '__main__':
-    a = [0, 0, 0, 1, 1]
-    b = [1, 1, 1, 2, 3]
+    a = [0, 1, 2]
+    b = [0, 1, 2]
     print permute_clustering(a, b)
+    print permute_clustering_DEPRECATED(a, b)
+    print
+
+    a = [0, 1, 2]
+    b = [1, 2, 0]
+    print permute_clustering(a, b)
+    print permute_clustering_DEPRECATED(a, b)
+    print
+
+
+    a = [0, 0, 0, 1, 1, 1, 1, 1, 1]
+    b = [1, 1, 1, 2, 2, 2, 0, 0, 1]
+    print permute_clustering(a, b)
+    print permute_clustering_DEPRECATED(a, b)
+    print
+
+    a = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+    b = [0, 0, 1, 1, 1, 2, 2, 2, 0]
+    print permute_clustering(a, b)
+    print permute_clustering_DEPRECATED(a, b)
+    print
+
+
+    print 'Case where deprecated method fails:'
+    a = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+    b = [1, 1, 2, 2, 2, 0, 0, 0, 1]
+    print permute_clustering(a, b)
+    print permute_clustering_DEPRECATED(a, b)
+
+
