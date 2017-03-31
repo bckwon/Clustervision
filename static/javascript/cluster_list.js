@@ -800,7 +800,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 
 	_self.cluster_sort_header = _self.data_point_space.append("div")
 									.selectAll("div.sort_cluster_header")
-									.data(["Name", "Attribute Value",  "C.Avg.", "F"]).enter()
+									.data(["Name", "Feature Value",  "C.Avg.", "F"]).enter()
 								.append("div")
 									.attr("class", "sort_cluster_header")
 									.style("width", function(d,i){return width_array[i];})
@@ -912,6 +912,7 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 				  				})
 				  				return e;}).enter()
 							.append("rect")
+							.attr("class", "attribute_rect")
 							.style("opacity", SELECTED_PATH_OPACITY)
 							.style("fill", function(e, e_index){
 								if(e["type"]=="total"){
@@ -1011,7 +1012,21 @@ ClusterList.prototype.draw_data_point_in_area_chart = function(data_item_index, 
 										.style("stroke-width", 3)
 										.style("stroke", "black");
 								}else{
+									var color = WEDGE_HIGHLIGHT_COLOR;
+									var triangleSize = 25;
+									var verticalTransform = _self.hist_height + Math.sqrt(triangleSize);
+
+									var triangle = d3.svg.symbol()
+									            .type('triangle-down')
+									            .size(triangleSize)
 									d3.select(this).selectAll("line.marker_line").remove();
+									d3.select(this).append("path")
+            							.attr("d", triangle)
+							            .attr("stroke", color)
+							            .attr("fill", color)
+							            .attr("transform", function(e) { 
+							            	var x_pos = x(parseFloat(e["value"]))+x.rangeBand()/2;
+							            	return "translate(" + x_pos + "," + _self.hist_height*.8 + ")"; });
 								}
 
 								d3.select(this)
