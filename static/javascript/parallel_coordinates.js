@@ -249,6 +249,18 @@ ParallelCoordinates.prototype.redraw = function() {
     _self.extent[d] = d3.extent(datum, function(p){return +p[d];});
   });
 
+  // 25% extent
+  var keys = d3.keys(_self.extent);
+  _self.extent_25 = {};
+  keys.forEach(function(d){
+    var extent = _self.extent[d].slice();
+    var diff = extent[1] - extent[0];
+    var coeff = .25;
+    extent[0] = extent[0] - diff*coeff;
+    extent[1] = extent[1] + diff*coeff;
+    _self.extent_25[d] = extent;
+  });
+
   _self.x.domain(_self.dimensions = _self.dimensions.filter(function(d) {
     return d != "Player Name" && d != "Team" && d != "Pos" && d!="Vehicle Name" && d!="Country" && d!="University Name" && d!="Subreddit" && d!="equals" && (_self.y[d] = d3.scale.linear()
         .domain(_self.current_extent[d])
@@ -776,16 +788,7 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
   }else if(argument == "Fit to Cluster"){
     _self.current_extent = _self.cluster_extent;
   }else if(argument == "Align"){
-    _self.current_extent = _self.extent;
-    var keys = d3.keys(_self.current_extent);
-    keys.forEach(function(d){
-      var extent = _self.current_extent[d].slice();
-      var diff = extent[1] - extent[0];
-      var coeff = .25;
-      extent[0] = extent[0] - diff*coeff;
-      extent[1] = extent[1] + diff*coeff;
-      _self.current_extent[d] = extent;
-    });
+    _self.current_extent = _self.extent_25;
   }
 
   _self.dimensions.forEach(function(d,i){
