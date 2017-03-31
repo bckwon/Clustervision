@@ -60,6 +60,23 @@ Aster.prototype.draw = function(obj){
   var keys = Object.keys(obj);
   var obj_array = Object.values(obj).map(function(k){ return parseFloat(k); });
 
+  _self.outerPath_g = _self.svg.selectAll(".outlineArc_g")
+      .data(_self.pie(obj_array))
+    .enter().append("g")
+      .attr("class", "outlineArc_g");
+
+  // _self.circle = _self.outerPath_g
+  //   .append("circle")
+  //     .attr("r", _self.radius)
+  //     .style("stroke", "none")
+  //     .style("fill", "white");
+
+  _self.outerPath = _self.outerPath_g.append("path")
+                .attr("fill", "white")
+                .attr("stroke", "gray")
+                .attr("class", "outlineArc")
+                .attr("d", _self.outlineArc);
+
   _self.path_g = _self.svg.selectAll(".solidArc_g")
       .data(_self.pie(obj_array)).enter()
     .append("g").attr("class", "solidArc_g");
@@ -107,16 +124,7 @@ Aster.prototype.draw = function(obj){
       });
   }
 
-  _self.outerPath_g = _self.svg.selectAll(".outlineArc_g")
-      .data(_self.pie(obj_array))
-    .enter().append("g")
-      .attr("class", "outlineArc_g");
 
-  _self.outerPath = _self.outerPath_g.append("path")
-                .attr("fill", "none")
-                .attr("stroke", "gray")
-                .attr("class", "outlineArc")
-                .attr("d", _self.outlineArc);
 
 }
 
@@ -131,9 +139,12 @@ Aster.prototype.highlight_circles = function(highglight_bool) {
 
   _self.path.style("stroke", function(d,i){
     if(highglight_bool){
-      return CLUSTERING_RESULT_SELECTED_COLOR;
+      // return CLUSTERING_RESULT_SELECTED_COLOR;
+      // return COLOR_DARKGRAY;
+      return "gray";
     }else{
-      return COLOR_DARKGRAY;
+      // return COLOR_DARKGRAY;
+      return "gray";
     }
   })
   // .style("stroke-width", function(d,i){
@@ -146,7 +157,8 @@ Aster.prototype.highlight_circles = function(highglight_bool) {
 
   _self.outerPath.style("stroke", function(d,i){
     if(highglight_bool){
-      return CLUSTERING_RESULT_SELECTED_COLOR;
+      // return CLUSTERING_RESULT_SELECTED_COLOR;
+      return "gray";
     }else{
       return "gray";
     }

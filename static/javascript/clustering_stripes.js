@@ -76,8 +76,10 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 							})
 							.style("cursor", "pointer")
 							.on("click", function(d,i){
-								d3.selectAll(".clustering_container").style("stroke", "black").style("stroke-width", 1);
-								d3.select(this).selectAll(".clustering_container").style("stroke", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke-width", CLUSTERING_RESULT_SELECTED_STROKE_WIDTH);
+								// d3.selectAll(".clustering_container").style("stroke", "black").style("stroke-width", 1);
+								// d3.select(this).selectAll(".clustering_container").style("stroke", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke-width", CLUSTERING_RESULT_SELECTED_STROKE_WIDTH);
+								d3.selectAll("rect.clustering_background").style("fill", "none").style("stroke","none");
+								d3.select(this).select("rect.clustering_background").style("fill", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke-width", CLUSTERING_RESULT_SELECTED_STROKE_WIDTH);
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_parallel_coordinates'].fire([d,i]);
@@ -98,6 +100,13 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 							})
 							.on("contextmenu", d3.contextMenu(_self.context_menu));
 
+	_self.rect_bg = _self.list_space.append("rect")
+					.attr("class", "clustering_background")
+					.attr("x", -_self.width)
+					.attr("width", _self.width*3)
+					.attr("height", _self.rect_size)
+					.style("fill", "none")
+					.style("cursor", "pointer");
 
 	_self.rect = _self.list_space.append("rect")
 					.attr("class", "clustering_container")
@@ -106,7 +115,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 					.style("fill", "none")
 					.style("stroke", "black")
 					.style("stroke-width", "1px")
-					.style("cursor", "pointer")
+					.style("cursor", "pointer");
 
 	_self.cluster_rect = _self.list_space.selectAll("rect.cluster_rect")
 							.data(function(d,i){
