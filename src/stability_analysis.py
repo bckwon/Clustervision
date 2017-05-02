@@ -72,16 +72,32 @@ class Stability:
 
 
 
-	def compute_centeroid_sim_matrix(self):
+	def compute_centeroid_sim_matrix(self, data):
 		"""
 		"""
-		return None
+		centeroid_vecs = []
+		for x in data:
+			vec = []
+			for center_grp in self.cluster_centers:
+				for center in center_grp:
+					sim_to_center = cosine(x, center)
+					vec.append(sim_to_center)
+			centeroid_vecs.append(np.array(vec))
+		centeroid_vecs = np.array(centeroid_vecs)
+
+
+		sim_matrix = np.zeros((centeroid_vecs.shape[0], centeroid_vecs.shape[0]))
+		for k in range(centeroid_vecs.shape[0]):
+			for l in range(centeroid_vecs.shape[0]):
+				sim_matrix[k][l] = 1.0 - cosine(centeroid_vecs[k], centeroid_vecs[l])
+		return sim_matrix
 
 
 
 
 
-	def consensus_clustering(self, sim='prob', metric='kl', method='spectral', meta_clusters=10):
+
+	def consensus_clustering(self, sim='centeroid', metric='kl', method='spectral', meta_clusters=10, data=None):
 		"""
 		"""
 		if (sim == 'count'):
@@ -89,7 +105,7 @@ class Stability:
 		elif (sim == 'prob'):
 			sim_matrix = self.compute_prob_sim_matrix(max_index=10, metric=metric)
 		elif (sim == 'centeroid'):
-			sim_matrix = self.compute_centeroid_sim_matrix()
+			sim_matrix = self.compute_centeroid_sim_matrix(data)
 		else:
 			print('Only available metrics are: count, prob, centeroid')
 			sys.exit()
@@ -160,8 +176,8 @@ clusters, centers = compute_clusters(input_data)
 
 #################################
 out = Stability(clusters, centers)
-
-print(len(out.consensus_clustering()))
+# print(out.compute_centeroid_sim_matrix(input_data))
+print(len(out.consensus_clustering(data=input_data)))
 
 
 
