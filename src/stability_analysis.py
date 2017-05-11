@@ -8,6 +8,10 @@ from scipy.spatial.distance import cosine
 import math
 
 
+import quality_metrics
+import cluster
+
+
 __author__ = "jverma"
 
 
@@ -18,12 +22,21 @@ __author__ = "jverma"
 
 class Stability:
 	"""
+	Studies stability in different clustering runs via consensus clustering.
 	"""
-	def __init__(self, clustering_results, cluster_centers):
+	def __init__(self, clustering_results, data, cluster_centers):
 		"""
+		Instantiates the class.
+
+		Parameters
+		----------
+		clustering_results: A numpy array where each row containts the cluster indices from a clustering run.
+		cluster_centers: A list of lists where each inner list contains the centeroids of a clustering run.
 		"""
 		self.clustering_results = clustering_results
 		self.cluster_centers = cluster_centers
+		self.data = data
+		self.array_data = data.as_matrix()
 		print("stability...")
 
 
@@ -42,7 +55,7 @@ class Stability:
 
 
 
-	def compute_prob_sim_matrix(self, max_index=10, metric='cosine'):
+	def compute_prob_sim_matrix(self, max_index=20, metric='kl'):
 		"""
 		"""
 		count_vecs = self.clustering_results.transpose()
@@ -72,11 +85,11 @@ class Stability:
 
 
 
-	def compute_centeroid_sim_matrix(self, data):
+	def compute_centeroid_sim_matrix(self):
 		"""
 		"""
 		centeroid_vecs = []
-		for x in data:
+		for x in self.data:
 			vec = []
 			for center_grp in self.cluster_centers:
 				for center in center_grp:
@@ -97,21 +110,22 @@ class Stability:
 
 
 
-	def consensus_clustering(self, sim='centeroid', metric='kl', method='spectral', meta_clusters=10, data=None):
+	def consensus_clustering(self, sim='count', metric='kl', method='spectral', meta_clusters=10):
 		"""
 		"""
+		params = {'sim': sim, 'metric': metric, 'alg_name': method, 'n_clusters': meta_clusters}
 		if (sim == 'count'):
 			sim_matrix = self.compute_count_sim_matrix()
 		elif (sim == 'prob'):
 			sim_matrix = self.compute_prob_sim_matrix(max_index=10, metric=metric)
 		elif (sim == 'centeroid'):
-			sim_matrix = self.compute_centeroid_sim_matrix(data)
+			sim_matrix = self.compute_centeroid_sim_matrix(self.data)
 		else:
 			print('Only available metrics are: count, prob, centeroid')
 			sys.exit()
 		if (method == 'spectral'):
 			labels = SpectralClustering(n_clusters=meta_clusters, affinity='precomputed').fit_predict(sim_matrix)
-			return labels
+			# return labels
 		if (method == 'nnmf'):
 			model = NMF(n_components=meta_clusters, init='random', random_state=0)
 			nmf = model.fit(sim_matrix)
@@ -119,7 +133,54 @@ class Stability:
 			for x in nmf.components_.T:
 				idx = np.argsort(x)[meta_clusters-1]
 				labels.append(idx)
-			return labels
+			# return labels
+
+		sorted_labels = cluster.sort_labels(self.array_data, labels)
+		feature_selected_labels = cluster.feature_selection_labels(self.data, labels)
+
+
+		quality_silhouette = quality_metrics.silhouette_score(self.array_data, labels)
+		quality_silhouette_clusters = quality_metrics.silhouette_clusters(self.array_data, labels)
+		quality_silhouette_samples = quality_metrics.silhouette_samples(self.array_data, labels)
+
+		quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(self.array_data, labels)
+
+		quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(self.array_data, labels)
+
+		quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(self.array_data, labels)
+
+		quality_neg_cohesion = quality_metrics.neg_cohesion(self.array_data, labels)
+		quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(self.array_data, labels)
+
+		quality_separation = quality_metrics.separation_score(self.array_data, labels)
+		quality_separation_clusters = quality_metrics.separation_clusters(self.array_data, labels)
+
+		quality_min_max_dist = quality_metrics.min_max_dist(self.array_data, labels)
+
+		quality_sdbw = quality_metrics.neg_s_Dbw(self.array_data, labels)
+
+
+		clustering_results = {'quality': quality_sdbw, 'quality_metrics': {
+							'sdbw': quality_sdbw,
+							'silhouette_score': quality_silhouette,
+							'silhouette_clusters': quality_silhouette_clusters,
+							'silhouette_samples': quality_silhouette_samples,
+							'calinski_harabaz': quality_calinski_harabaz,
+							'davies_bouldin': quality_neg_davies_bouldin,
+							'gap_statistic': quality_neg_gap_statistic,
+							'cohesion': quality_neg_cohesion,
+							'cohesion_clusters': quality_neg_cohesion_clusters,
+							'separation': quality_separation,
+							'separation_clusters': quality_separation_clusters,
+							'min_max_dist': quality_min_max_dist,
+							},
+							'labels': labels.tolist(),
+							'n_clusters': meta_clusters,
+							'clustering_parameters': params,
+							'sorted_labels': sorted_labels,
+							'cluster_feature_selection': feature_selected_labels
+							}
+		return clustering_results
 
 
 ###########################################################################################
@@ -168,16 +229,18 @@ def compute_clusters(data, n_runs=10, method='KMeans', n_clusters=10):
 
 
 
-input_data = pd.read_csv('../data/sutter_data/sutter3-15-2017-all.csv')
-input_data = input_data.as_matrix()
+# input_data = pd.read_csv('../data/sutter_data/sutter3-15-2017-all.csv')
+# input_data = input_data.as_matrix()
 
-clusters, centers = compute_clusters(input_data)
+# clusters, centers = compute_clusters(input_data)
 
 
 #################################
-out = Stability(clusters, centers)
-# print(out.compute_centeroid_sim_matrix(input_data))
-print(len(out.consensus_clustering(data=input_data)))
+# out = Stability(clusters, centers)
+# consensus_results = out.consensus_clustering(sim='centeroid', metric='cosine', data=input_data)
+# np.savetxt('centroid_consensus.csv', consensus_results, delimiter=',')
+# # print(out.compute_centeroid_sim_matrix(input_data))
+# print(len(out.consensus_clustering(data=input_data)))
 
 
 

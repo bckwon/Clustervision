@@ -23,6 +23,7 @@ import collections
 from flask import Flask, request, render_template
 from multiprocessing import Pool
 from src import cluster, config, constraints, permute_clustering, superpoints
+from src.stability_analysis import Stability
 
 app = Flask(__name__)
 
@@ -206,6 +207,28 @@ def get_clustering():
     # Permute the clusterings so adjacent clusterings are similar
     clustering_choices = permute_clustering.permute_clustering_vec(clustering_choices)
     # clustering_choices = quality_metrics.normalize_clustering_vec(clustering_choices)
+    dataset_name = clustering_choices[0]['clustering_parameters']['dataset']
+    print(dataset_name)
+
+    (dataset, description) = cluster.dataset_from_name(dataset_name)
+    array_data = dataset.as_matrix()
+    print(array_data.shape)
+
+    
+    # consensus clustering code (jverma)
+    cluster_info = np.arange(len(clustering_choices[0]['labels']))
+    # print(cluster_info.shape)
+    for clustering_run in clustering_choices:
+        cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
+    cluster_info = cluster_info[1:]
+    print(cluster_info.shape)
+
+    consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
+    consensus_clustering = consensus_clust.consensus_clustering()
+    print(consensus_clustering)
+
+    # clustering_choices.append(consensus_clustering)
+
 
     return json.dumps(clustering_choices)
 
