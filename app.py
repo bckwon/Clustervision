@@ -9,7 +9,7 @@ Documentation: https://ibm.ent.box.com/notes/123647604541
 
 Created on 01/17/2017
 """
-
+import os
 import json
 import lmdb
 import numpy as np
@@ -296,6 +296,8 @@ def superpoint():
     d = superpoints.find_superpoints(clustering_id, max_dist=max_dist)
     return json.dumps(d)
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
+port = os.getenv('PORT', '5000')
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=int(port),debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
