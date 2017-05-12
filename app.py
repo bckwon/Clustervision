@@ -225,9 +225,13 @@ def get_clustering():
 
     consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
     consensus_clustering = consensus_clust.consensus_clustering()
-    print(consensus_clustering)
+    # print(consensus_clustering)
+    consensus_clustering['clustering_parameters']['chosen_by'] = 'consensus clustering: Count'
+    clustering_choices.append(consensus_clustering)
 
-    # clustering_choices.append(consensus_clustering)
+    prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob')
+    prob_consensus_clustering['clustering_parameters']['chosen_by'] = 'consensus clustering: KL Divergence'
+    clustering_choices.append(prob_consensus_clustering)
 
 
     return json.dumps(clustering_choices)

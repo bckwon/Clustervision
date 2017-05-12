@@ -63,6 +63,7 @@ class Stability:
 		prob_vectors = []
 		for x in count_vecs:
 			vec_dict = {i: 0.0 for i in range(max_index)}
+			print(vec_dict)
 			for j in x:
 				vec_dict[j] += 1.0
 			vec_values = np.array(([vec_dict[i] for i in range(max_index)])) / len(vec_dict)
@@ -117,7 +118,7 @@ class Stability:
 		if (sim == 'count'):
 			sim_matrix = self.compute_count_sim_matrix()
 		elif (sim == 'prob'):
-			sim_matrix = self.compute_prob_sim_matrix(max_index=10, metric=metric)
+			sim_matrix = self.compute_prob_sim_matrix(max_index=20, metric=metric)
 		elif (sim == 'centeroid'):
 			sim_matrix = self.compute_centeroid_sim_matrix(self.data)
 		else:
