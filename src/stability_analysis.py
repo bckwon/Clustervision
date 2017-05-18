@@ -136,51 +136,53 @@ class Stability:
 				labels.append(idx)
 			# return labels
 
-		sorted_labels = cluster.sort_labels(self.array_data, labels)
-		feature_selected_labels = cluster.feature_selection_labels(self.data, labels)
+		clustering_results = cluster.build_clustering_object(self.data, labels, params, clustering_key=None)
+
+		# sorted_labels = cluster.sort_labels(self.array_data, labels)
+		# feature_selected_labels = cluster.feature_selection_labels(self.data, labels)
 
 
-		quality_silhouette = quality_metrics.silhouette_score(self.array_data, labels)
-		quality_silhouette_clusters = quality_metrics.silhouette_clusters(self.array_data, labels)
-		quality_silhouette_samples = quality_metrics.silhouette_samples(self.array_data, labels)
+		# quality_silhouette = quality_metrics.silhouette_score(self.array_data, labels)
+		# quality_silhouette_clusters = quality_metrics.silhouette_clusters(self.array_data, labels)
+		# quality_silhouette_samples = quality_metrics.silhouette_samples(self.array_data, labels)
 
-		quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(self.array_data, labels)
+		# quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(self.array_data, labels)
 
-		quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(self.array_data, labels)
+		# quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(self.array_data, labels)
 
-		quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(self.array_data, labels)
+		# quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(self.array_data, labels)
 
-		quality_neg_cohesion = quality_metrics.neg_cohesion(self.array_data, labels)
-		quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(self.array_data, labels)
+		# quality_neg_cohesion = quality_metrics.neg_cohesion(self.array_data, labels)
+		# quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(self.array_data, labels)
 
-		quality_separation = quality_metrics.separation_score(self.array_data, labels)
-		quality_separation_clusters = quality_metrics.separation_clusters(self.array_data, labels)
+		# quality_separation = quality_metrics.separation_score(self.array_data, labels)
+		# quality_separation_clusters = quality_metrics.separation_clusters(self.array_data, labels)
 
-		quality_min_max_dist = quality_metrics.min_max_dist(self.array_data, labels)
+		# quality_min_max_dist = quality_metrics.min_max_dist(self.array_data, labels)
 
-		quality_sdbw = quality_metrics.neg_s_Dbw(self.array_data, labels)
+		# quality_sdbw = quality_metrics.neg_s_Dbw(self.array_data, labels)
 
 
-		clustering_results = {'quality': quality_sdbw, 'quality_metrics': {
-							'sdbw': quality_sdbw,
-							'silhouette_score': quality_silhouette,
-							'silhouette_clusters': quality_silhouette_clusters,
-							'silhouette_samples': quality_silhouette_samples,
-							'calinski_harabaz': quality_calinski_harabaz,
-							'davies_bouldin': quality_neg_davies_bouldin,
-							'gap_statistic': quality_neg_gap_statistic,
-							'cohesion': quality_neg_cohesion,
-							'cohesion_clusters': quality_neg_cohesion_clusters,
-							'separation': quality_separation,
-							'separation_clusters': quality_separation_clusters,
-							'min_max_dist': quality_min_max_dist,
-							},
-							'labels': labels.tolist(),
-							'n_clusters': meta_clusters,
-							'clustering_parameters': params,
-							'sorted_labels': sorted_labels,
-							'cluster_feature_selection': feature_selected_labels
-							}
+		# clustering_results = {'quality': quality_sdbw, 'quality_metrics': {
+		# 					'sdbw': quality_sdbw,
+		# 					'silhouette_score': quality_silhouette,
+		# 					'silhouette_clusters': quality_silhouette_clusters,
+		# 					'silhouette_samples': quality_silhouette_samples,
+		# 					'calinski_harabaz': quality_calinski_harabaz,
+		# 					'davies_bouldin': quality_neg_davies_bouldin,
+		# 					'gap_statistic': quality_neg_gap_statistic,
+		# 					'cohesion': quality_neg_cohesion,
+		# 					'cohesion_clusters': quality_neg_cohesion_clusters,
+		# 					'separation': quality_separation,
+		# 					'separation_clusters': quality_separation_clusters,
+		# 					'min_max_dist': quality_min_max_dist,
+		# 					},
+		# 					'labels': labels.tolist(),
+		# 					'n_clusters': meta_clusters,
+		# 					'clustering_parameters': params,
+		# 					'sorted_labels': sorted_labels,
+		# 					'cluster_feature_selection': feature_selected_labels
+		# 					}
 		return clustering_results
 
 

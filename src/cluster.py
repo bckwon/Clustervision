@@ -128,68 +128,135 @@ def compute_clustering(params):
         # print labels
         # print description[0].keys()
 
-        X_train, X_test, y_train, y_test = train_test_split(dataset, labels,random_state=0,test_size=1)
+        # X_train, X_test, y_train, y_test = train_test_split(dataset, labels,random_state=0,test_size=1)
 
-        select = SelectPercentile(f_classif, percentile=50)
-        select.fit(X_train,y_train)
-        # X_train_selected = select.transform(X_train)
+        # select = SelectPercentile(f_classif, percentile=50)
+        # select.fit(X_train,y_train)
+        # # X_train_selected = select.transform(X_train)
 
-        sorted_labels = sort_labels(dataset, labels)
-        feature_selected_labels = feature_selection_labels(pd_dataset, labels)
+        # sorted_labels = sort_labels(dataset, labels)
+        # feature_selected_labels = feature_selection_labels(pd_dataset, labels)
 
-        quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
-        quality_silhouette_clusters = quality_metrics.silhouette_clusters(dataset, labels)
-        quality_silhouette_samples = quality_metrics.silhouette_samples(dataset, labels)
+        # quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
+        # quality_silhouette_clusters = quality_metrics.silhouette_clusters(dataset, labels)
+        # quality_silhouette_samples = quality_metrics.silhouette_samples(dataset, labels)
 
-        quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
+        # quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
 
-        quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(dataset, labels)
+        # quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(dataset, labels)
 
-        quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(dataset, labels)
+        # quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(dataset, labels)
 
-        quality_neg_cohesion = quality_metrics.neg_cohesion(dataset, labels)
-        quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(dataset, labels)
+        # quality_neg_cohesion = quality_metrics.neg_cohesion(dataset, labels)
+        # quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(dataset, labels)
 
-        quality_separation = quality_metrics.separation_score(dataset, labels)
-        quality_separation_clusters = quality_metrics.separation_clusters(dataset, labels)
+        # quality_separation = quality_metrics.separation_score(dataset, labels)
+        # quality_separation_clusters = quality_metrics.separation_clusters(dataset, labels)
 
-        quality_min_max_dist = quality_metrics.min_max_dist(dataset, labels)
+        # quality_min_max_dist = quality_metrics.min_max_dist(dataset, labels)
 
-        quality_sdbw = quality_metrics.neg_s_Dbw(dataset,labels)
+        # quality_sdbw = quality_metrics.neg_s_Dbw(dataset,labels)
 
-        n_clusters = n_clusters_from_labels(labels)
-        clustering = {
-            'quality': quality_sdbw, # quality_silhouette, # backward compatability
-            'quality_metrics': {
+        # n_clusters = n_clusters_from_labels(labels)
+        # clustering = {
+        #     'quality': quality_sdbw, # quality_silhouette, # backward compatability
+        #     'quality_metrics': {
 
-                'sdbw': quality_sdbw,
-                'silhouette_score': quality_silhouette,
-                'silhouette_clusters': quality_silhouette_clusters,
-                'silhouette_samples': quality_silhouette_samples,
-                'calinski_harabaz': quality_calinski_harabaz,
-                'davies_bouldin': quality_neg_davies_bouldin,
-                'gap_statistic': quality_neg_gap_statistic,
-                'cohesion': quality_neg_cohesion,
-                'cohesion_clusters': quality_neg_cohesion_clusters,
-                'separation': quality_separation,
-                'separation_clusters': quality_separation_clusters,
-                'min_max_dist': quality_min_max_dist,
-            },
-            'labels': labels.tolist(),
-            'n_clusters': n_clusters,
-            'clustering_parameters': params,
-            'sorted_labels': sorted_labels,
-            'cluster_feature_selection': feature_selected_labels,
-            'clustering_id': clustering_key,
-            'feature_selection': {
-                'names': list(pd_dataset.columns.values),
-                'scores': select.scores_.tolist(),
-                'pvalues': select.pvalues_.tolist(),
-            },
-        }
+        #         'sdbw': quality_sdbw,
+        #         'silhouette_score': quality_silhouette,
+        #         'silhouette_clusters': quality_silhouette_clusters,
+        #         'silhouette_samples': quality_silhouette_samples,
+        #         'calinski_harabaz': quality_calinski_harabaz,
+        #         'davies_bouldin': quality_neg_davies_bouldin,
+        #         'gap_statistic': quality_neg_gap_statistic,
+        #         'cohesion': quality_neg_cohesion,
+        #         'cohesion_clusters': quality_neg_cohesion_clusters,
+        #         'separation': quality_separation,
+        #         'separation_clusters': quality_separation_clusters,
+        #         'min_max_dist': quality_min_max_dist,
+        #     },
+        #     'labels': labels.tolist(),
+        #     'n_clusters': n_clusters,
+        #     'clustering_parameters': params,
+        #     'sorted_labels': sorted_labels,
+        #     'cluster_feature_selection': feature_selected_labels,
+        #     'clustering_id': clustering_key,
+        #     'feature_selection': {
+        #         'names': list(pd_dataset.columns.values),
+        #         'scores': select.scores_.tolist(),
+        #         'pvalues': select.pvalues_.tolist(),
+        #     },
+        # }
+        clustering = build_clustering_object(pd_dataset, labels, params, clustering_key)
+        # print(clustering)
 
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
+
+
+def build_clustering_object(pd_dataset, labels, params, clustering_key):
+    dataset = pd_dataset.as_matrix()
+    X_train, X_test, y_train, y_test = train_test_split(dataset, labels,random_state=0,test_size=1)
+    select = SelectPercentile(f_classif, percentile=50)
+    select.fit(X_train, y_train)
+
+    sorted_labels = sort_labels(dataset, labels)
+    feature_selected_labels = feature_selection_labels(pd_dataset, labels)
+
+    quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
+    quality_silhouette_clusters = quality_metrics.silhouette_clusters(dataset, labels)
+    quality_silhouette_samples = quality_metrics.silhouette_samples(dataset, labels)
+
+    quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
+
+    quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(dataset, labels)
+
+    quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(dataset, labels)
+
+    quality_neg_cohesion = quality_metrics.neg_cohesion(dataset, labels)
+    quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(dataset, labels)
+
+    quality_separation = quality_metrics.separation_score(dataset, labels)
+    quality_separation_clusters = quality_metrics.separation_clusters(dataset, labels)
+
+    quality_min_max_dist = quality_metrics.min_max_dist(dataset, labels)
+
+    quality_sdbw = quality_metrics.neg_s_Dbw(dataset,labels)
+
+    n_clusters = n_clusters_from_labels(labels)
+
+    clustering = {
+        'quality': quality_sdbw,
+        'quality_metrics': {
+        'sdbw': quality_sdbw,
+        'silhouette_score': quality_silhouette,
+        'silhouette_clusters': quality_silhouette_clusters,
+        'silhouette_samples': quality_silhouette_samples,
+        'calinski_harabaz': quality_calinski_harabaz,
+        'davies_bouldin': quality_neg_davies_bouldin,
+        'gap_statistic': quality_neg_gap_statistic,
+        'cohesion': quality_neg_cohesion,
+        'cohesion_clusters': quality_neg_cohesion_clusters,
+        'separation': quality_separation,
+        'separation_clusters': quality_separation_clusters,
+        'min_max_dist': quality_min_max_dist,
+        },
+        'labels': labels.tolist(),
+        'n_clusters': n_clusters,
+        'clustering_parameters': params,
+        'sorted_labels': sorted_labels,
+        'cluster_feature_selection': feature_selected_labels,
+        'clustering_id': clustering_key,
+         'feature_selection': {
+             'names': list(pd_dataset.columns.values),
+             'scores': select.scores_.tolist(),
+             'pvalues': select.pvalues_.tolist(),
+             },
+    }
+    return clustering
+
+
+
 
 def model_from_params(params):
     alg_name = params['alg_name']
