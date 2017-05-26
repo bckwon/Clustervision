@@ -134,6 +134,7 @@ class Stability:
 			for x in nmf.components_.T:
 				idx = np.argsort(x)[meta_clusters-1]
 				labels.append(idx)
+				# labels = np.array(labels)
 			# return labels
 
 		clustering_results = cluster.build_clustering_object(self.data, labels, params, clustering_key=None)
