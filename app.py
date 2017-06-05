@@ -22,7 +22,7 @@ import sklearn.preprocessing
 import collections
 from flask import Flask, request, render_template
 from multiprocessing import Pool
-from src import cluster, config, constraints, permute_clustering, superpoints
+from src import cluster, config, constraints, permute_clustering, superpoints, cluster_membership_count
 from src.stability_analysis import Stability
 
 app = Flask(__name__)
@@ -216,29 +216,29 @@ def get_clustering():
 
     for x in clustering_choices:
         print(x['clustering_parameters']['chosen_by'])
-    # consensus clustering code (jverma)
-    for qm in quality_metrics:
-    # qm = 'sdbw'
-        clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
-        n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
-        n_labels = int((np.mean(n_labels_arr)))
-        cluster_info = np.arange(len(clustering_choices_qm[0]['labels']))
-        print("number of clusters considered...")
-        print(cluster_info.shape)
-        for clustering_run in clustering_choices_qm:
-            cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
-        cluster_info = cluster_info[1:]
-        print(cluster_info.shape)
+    # # consensus clustering code (jverma)
+    # for qm in quality_metrics:
+    # # qm = 'sdbw'
+    #     clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
+    #     n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
+    #     n_labels = int((np.mean(n_labels_arr)))
+    #     cluster_info = np.arange(len(clustering_choices_qm[0]['labels']))
+    #     print("number of clusters considered...")
+    #     print(cluster_info.shape)
+    #     for clustering_run in clustering_choices_qm:
+    #         cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
+    #     cluster_info = cluster_info[1:]
+    #     print(cluster_info.shape)
 
-        consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
-        consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
-        # print(consensus_clustering)
-        consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
-        clustering_choices.append(consensus_clustering)
+    #     consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
+    #     consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
+    #     # print(consensus_clustering)
+    #     consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
+    #     clustering_choices.append(consensus_clustering)
 
-        prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
-        prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
-        clustering_choices.append(prob_consensus_clustering)
+    #     prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
+    #     prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
+    #     clustering_choices.append(prob_consensus_clustering)
 
     # qm = 'gap_statistic'
     # clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
@@ -262,9 +262,12 @@ def get_clustering():
     # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
     # clustering_choices.append(prob_consensus_clustering)
     
+    # @bumchul.kwon cluster membership count
+    cluster_membership = cluster_membership_count.count_cluster_membership(clustering_choices)
+    clsobject = {'0': clustering_choices, '1': cluster_membership}
 
-
-    return json.dumps(clustering_choices)
+    # return json.dumps(clustering_choices)
+    return json.dumps(clsobject)
 
 
 @app.route('/dataset', methods=['POST', 'GET'])

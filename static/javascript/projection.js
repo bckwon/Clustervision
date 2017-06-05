@@ -20,6 +20,8 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.data_embedding = data["embedding"];
 	_self.data_attributes = data["data_attributes"];
 	_self.clustering = data["clustering"];
+	_self.cluster_membership = data["cluster_membership"];
+
 	var color_domain = d3.extent(_self.clustering[_self.cls_index]["labels"], function(d){return parseInt(d);});
 	var my_domain = COLOR_RANGE.map(function(d,i){return i.toString();});
 	_self.color = d3.scale.ordinal()
@@ -83,6 +85,35 @@ function Projection(canvas, data, screen_width, screen_height){
     _self.pc_listener_for_cluster_selection = new _s.Listener("pc_listener_for_cluster_selection");
     _self.pc_listener_for_cluster_selection.subscribe($.proxy(_self.pcClusterSelectionHandler, _self));
 }
+
+Projection.prototype.draw_network = function(first_argument) {
+	var _self = this;
+	_self.network_edge_scale = d3.scale.linear().domain([0, _self.clustering.length]).range([0, _self.radius]);
+	_self.network_edge_opacity_scale = d3.scale.linear().domain([0, _self.clustering.length]).range([0, 1]);
+
+	for (var i = 0; i < _self.data_embedding.length; i++) {
+		for (var j = _self.data_embedding.length - 1; j >= i; j--) {
+			// draw path from i to j
+			if(parseFloat(_self.cluster_membership[i][j]) >= (_self.clustering.length)*CLUSTERING_NETWORK_COOCCURRENCE_PARAMETER){
+				_self.svg.append("line")
+					.attr("class", "cluster_membership_network")
+					.attr("id", i+"_"+j)
+					.attr({
+						"x1": _self.x_scale(_self.data_embedding[i][0]),
+						"x2": _self.x_scale(_self.data_embedding[j][0]),
+						"y1": _self.y_scale(_self.data_embedding[i][1]),
+						"y2": _self.y_scale(_self.data_embedding[j][1]),
+						"stroke-width": _self.network_edge_scale(parseFloat(_self.cluster_membership[i][j])),
+						"stroke": "#999",
+						"opacity": _self.network_edge_opacity_scale(_self.cluster_membership[i][j])
+					});
+			}
+			// _self.data_embedding[i]
+
+		}
+		// _self.data_embedding[i]
+	}
+};
 
 Projection.prototype.request_superpoints = function(distance) {
 	var _self = this;
@@ -276,6 +307,8 @@ Projection.prototype.draw = function(){
 						.style("alignment-baseline", "middle")
 						.style("font-size", "150%")
 						.style("fill", "black");
+
+	_self.draw_network();
 
 	_self.circ_g = _self.svg.selectAll("g").data(_self.data_embedding).enter()
 						.append("g").attr("class", "circ_g")
