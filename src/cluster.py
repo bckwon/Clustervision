@@ -455,6 +455,21 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions.append(d)
 
         return (pdata, descriptions)
+    elif dataset_name == 'sutter-kenney':
+        pdata = pd.read_csv('data/sutter_kenney_data/sutter-kenney6-8-2017-all.csv')
+        pdata.drop(pdata.columns[[0,1]], axis=1, inplace=True)
+
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        return (pdata, descriptions)
     elif dataset_name == 'bobross':
         pdata = pd.read_csv('data/bobross_data/elements-by-episode-filtered.csv')
 
