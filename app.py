@@ -333,7 +333,6 @@ def superpoint():
 def clmnetwork():
     network_array = request.get_json('network_array')['network_array']
     cluster_membership = cluster_membership_count.count_cluster_membership(network_array)
-    print(cluster_membership)
     return json.dumps(cluster_membership)
 
 port = os.getenv('PORT', '5000')

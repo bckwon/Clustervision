@@ -95,15 +95,12 @@ Projection.prototype.network_handler = function(network_array) {
 	var _self = this;
 	if(network_array.length > 1){
 		_self.network_array = network_array;
-		console.log(network_array);
 		var clustering_array_for_network = _self.clustering.filter(function(d,i){
 			return network_array.indexOf(i) >= 0;
 		});
-		console.log(clustering_array_for_network);
 		var myData = JSON.stringify({
 	                "network_array": clustering_array_for_network
 	            }, null, '\t');
-		console.log(myData);
 		$.ajax({
 		    type: "POST",
 		    url: $SCRIPT_ROOT + "/cluster_membership_network",
@@ -111,9 +108,7 @@ Projection.prototype.network_handler = function(network_array) {
 		    data: myData,
 		    dataType: 'json',
 		    success: function(data) {
-		        // var parsed_data = JSON.parse(data);
 		        _self.cluster_membership = data;
-		        console.log(_self.cluster_membership);
 		        // _self.draw_network();
 		        // _self.draw_reverse_network();
 		        _self.draw_outliers();
