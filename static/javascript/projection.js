@@ -84,17 +84,61 @@ function Projection(canvas, data, screen_width, screen_height){
     // new listener
     _self.pc_listener_for_cluster_selection = new _s.Listener("pc_listener_for_cluster_selection");
     _self.pc_listener_for_cluster_selection.subscribe($.proxy(_self.pcClusterSelectionHandler, _self));
+
+    // network listener
+    _self.cluster_list_listener_for_network_view = new _s.Listener("cluster_list_listener_for_network_view");
+    _self.cluster_list_listener_for_network_view.subscribe($.proxy(_self.network_handler, _self));
 }
 
-Projection.prototype.draw_network = function(first_argument) {
+Projection.prototype.network_handler = function(network_array) {
+	// body...
 	var _self = this;
-	_self.network_edge_scale = d3.scale.linear().domain([0, _self.clustering.length]).range([0, _self.radius]);
-	_self.network_edge_opacity_scale = d3.scale.linear().domain([0, _self.clustering.length]).range([0, 1]);
+	if(network_array.length > 1){
+		_self.network_array = network_array;
+		console.log(network_array);
+		var clustering_array_for_network = _self.clustering.filter(function(d,i){
+			return network_array.indexOf(i) >= 0;
+		});
+		console.log(clustering_array_for_network);
+		var myData = JSON.stringify({
+	                "network_array": clustering_array_for_network
+	            }, null, '\t');
+		console.log(myData);
+		$.ajax({
+		    type: "POST",
+		    url: $SCRIPT_ROOT + "/cluster_membership_network",
+		    contentType: "application/json; charset=utf-8",
+		    data: myData,
+		    dataType: 'json',
+		    success: function(data) {
+		        // var parsed_data = JSON.parse(data);
+		        _self.cluster_membership = data;
+		        console.log(_self.cluster_membership);
+		        // _self.draw_network();
+		        // _self.draw_reverse_network();
+		        _self.draw_outliers();
+		    }
+		});
+	}else{
+		// reset drawing
+		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
+					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
+	}
+};
+
+Projection.prototype.draw_network = function() {
+	var _self = this;
+
+	d3.selectAll("line.cluster_membership_network").remove();
+
+	// Edge Representation
+	_self.network_edge_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, _self.radius]);
+	_self.network_edge_opacity_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, .25]);
 
 	for (var i = 0; i < _self.data_embedding.length; i++) {
 		for (var j = _self.data_embedding.length - 1; j >= i; j--) {
 			// draw path from i to j
-			if(parseFloat(_self.cluster_membership[i][j]) >= (_self.clustering.length)*CLUSTERING_NETWORK_COOCCURRENCE_PARAMETER){
+			if(parseFloat(_self.cluster_membership[i][j]) >= (_self.network_array.length)*CLUSTERING_NETWORK_COOCCURRENCE_PARAMETER){
 				_self.svg.append("line")
 					.attr("class", "cluster_membership_network")
 					.attr("id", i+"_"+j)
@@ -113,6 +157,63 @@ Projection.prototype.draw_network = function(first_argument) {
 		}
 		// _self.data_embedding[i]
 	}
+	_self.update_g.style("opacity", 1).transition().delay(2000).duration(500).style("opacity", 0);
+	_self.svg.selectAll("line.cluster_membership_network").each(function(){
+		d3.select(this).moveToBack();
+	});
+};
+
+Projection.prototype.draw_reverse_network = function() {
+	var _self = this;
+
+	d3.selectAll("line.cluster_membership_network").remove();
+
+	// Edge Representation
+	_self.network_edge_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, _self.radius]);
+	_self.network_edge_opacity_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, .25]);
+
+	for (var i = 0; i < _self.data_embedding.length; i++) {
+		for (var j = _self.data_embedding.length - 1; j >= i; j--) {
+			// draw path from i to j
+			if(parseFloat(_self.cluster_membership[i][j]) > 0 && parseFloat(_self.cluster_membership[i][j]) < _self.network_array.length){
+				_self.svg.append("line")
+					.attr("class", "cluster_membership_network")
+					.attr("id", i+"_"+j)
+					.attr({
+						"x1": _self.x_scale(_self.data_embedding[i][0]),
+						"x2": _self.x_scale(_self.data_embedding[j][0]),
+						"y1": _self.y_scale(_self.data_embedding[i][1]),
+						"y2": _self.y_scale(_self.data_embedding[j][1]),
+						"stroke-width": _self.radius,
+						"stroke": "#de2d26",
+						"opacity": .25
+					});
+			}
+			// _self.data_embedding[i]
+
+		}
+		// _self.data_embedding[i]
+	}
+	_self.update_g.style("opacity", 1).transition().delay(2000).duration(500).style("opacity", 0);
+	_self.svg.selectAll("line.cluster_membership_network").each(function(){
+		d3.select(this).moveToBack();
+	});
+};
+
+Projection.prototype.draw_outliers = function() {
+	var _self = this;
+
+	_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
+					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
+
+	_self.circ.each(function(element, index){
+		var sum = _self.cluster_membership[index].filter(function(d){return d==1;}).reduce(function(a,b){return a+b;}, 0);
+		if(sum > 20){ // what is the best way to come up with this threshold?
+			d3.select(this).style({"stroke-width": 5,
+									"stroke": "black"});
+			d3.select(this).moveToFront();
+		};
+	})
 };
 
 Projection.prototype.request_superpoints = function(distance) {
@@ -308,7 +409,31 @@ Projection.prototype.draw = function(){
 						.style("font-size", "150%")
 						.style("fill", "black");
 
-	_self.draw_network();
+ 	_self.update_g = _self.svg.append("g")
+ 						.attr("class", "update")
+ 						.style("opacity", 0);
+
+	_self.update_box = _self.update_g.append("rect")
+						.attr("class", "update_box")
+						.attr("x", 300)
+						.attr("y", -45)
+						.attr("width", 240)
+						.attr("height", 25)
+						.style("fill", "none")
+						.style("stroke", "#43a2ca")
+						.style("stroke-width", "2.5px");
+
+	_self.update = _self.update_g.append("text")
+						.attr("class", "update_text")
+						.attr("dx", 420)
+						.attr("dy", -30)
+						.text("Updated!")
+						.style("text-anchor", "middle")
+						.style("alignment-baseline", "middle")
+						.style("font-size", "150%")
+						.style("fill", "#43a2ca");
+
+	// _self.draw_network();
 
 	_self.circ_g = _self.svg.selectAll("g").data(_self.data_embedding).enter()
 						.append("g").attr("class", "circ_g")

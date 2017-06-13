@@ -329,6 +329,13 @@ def superpoint():
     d = superpoints.find_superpoints(clustering_id, max_dist=max_dist)
     return json.dumps(d)
 
+@app.route('/cluster_membership_network', methods=['POST', 'GET'])
+def clmnetwork():
+    network_array = request.get_json('network_array')['network_array']
+    cluster_membership = cluster_membership_count.count_cluster_membership(network_array)
+    print(cluster_membership)
+    return json.dumps(cluster_membership)
+
 port = os.getenv('PORT', '5000')
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(port),debug=True)

@@ -4,6 +4,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.data = data;
 	_self.margin = 60;
 	_self.rect_size = 30;
+	_self.network_array = [];
 
 	_self.parameters = ["n_clusters", "alg_name", "chosen_by"];
 	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist", "separation", "cohesion");
@@ -60,7 +61,45 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
             		.style("stroke", "#e34a33")
             		.style("stroke-width", 1);
             },
-            disabled: false
+            disabled: true
+        },
+        {
+        	title: 'add/remove it to highlight unstable points',
+        	action: function(elm, d, i){
+        		var index = _self.network_array.indexOf(i);
+        		if(index>=0){
+        			_self.network_array.splice(index, 1);
+        			// remove dotted box:
+        			d3.select(elm).selectAll("rect.network_box").remove();
+
+        		}else{
+        			_self.network_array.push(i);
+        			_self.network_array = _self.network_array.sort();
+        			// draw dotted box:
+            		d3.select(elm)
+	        			.append("rect")
+		            		.attr("class", "network_box")
+		            		.attr("x", -_self.rect_size*1.8)
+		            		.attr("width",_self.width+_self.rect_size*3.6)
+		            		.attr("height",_self.rect_size)
+		            		.style("fill", "none")
+		            		.style("stroke", "#636363")
+		            		.style("stroke-dasharray", "5, 5")
+		            		.style("stroke-width", 2.5);
+        		}
+        		
+	            // fire event to projection.js for network view:
+	            _s.listenerMap['cluster_list_listener_for_network_view'].fire(_self.network_array);
+        	}
+        },
+        {
+        	title: 'remove all highlights',
+        	action: function(elm, d, i){
+        		_self.network_array = [];
+        		d3.selectAll("rect.network_box").remove();
+	            // fire event to projection.js for network view:
+	            _s.listenerMap['cluster_list_listener_for_network_view'].fire(_self.network_array);
+        	}
         }
     ];
 
@@ -196,7 +235,19 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.asterplots.forEach(function(d,i){
 		d.highlight_wedge(_self.data[i]["clustering_parameters"]["chosen_by"]);
 	});
+
+	// _self.key_stroke_on();
 }
+
+ClusteringStripes.prototype.key_stroke_on = function() {
+	var _self = this;
+	d3.select("body")
+		.on("keydown", function(){
+			var code = d3.event.keyCode;
+			console.log(code);
+
+		})
+};
 
 ClusteringStripes.prototype.popup = function(list_index){
     var _self = this;

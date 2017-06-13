@@ -1,6 +1,7 @@
 import numpy as np 
 
 def count_cluster_membership(cl_choices):
+	print(cl_choices)
 	cluster_label_list = [x["labels"] for x in cl_choices]
 	num = len(cluster_label_list[0])
 	cluster_membership_count = [[0 for j in range(num)] for i in range(num)]
