@@ -16,12 +16,16 @@ Radar = function(gname, width, height, data, keys, extent, labelvalue){
   var size = 2;
   var json = [];
   
-  json.push([]);
-
-  _self.keys.forEach(function(d,i){
-    var measure = (_self.data[d] - _self.extent[i][0]) / (_self.extent[i][1]-_self.extent[i][0]); 
-    json[0].push({"axis": d, "measure": _self.data[d], "value": measure});
-  })
+  _self.data.forEach(function(d,i){
+    json.push([]);
+  });
+  
+  _self.data.forEach(function(data_object, data_index){
+    _self.keys.forEach(function(d,i){
+      var measure = (data_object[d] - _self.extent[i][0]) / (_self.extent[i][1]-_self.extent[i][0]); 
+      json[data_index].push({"axis": d, "measure": data_object[d], "value": measure});
+    })
+  });
 
   _self.json = json;
 

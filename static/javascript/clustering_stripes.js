@@ -232,7 +232,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 						// @bckwon: here we change the aster plots to the radar charts.
 						// _self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
 						if(GLYPH_REPRESENTATION == "RADAR"){
-							_self.asterplots.push(new Radar(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+							_self.asterplots.push(new Radar(classname, _self.rect_size, _self.rect_size, [obj], keys, _self.extent));
 						}else{
 							_self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
 						}

@@ -16,6 +16,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.x_scale = d3.scale.linear().range([0, width-2*margin.x]);
 	_self.y_scale = d3.scale.linear().range([0, height-2*margin.y]);
 	_self.radius = CIRCLE_RADIUS;
+	_self.rect_size = _self.radius*10;
 	_self.data = data;
 	_self.data_embedding = data["embedding"];
 	_self.data_attributes = data["data_attributes"];
@@ -87,11 +88,81 @@ function Projection(canvas, data, screen_width, screen_height){
 
     // network listener
     _self.cluster_list_listener_for_network_view = new _s.Listener("cluster_list_listener_for_network_view");
-    _self.cluster_list_listener_for_network_view.subscribe($.proxy(_self.network_handler, _self));
+    // _self.cluster_list_listener_for_network_view.subscribe($.proxy(_self.network_handler, _self));
+    _self.cluster_list_listener_for_network_view.subscribe($.proxy(_self.clustering_comparison_handler, _self));
 }
 
+Projection.prototype.clustering_comparison_handler = function(network_array){
+	var _self = this;
+	if(network_array.length > 1){
+		_self.network_array = network_array;
+		var clustering_array_for_clustering_comparison = _self.clustering.filter(function(d,i){
+			return network_array.indexOf(i) >= 0;
+		}).map(function(d){return d["labels"];});
+		var items_for_highlights = [];
+		for (var j = 0; j < clustering_array_for_clustering_comparison[0].length; j++) {
+			var comparison_array = [];
+			for (var i = 0; i < clustering_array_for_clustering_comparison.length; i++) {
+				var element = clustering_array_for_clustering_comparison[i][j];
+				comparison_array.push(element)
+			}
+			if(array_contains_identical_elements(comparison_array)){
+				items_for_highlights.push(0);
+			}else{
+				items_for_highlights.push(1);
+			}
+		}
+		_self.highlight_outliter_items(items_for_highlights);
+		// Draw Radar Charts for Quality Metrics on Top:
+		// 
+		_self.draw_radar_chart();
+	}else{
+		// reset drawing
+		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
+					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
+		d3.selectAll("g.rc_chart_g").remove();
+	}
+}
+
+Projection.prototype.draw_radar_chart = function() {
+	var _self = this;
+
+	d3.selectAll("g.rc_chart_g").remove();
+
+	_self.quality_metrics = _.without(Object.keys(_self.clustering[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist", "separation", "cohesion");
+
+	_self.radar_g = _self.svg.append("g")
+					.attr("class", "rc_chart_g")
+					.attr("transform", "translate(300,-45)");
+
+	_self.quality_metrics_extent = [];
+
+	_self.quality_metrics.forEach(function(d){
+		_self.quality_metrics_extent.push(d3.extent(_self.clustering, function(e){
+			return parseFloat(e["quality_metrics"][d]);
+		}));
+	});
+
+	var object_array = [];
+	var classname = ".rc_chart_g";
+	var keys = _self.quality_metrics
+	_self.clustering.filter(function(d,i){return _self.network_array.indexOf(i) > -1 }).forEach(function(d,i){
+		var obj = {};
+		_self.quality_metrics.forEach(function(e){
+			obj[e] = parseFloat(parseFloat(d["quality_metrics"][e]).toFixed(3));
+		});
+		keys = d3.keys(obj)
+		object_array.push(obj);
+	});
+
+	console.log(object_array);
+
+	if(GLYPH_REPRESENTATION == "RADAR"){
+		var radar = new Radar(classname, _self.rect_size, _self.rect_size, object_array, keys, _self.quality_metrics_extent);
+	}
+};
+
 Projection.prototype.network_handler = function(network_array) {
-	// body...
 	var _self = this;
 	if(network_array.length > 1){
 		_self.network_array = network_array;
@@ -192,6 +263,20 @@ Projection.prototype.draw_reverse_network = function() {
 	_self.update_g.style("opacity", 1).transition().delay(2000).duration(500).style("opacity", 0);
 	_self.svg.selectAll("line.cluster_membership_network").each(function(){
 		d3.select(this).moveToBack();
+	});
+};
+
+Projection.prototype.highlight_outliter_items = function(index_array) {
+	var _self = this;
+	_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
+					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
+
+	_self.circ.each(function(element, index){
+		if(index_array[index]==1){
+			d3.select(this).style({"stroke-width": 5,
+									"stroke": "black"});
+			d3.select(this).moveToFront();
+		};
 	});
 };
 
@@ -554,4 +639,13 @@ Projection.prototype.draw = function(){
 									});
 							}
 						})
+}
+
+function array_contains_identical_elements(array) {
+    for(var i = 0; i < array.length - 1; i++) {
+        if(array[i] !== array[i+1]) {
+            return false;
+        }
+    }
+    return true;
 }
