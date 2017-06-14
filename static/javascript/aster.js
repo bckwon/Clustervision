@@ -1,5 +1,6 @@
 Aster = function(gname, width, height, data, keys, extent, labelvalue){
   var _self = this;
+  console.log(data);
 	_self.gname = gname;
   _self.width = width;
   _self.height = height;

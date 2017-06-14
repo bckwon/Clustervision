@@ -123,13 +123,14 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_parallel_coordinates'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_updating_list_table'].fire(i);
-								_self.asterplots.forEach(function(ap,j){
-									if(i == j){
-										ap.highlight_circles(true);
-									}else{
-										ap.highlight_circles(false);
-									}
-								})
+								// @bckwon: we do not highlight circles
+								// _self.asterplots.forEach(function(ap,j){
+								// 	if(i == j){
+								// 		ap.highlight_circles(true);
+								// 	}else{
+								// 		ap.highlight_circles(false);
+								// 	}
+								// })
 							})
 							.on("mouseenter", function(d,i){
 								_self.popup(i);
@@ -228,13 +229,20 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 						});
 						var keys = Object.keys(obj);
 						var classname = "." + d3.select(this).attr("class");
-						_self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+						// @bckwon: here we change the aster plots to the radar charts.
+						// _self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+						if(GLYPH_REPRESENTATION == "RADAR"){
+							_self.asterplots.push(new Radar(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+						}else{
+							_self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+						}
 					});
 
 	// highlight_wedge
-	_self.asterplots.forEach(function(d,i){
-		d.highlight_wedge(_self.data[i]["clustering_parameters"]["chosen_by"]);
-	});
+	// @bckwon: here we need to create function and unhighlight this back
+	// _self.asterplots.forEach(function(d,i){
+	// 	d.highlight_wedge(_self.data[i]["clustering_parameters"]["chosen_by"]);
+	// });
 
 	// _self.key_stroke_on();
 }
