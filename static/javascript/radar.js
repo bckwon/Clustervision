@@ -9,7 +9,7 @@ Radar = function(gname, width, height, data, keys, extent, labelvalue){
   _self.labelvalue = labelvalue;
   _self.margin = {top: 0, right: 0, bottom: 0, left: 0};
 
-	var wMaior = width;
+  var wMaior = width;
   var wMenor = width/2;
   var colorscale = d3.scale.category10();
   var legendOptions = ['Legend 1'];
@@ -165,6 +165,13 @@ function drawRadarChart(divId, w, h) {
                 .enter()
                 .append("polygon")
                 .attr("class", "radar-chart-series_"+series)
+                .style("opacity", function(){
+                    if(series == 0){
+                        return 1;
+                    }else{
+                        return .5;
+                    }
+                })
                 .style("stroke-width", strokeWidthPolygon)
                 .style("stroke", cfg.color(series))
                 .attr("points",function(d) {

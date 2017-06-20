@@ -9,6 +9,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	_self.dblclicked = false;
 	_self.cls_index = 0; // default
 	_self.selected_cluster_indices = [];
+	_self.items_for_highlights = [];
 	_self.margin = margin;
 	_self.width = width;
 	_self.height = height;
@@ -99,6 +100,7 @@ Projection.prototype.clustering_comparison_handler = function(network_array){
 		var clustering_array_for_clustering_comparison = _self.clustering.filter(function(d,i){
 			return network_array.indexOf(i) >= 0;
 		}).map(function(d){return d["labels"];});
+		_self.clustering_array_for_clustering_comparison = clustering_array_for_clustering_comparison;
 		var items_for_highlights = [];
 		for (var j = 0; j < clustering_array_for_clustering_comparison[0].length; j++) {
 			var comparison_array = [];
@@ -112,15 +114,16 @@ Projection.prototype.clustering_comparison_handler = function(network_array){
 				items_for_highlights.push(1);
 			}
 		}
-		_self.highlight_outliter_items(items_for_highlights);
+		_self.items_for_highlights = items_for_highlights;
+		_self.highlight_outlier_items();
 		// Draw Radar Charts for Quality Metrics on Top:
-		// 
-		_self.draw_radar_chart();
+		// _self.draw_radar_chart();
 	}else{
 		// reset drawing
 		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
 					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
 		d3.selectAll("g.rc_chart_g").remove();
+		_self.items_for_highlights = [];
 	}
 }
 
@@ -154,8 +157,6 @@ Projection.prototype.draw_radar_chart = function() {
 		keys = d3.keys(obj)
 		object_array.push(obj);
 	});
-
-	console.log(object_array);
 
 	if(GLYPH_REPRESENTATION == "RADAR"){
 		var radar = new Radar(classname, _self.rect_size, _self.rect_size, object_array, keys, _self.quality_metrics_extent);
@@ -266,15 +267,21 @@ Projection.prototype.draw_reverse_network = function() {
 	});
 };
 
-Projection.prototype.highlight_outliter_items = function(index_array) {
+Projection.prototype.highlight_outlier_items = function() {
 	var _self = this;
+	var index_array = _self.items_for_highlights;
+	var current_index = _self.network_array.indexOf(_self.cls_index);
+	var clustering_array_for_clustering_comparison = _self.clustering_array_for_clustering_comparison.slice();
+
+	clustering_array_for_clustering_comparison.splice(current_index, 1);
+
 	_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
 					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
 
 	_self.circ.each(function(element, index){
 		if(index_array[index]==1){
-			d3.select(this).style({"stroke-width": 5,
-									"stroke": "black"});
+			d3.select(this).style({"stroke-width": 3,
+									"stroke": _self.color(clustering_array_for_clustering_comparison[0][index])});
 			d3.select(this).moveToFront();
 		};
 	});
@@ -342,6 +349,9 @@ Projection.prototype.qualityChartHandler = function(argument) {
 	_self.request_superpoints(distance);
 	_self.draw();
 	_self.color_by_new_index();
+	if(_self.items_for_highlights.length > 1){
+		_self.highlight_outlier_items();
+	}
 };
 
 Projection.prototype.clusterListHandler = function(argument) {

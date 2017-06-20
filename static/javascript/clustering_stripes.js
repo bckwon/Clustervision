@@ -5,6 +5,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.margin = 60;
 	_self.rect_size = 30;
 	_self.network_array = [];
+	_self.cls_index = 0; // default
 
 	_self.parameters = ["n_clusters", "alg_name", "chosen_by"];
 	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist", "separation", "cohesion");
@@ -87,7 +88,8 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 		            		.style("stroke-dasharray", "5, 5")
 		            		.style("stroke-width", 2.5);
         		}
-        		
+        		// redraw radar chart based on selection:
+        		_self.redraw_radar_chart();
 	            // fire event to projection.js for network view:
 	            _s.listenerMap['cluster_list_listener_for_network_view'].fire(_self.network_array);
         	}
@@ -123,6 +125,8 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 								_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_parallel_coordinates'].fire([d,i]);
 								_s.listenerMap['quality_chart_listener_for_updating_list_table'].fire(i);
+								_self.cls_index = i;
+								_self.redraw_radar_chart();
 								// @bckwon: we do not highlight circles
 								// _self.asterplots.forEach(function(ap,j){
 								// 	if(i == j){
@@ -246,6 +250,46 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 
 	// _self.key_stroke_on();
 }
+
+ClusteringStripes.prototype.redraw_radar_chart = function() {
+	var _self = this;
+	if(_self.network_array.length > 1){
+		_self.asterplots = [];
+		var anchor_object = {};
+		_self.quality_metrics.forEach(function(e){
+			anchor_object[e] = parseFloat(_self.data[_self.cls_index]["quality_metrics"][e]).toFixed(3);	
+		})
+
+		_self.aster = _self.aster_g.each(function(d,i){
+						var obj = {};
+						_self.quality_metrics.forEach(function(e){
+							obj[e] = parseFloat(d["quality_metrics"][e]).toFixed(3);
+						});
+						var keys = Object.keys(obj);
+						var classname = "." + d3.select(this).attr("class");
+						if(GLYPH_REPRESENTATION == "RADAR"){
+							_self.asterplots.push(new Radar(classname, _self.rect_size, _self.rect_size, [obj, anchor_object], keys, _self.extent));
+						}else{
+							_self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+						}
+					});
+	}else{
+		_self.asterplots = [];
+		_self.aster = _self.aster_g.each(function(d,i){
+						var obj = {};
+						_self.quality_metrics.forEach(function(e){
+							obj[e] = parseFloat(d["quality_metrics"][e]).toFixed(3);
+						});
+						var keys = Object.keys(obj);
+						var classname = "." + d3.select(this).attr("class");
+						if(GLYPH_REPRESENTATION == "RADAR"){
+							_self.asterplots.push(new Radar(classname, _self.rect_size, _self.rect_size, [obj], keys, _self.extent));
+						}else{
+							_self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
+						}
+					});
+	}
+};
 
 ClusteringStripes.prototype.key_stroke_on = function() {
 	var _self = this;
