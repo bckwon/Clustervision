@@ -280,7 +280,7 @@ Projection.prototype.highlight_outlier_items = function() {
 
 	_self.circ.each(function(element, index){
 		if(index_array[index]==1){
-			d3.select(this).style({"stroke-width": 3,
+			d3.select(this).style({"stroke-width": OUTLIER_CIRCLE_STROKE_WIDTH,
 									"stroke": _self.color(clustering_array_for_clustering_comparison[0][index])});
 			d3.select(this).moveToFront();
 		};
