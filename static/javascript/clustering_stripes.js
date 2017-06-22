@@ -75,7 +75,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 
         		}else{
         			_self.network_array.push(i);
-        			_self.network_array = _self.network_array.sort();
+        			_self.network_array = _self.network_array.sort(d3.ascending);
         			// draw dotted box:
             		d3.select(elm)
 	        			.append("rect")
@@ -210,7 +210,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 					.style("text-anchor", "middle")
 		            .style("font-size", "100%")
 		            .style("alignment-baseline", "central")
-					.text(function(d,i){return i;});
+					.text(function(d,i){return (i+1);});
 
 	_self.aster_g = _self.list_space.append("g")
 					.attr("class", function(d,i){

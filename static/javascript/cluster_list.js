@@ -152,7 +152,7 @@ ClusterList.prototype.draw_cluster = function(data_item_index, clustering_index,
 
 	_self.cluster_title = _self.cluster_space.append("text")
 					.attr("dy", 0)
-					.text("Cluster " + cluster_num)
+					.text("Cluster " + (cluster_num+1))
 					// .style("fill", _self.color(cluster_num))
 					.style("font-size", "200%");
 
@@ -356,7 +356,7 @@ ClusterList.prototype.draw_cluster_with_area_chart = function(data_item_index, c
 	_self.cluster_title = _self.cluster_space.append("text")
 					.attr("dx", -20)
 					.attr("dy", 0)
-					.text("Cluster " + cluster_num)
+					.text("Cluster " + (cluster_num+1))
 					.style("fill", _self.color(cluster_num))
 					.style("font-size", "200%");
 

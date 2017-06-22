@@ -493,7 +493,7 @@ Projection.prototype.draw = function(){
 	_self.title = _self.svg.append("text")
 						.attr("dx", 240/2)
 						.attr("dy", -30)
-						.text("Clustering: #" + _self.cls_index)
+						.text("Clustering: #" + (_self.cls_index+1))
 						.style("text-anchor", "middle")
 						.style("alignment-baseline", "middle")
 						.style("font-size", "150%")

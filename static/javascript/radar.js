@@ -11,7 +11,7 @@ Radar = function(gname, width, height, data, keys, extent, labelvalue){
 
   var wMaior = width;
   var wMenor = width/2;
-  var colorscale = d3.scale.category10();
+  var colorscale = d3.scale.ordinal().range(["#4FEAE1",CLUSTERING_RESULT_SELECTED_COLOR]);
   var legendOptions = ['Legend 1'];
   var size = 2;
   var json = [];
@@ -169,7 +169,7 @@ function drawRadarChart(divId, w, h) {
                     if(series == 0){
                         return 1;
                     }else{
-                        return .5;
+                        return 1;
                     }
                 })
                 .style("stroke-width", strokeWidthPolygon)
@@ -259,6 +259,9 @@ function drawRadarChart(divId, w, h) {
                 series++;
             });
             
+            // Moving things above
+            d3.selectAll(".radar-chart-series_1").moveToBack();
+
             //Tooltip
             tooltip = g.append('text')
             .style('opacity', 0)
