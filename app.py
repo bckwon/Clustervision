@@ -110,7 +110,8 @@ def get_clustering():
 
     # If no user choice is provided, find the query clustering by finding the
     # clustering with the highest quality that satisfies the user constraints.
-    qm = 'sdbw'
+    FIRST_QUALITY_METRIC_TO_TRY = 'sdbw'
+    qm = FIRST_QUALITY_METRIC_TO_TRY
     if query_params is None:
         assert query_clustering is None
         # In the first round, the user's choice is not specified.
@@ -171,7 +172,10 @@ def get_clustering():
         clustering_choices = [query_clustering]
         for qm in quality_metrics:
             qm_choices = [query_params]
-            while len(qm_choices) <= min(len(param_vec), config.NUM_CHOICES_PER_QM):
+            num_choices = config.NUM_CHOICES_PER_QM
+            if (qm == FIRST_QUALITY_METRIC_TO_TRY):
+                num_choices = num_choices - 1 # the FIRST_QUALITY_METRIC_TO_TRY had a result already calculated circa line 111, so compute one less here
+            while len(qm_choices) <= min(len(param_vec), num_choices):
                 best_score = float('-inf')
                 for params in param_vec:
                     if params not in param_choices:
@@ -261,7 +265,7 @@ def get_clustering():
     # prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
     # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
     # clustering_choices.append(prob_consensus_clustering)
-    
+
     # @bumchul.kwon cluster membership count
     cluster_membership = cluster_membership_count.count_cluster_membership(clustering_choices)
     clsobject = {'0': clustering_choices, '1': cluster_membership}
