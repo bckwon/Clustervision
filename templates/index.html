@@ -261,7 +261,7 @@
         if ((session['embedding'] == null) || (session['data_attributes'] == null) || (session['clustering'] == null)) {
             window.setTimeout('load_projection();', 100);
         } else {
-            var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2.5);
+            var proj = new Projection(".canvas_middle_top", session, screen_width/2, screen_height/2);
             var pc = new ParallelCoordinates(".canvas_middle_bottom_right", session, screen_width/2*.75, screen_height/2.5, sort_asc, sort_desc, remove_svg);
             setup_checkbox_list();
         }
