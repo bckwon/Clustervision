@@ -693,7 +693,8 @@ Projection.prototype.draw = function(){
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							});
-							if(_self.halfcircle_indices.indexOf(i)>-1){
+							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
+							if(_self.halfcircle_indices.indexOf(i)>-1 && _self.selected_cluster_indices.indexOf(cluster_label) == -1){
 								d3.select(this).style("opacity", 0);
 							}
 						})
