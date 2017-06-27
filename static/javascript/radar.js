@@ -11,7 +11,7 @@ Radar = function(gname, width, height, data, keys, extent, labelvalue){
 
   var wMaior = width;
   var wMenor = width/2;
-  var colorscale = d3.scale.ordinal().range(["#1f77b4",CLUSTERING_RESULT_SELECTED_COLOR]);
+  var colorscale = d3.scale.ordinal().range(RADAR_COLOR_SCALE_FOR_OVERLAYING);
   var legendOptions = ['Legend 1'];
   var size = 2;
   var json = [];
