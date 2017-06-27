@@ -716,7 +716,16 @@ Projection.prototype.draw = function(){
 							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(_self.selected_cluster_indices);
 
 							// d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
+
 							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
+
+							_self.circ.style("opacity", function(d,i){
+								if(_self.halfcircle_indices.indexOf(i)>-1){
+									return 0;
+								}else{
+									return DESELECTED_CIRCLE_OPACITY;
+								}
+							});
 
 							_self.selected_cluster_indices.forEach(function(clabel){
 								d3.selectAll("circle.data_item_circ[cluster_index='"+clabel+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
