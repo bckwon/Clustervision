@@ -20,4 +20,4 @@ var CLUSTERING_RESULT_SELECTED_COLOR = "#fed500"
 var CLUSTERING_RESULT_SELECTED_STROKE_WIDTH = 3;
 var CLUSTERING_NETWORK_COOCCURRENCE_PARAMETER = 1; // must be 0 - 1 (0 means all edges; 1 means only the edges that appear in ALL clustering results)
 var GLYPH_REPRESENTATION = "RADAR"; // must be one of the following options : 1) RADAR 2) ASTER
-var RADAR_COLOR_SCALE_FOR_OVERLAYING_TWO = ["#1f77b4",CLUSTERING_RESULT_SELECTED_COLOR]; // 0: current one, 1: overlaid one for comparison
+var RADAR_COLOR_SCALE_FOR_OVERLAYING_TWO = ["black",CLUSTERING_RESULT_SELECTED_COLOR]; // 0: current one, 1: overlaid one for comparison
