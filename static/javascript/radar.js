@@ -11,7 +11,7 @@ Radar = function(gname, width, height, data, keys, extent, labelvalue){
 
   var wMaior = width;
   var wMenor = width/2;
-  var colorscale = d3.scale.ordinal().range(["#4FEAE1",CLUSTERING_RESULT_SELECTED_COLOR]);
+  var colorscale = d3.scale.ordinal().range(["#1f77b4",CLUSTERING_RESULT_SELECTED_COLOR]);
   var legendOptions = ['Legend 1'];
   var size = 2;
   var json = [];
@@ -57,7 +57,7 @@ function drawRadarChart(divId, w, h) {
                 TranslateY: 0,
                 ExtraWidthX: 10,
                 ExtraWidthY: 100,
-                color: d3.scale.category10()
+                color: colorscale
             };
             
             if ('undefined' !== typeof options) {
@@ -100,7 +100,7 @@ function drawRadarChart(divId, w, h) {
                 .attr("class", "line")
                 
                 .style("stroke", "grey")
-                .style("stroke-opacity", "0.75")
+                .style("stroke-opacity", 1)
                 .style("stroke-width", "0.3px")
                 .attr("transform", "translate(" + (cfg.w/2-levelFactor) + ", " + (cfg.h/2-levelFactor) + ")");
             }
