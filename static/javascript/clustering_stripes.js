@@ -99,6 +99,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
         	action: function(elm, d, i){
         		_self.network_array = [];
         		d3.selectAll("rect.network_box").remove();
+        		_self.redraw_radar_chart();
 	            // fire event to projection.js for network view:
 	            _s.listenerMap['cluster_list_listener_for_network_view'].fire(_self.network_array);
         	}

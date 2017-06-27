@@ -6,6 +6,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	var width = screen_width;
 	var height = screen_height;
 	var margin = {x:20, y:80};
+	_self.halfcircle_indices = [];
 	_self.dblclicked = false;
 	_self.cls_index = 0; // default
 	_self.selected_cluster_indices = [];
@@ -95,6 +96,7 @@ function Projection(canvas, data, screen_width, screen_height){
 
 Projection.prototype.clustering_comparison_handler = function(network_array){
 	var _self = this;
+	_self.halfcircle_indices = [];
 	if(network_array.length > 1){
 		_self.network_array = network_array;
 		var clustering_array_for_clustering_comparison = _self.clustering.filter(function(d,i){
@@ -120,8 +122,10 @@ Projection.prototype.clustering_comparison_handler = function(network_array){
 		// _self.draw_radar_chart();
 	}else{
 		// reset drawing
+		d3.selectAll("g.arc").remove();
 		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
-					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
+					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH,
+					"opacity": DESELECTED_CIRCLE_OPACITY});
 		d3.selectAll("g.rc_chart_g").remove();
 		_self.items_for_highlights = [];
 	}
@@ -278,11 +282,61 @@ Projection.prototype.highlight_outlier_items = function() {
 	_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
 					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
 
+    _self.arc = d3.svg.arc()
+                    .outerRadius(_self.radius)
+                    .innerRadius(0);
+
+    _self.pie = d3.layout.pie()
+                    .sort(null)
+                    .value(function(d) { return 1; });
+
 	_self.circ.each(function(element, index){
 		if(index_array[index]==1){
-			d3.select(this).style({"stroke-width": OUTLIER_CIRCLE_STROKE_WIDTH,
-									"stroke": _self.color(clustering_array_for_clustering_comparison[0][index])});
+			_self.halfcircle_indices.push(index);
+
+			// d3.select(this).style({"stroke-width": OUTLIER_CIRCLE_STROKE_WIDTH,
+			// 						"stroke": _self.color(clustering_array_for_clustering_comparison[0][index])});
+			// d3.select(this).moveToFront();
+			// draw half circles
+
+			var cla = _self.clustering_array_for_clustering_comparison.map(function(d){return d[index];});
+			cla = cla.move(current_index, 0);
+			var pie = _self.pie(cla);
+			d3.select(this.parentNode).selectAll("g.arc").remove();
+			var arc_g = d3.select(this.parentNode).selectAll("g.arc")
+				.data(pie).enter()
+				.append("g")
+				.attr("class", "arc");
+
+			var arc = arc_g.append("path")
+						.attr("class", "highlight_arc")
+						.attr("d", _self.arc)
+						.style("opacity", DESELECTED_CIRCLE_OPACITY)
+						.style("stroke", DESELECTED_CIRCLE_STROKE_COLOR)
+						.style("fill", function(d){
+							return _self.color(d["data"]);
+						});
+
+			d3.select(this).style("opacity", 0);
 			d3.select(this).moveToFront();
+			// d3.select(this).remove();
+			// _self.circ.splice(index, 1, arc);
+
+			if(_self.halfcircle_indices.indexOf(index) > -1 && _self.superpoints["superpoint"].indexOf(index) > -1){
+				var id = _self.superpoints["superpoint"].indexOf(index);
+				var newarc = d3.svg.arc()
+	                    .outerRadius(_self.circle_size_scale(_self.superpoints["size"][id]))
+	                    .innerRadius(0);
+	            d3.select(this.parentNode)
+	            	.selectAll("path.highlight_arc")
+	            	.style("display", "inherit")
+	            	.transition().duration(250)
+	            	.attr("d", newarc);
+			}else{
+				d3.select(this.parentNode)
+	            	.selectAll("path.highlight_arc")
+	            	.style("display", "none");
+			}
 		};
 	});
 };
@@ -319,6 +373,7 @@ Projection.prototype.request_superpoints = function(distance) {
 
 Projection.prototype.draw_superpoints = function() {
 	var _self = this;
+
 	_self.circle_size_scale = d3.scale.linear().domain([0, _self.data_embedding.length]).range(SUPERPOINT_CIRCLE_RADIUS_SCALE_RANGE_MIN_MAX);
 
 	_self.circ.transition().duration(250).style("display", function(d,i){
@@ -333,6 +388,26 @@ Projection.prototype.draw_superpoints = function() {
 			return _self.circle_size_scale(_self.superpoints["size"][index]);
 		}else{
 			return _self.radius;
+		}
+	});
+
+	var this_index = _.intersection(_self.halfcircle_indices, _self.superpoints["superpoint"]);
+
+	_self.circ.each(function(d,i){
+		if(this_index.indexOf(i) > -1){
+			var index = _self.superpoints["superpoint"].indexOf(i);
+			var arc = d3.svg.arc()
+                    .outerRadius(_self.circle_size_scale(_self.superpoints["size"][index]))
+                    .innerRadius(0);
+            d3.select(this.parentNode)
+            	.selectAll("path.highlight_arc")
+            	.style("display", "inherit")
+            	.transition().duration(250)
+            	.attr("d", arc);
+		}else{
+			d3.select(this.parentNode)
+            	.selectAll("path.highlight_arc")
+            	.style("display", "none");
 		}
 	});
 };
@@ -386,27 +461,40 @@ Projection.prototype.pcDataPointHandler = function(argument) {
 Projection.prototype.pcGroupHandler = function(argument) {
 	var _self = this;
 	_self.circ.style("display", function(d,i){
+		if(_self.halfcircle_indices.indexOf(i) > -1 && argument.indexOf(i) > -1){
+            d3.select(this.parentNode)
+            	.selectAll("path.highlight_arc")
+            	.style("display", "inherit");
+		}else{
+			d3.select(this.parentNode)
+            	.selectAll("path.highlight_arc")
+            	.style("display", "none");
+		}
 		if(argument.indexOf(i) > -1){
 			return null;
 		}else{
 			return "none";
 		}
-	})
+	});
 };
 
 Projection.prototype.pcClusterSelectionHandler = function(argument) {
 	var _self = this;
 	if(argument.length == 0){
+		d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 		_self.circ
 		    .style("opacity", function(d,i){
+		      if(_self.halfcircle_indices.indexOf(i) > -1){
+		      	return 0;
+		      }
 		      return DESELECTED_CIRCLE_OPACITY;
 		    }).style("stroke", function(d,i){
 		      return DESELECTED_CIRCLE_STROKE_COLOR;
 		    }).style("stroke-width", function(d,i){
 		      return DESELECTED_CIRCLE_STROKE_WIDTH;
 		    });
-		d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 		_self.selected_cluster_indices = [];
+		_self.draw_superpoints();
 	}else{
 		// fire to cluster_list
 		_self.selected_cluster_indices = argument.slice();
@@ -416,6 +504,9 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		      if(argument.indexOf(_self.labels[i])>-1){
 		        return SELECTED_CIRCLE_OPACITY;
 		      }else{
+		      	if(_self.halfcircle_indices.indexOf(i) > -1){
+		      		return 0;
+		      	}
 		        return DESELECTED_CIRCLE_OPACITY;
 		      }
 		    })
@@ -474,7 +565,16 @@ Projection.prototype.draw = function(){
 							// _self.circ.style("fill", function(d,i){
 							// 	return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							// }).style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
-							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
+							d3.selectAll("circle.data_item_circ").style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
+
+							_self.circ.style("opacity", function(d,i){
+								if(_self.halfcircle_indices.indexOf(i)>-1){
+									return 0;
+								}else{
+									return DESELECTED_CIRCLE_OPACITY;
+								}
+							});
+							
 							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
 							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([]);
@@ -584,12 +684,18 @@ Projection.prototype.draw = function(){
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							});
+							if(_self.halfcircle_indices.indexOf(i)>-1){
+								d3.select(this).style("opacity", SELECTED_CIRCLE_OPACITY);
+							}
 							d3.select(this).style("fill", "red");
 						})
 						.on("mouseleave", function(d,i){
 							_self.circ.style("fill", function(d,i){
 								return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
 							});
+							if(_self.halfcircle_indices.indexOf(i)>-1){
+								d3.select(this).style("opacity", 0);
+							}
 						})
 						.on("click", function(d,i){
 							d3.select(this).moveToFront();

@@ -283,6 +283,7 @@ ParallelCoordinates.prototype.redraw = function() {
             action: function(elm, d, i) {
               _self.rescale_axes("Original");
               _self.mean_and_95();
+              _self.to_reset_views();
             },
             disabled: false
         },
@@ -291,6 +292,7 @@ ParallelCoordinates.prototype.redraw = function() {
             action: function(elm, d, i) {
               _self.rescale_axes("Fit to Cluster");
               _self.mean_and_95();
+              _self.to_reset_views();
             },
             disabled: false
         },
@@ -299,6 +301,7 @@ ParallelCoordinates.prototype.redraw = function() {
             action: function(elm, d, i) {
               _self.rescale_axes("Align");
               _self.mean_and_95();
+              _self.to_reset_views();
             },
             disabled: false
         }
@@ -313,12 +316,13 @@ ParallelCoordinates.prototype.redraw = function() {
             .attr("y", -(_self.m[0]+_self.m[2])*2)
             .style("opacity", 0)
             .on("click", function(){
-              _self.selected_cluster_indices = [];
-              _self.highlight_by_cluster([]);
-              _s.listenerMap['projection_listener_for_data_point'].fire([]);
-              // pc_listener_for_cluster_selection
-              _s.listenerMap['pc_listener_for_cluster_selection'].fire([]);
-              _self.clean_brush();
+              _self.to_reset_views();
+              // _self.selected_cluster_indices = [];
+              // _self.highlight_by_cluster([]);
+              // _s.listenerMap['projection_listener_for_data_point'].fire([]);
+              // // pc_listener_for_cluster_selection
+              // _s.listenerMap['pc_listener_for_cluster_selection'].fire([]);
+              // _self.clean_brush();
             }).on("contextmenu", d3.contextMenu(_self.context_menu));
 
   _self.title_text = foreground_g.append("text")
@@ -1188,6 +1192,15 @@ ParallelCoordinates.prototype.clean_brush = function() {
   d3.selectAll(".remove_filter").attr("opacity", 0);
   _self.brush();
   d3.selectAll("image.sort").moveToFront();
+};
+
+ParallelCoordinates.prototype.to_reset_views = function() {
+  var _self = this;
+  _self.selected_cluster_indices = [];
+  _self.highlight_by_cluster([]);
+  _self.clean_brush();
+  _s.listenerMap['projection_listener_for_data_point'].fire([]);
+  _s.listenerMap['pc_listener_for_cluster_selection'].fire([]);
 };
 
 
