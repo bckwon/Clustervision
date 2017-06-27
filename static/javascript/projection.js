@@ -125,6 +125,7 @@ Projection.prototype.clustering_comparison_handler = function(network_array){
 		d3.selectAll("g.arc").remove();
 		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
 					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH,
+					"fill-opacity": DESELECTED_CIRCLE_OPACITY,
 					"opacity": DESELECTED_CIRCLE_OPACITY});
 		d3.selectAll("g.rc_chart_g").remove();
 		_self.items_for_highlights = [];
@@ -574,6 +575,14 @@ Projection.prototype.draw = function(){
 									return DESELECTED_CIRCLE_OPACITY;
 								}
 							});
+
+							_self.circ.style("fill-opacity", function(d,i){
+								if(_self.halfcircle_indices.indexOf(i)>-1){
+									return 0;
+								}else{
+									return DESELECTED_CIRCLE_OPACITY;
+								}
+							});
 							
 							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
@@ -719,7 +728,11 @@ Projection.prototype.draw = function(){
 
 							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 
-							_self.circ.style("opacity", function(d,i){
+							_self.selected_cluster_indices.forEach(function(clabel){
+								d3.selectAll("circle.data_item_circ[cluster_index='"+clabel+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
+							});
+
+							_self.circ.style("fill-opacity", function(d,i){
 								if(_self.halfcircle_indices.indexOf(i)>-1){
 									return 0;
 								}else{
@@ -727,9 +740,6 @@ Projection.prototype.draw = function(){
 								}
 							});
 
-							_self.selected_cluster_indices.forEach(function(clabel){
-								d3.selectAll("circle.data_item_circ[cluster_index='"+clabel+"']").style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_COLOR).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
-							})
 						})
 						.on("contextmenu", d3.contextMenu(_self.context_menu))
 						.on("dblclick", function(d,i){
