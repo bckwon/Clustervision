@@ -260,7 +260,7 @@ function drawRadarChart(divId, w, h) {
             });
 
             // Moving things above
-            d3.selectAll(".radar-chart-series_1").moveToBack();
+            d3.selectAll(".radar-chart-series_0").moveToFront();
 
             //Tooltip
             tooltip = g.append('text')
