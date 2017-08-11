@@ -218,37 +218,37 @@ def get_clustering():
     array_data = dataset.as_matrix()
     print(array_data.shape)
 
-    for x in clustering_choices:
-        print(x['clustering_parameters']['chosen_by'])
-    # consensus clustering code (jverma)
-    for qm in quality_metrics:
-        clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
-        n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
-        n_labels = int((np.mean(n_labels_arr)))
-        cluster_info = np.arange(len(clustering_choices_qm[0]['labels']))
-        print("number of clusters considered...")
-        print(cluster_info.shape)
-        for clustering_run in clustering_choices_qm:
-            cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
-        cluster_info = cluster_info[1:]
-        print(cluster_info.shape)
-
-        consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
-        consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
-        # print(consensus_clustering)
-        consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
-        clustering_choices.append(consensus_clustering)
-
-        # prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
-        # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
-        # clustering_choices.append(prob_consensus_clustering)
-
-    # jverma results writeup
-    file_name = dataset_name + '_consensus_results.json'
-    with open(file_name, 'wb') as f:
-        # result_contents = list(map(lambda x: {x['chosen_by', x['quality_metrics']]}, clustering_choices))
-        f.write(json.dumps(clustering_choices))
-        f.close()
+    # for x in clustering_choices:
+    #     print(x['clustering_parameters']['chosen_by'])
+    # # consensus clustering code (jverma)
+    # for qm in quality_metrics:
+    #     clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
+    #     n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
+    #     n_labels = int((np.mean(n_labels_arr)))
+    #     cluster_info = np.arange(len(clustering_choices_qm[0]['labels']))
+    #     print("number of clusters considered...")
+    #     print(cluster_info.shape)
+    #     for clustering_run in clustering_choices_qm:
+    #         cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
+    #     cluster_info = cluster_info[1:]
+    #     print(cluster_info.shape)
+    #
+    #     consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
+    #     consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
+    #     # print(consensus_clustering)
+    #     consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
+    #     clustering_choices.append(consensus_clustering)
+    #
+    #     # prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
+    #     # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
+    #     # clustering_choices.append(prob_consensus_clustering)
+    #
+    # # jverma results writeup
+    # file_name = dataset_name + '_consensus_results.json'
+    # with open(file_name, 'wb') as f:
+    #     # result_contents = list(map(lambda x: {x['chosen_by', x['quality_metrics']]}, clustering_choices))
+    #     f.write(json.dumps(clustering_choices))
+    #     f.close()
 
 
     # @bumchul.kwon cluster membership count
