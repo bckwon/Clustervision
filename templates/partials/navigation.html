@@ -19,6 +19,15 @@
             <li><a href="#" class="dataset_item" name="cars">cars</a></li>
             <!-- <li><a href="#" class="dataset_item" name="universities">universities</a></li> -->
             <li><a href="#" class="dataset_item" name="bobross">bobross</a></li>
+            <!-- Helen test -->
+            <li><a href="#" class="dataset_item" name = "test">test</a></li>
+            <li><a href="#" class="dataset_item" name = "binned_times">Antibodies binned times</a></li>
+            <li><a href="#" class="dataset_item" name = "differences">Antibodies difference t_appear</a></li>
+            <li><a href="#" class="dataset_item" name = "time_appearance">Antibodies t_appear</a></li>
+            <li><a href="#" class="dataset_item" name = "subtracted">Antibodies subtracted t_appear</a></li>
+            <!-- TODO: change this to appear only if an uploaded file exists? -->
+            <li><a href="#" class="dataset_item" name = "uploaded">uploaded</a></li>
+            <!-- end Helen test -->
           </ul>
         </li>
         <li class="dropdown" id = "drt_list">
@@ -30,6 +39,15 @@
             <li><a href="#" class="drt_item" name="spectral">Spectral</a></li>
           </ul>
         </li>
+        <!-- TODO: Helen upload button -->
+        <li id = "upload_button">
+        <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id = "upload_file">
+            <p><input type="file" name="file" id ="file"></p>
+            <p><input type="submit" name="btn" class="btn btn-primary btn-block" value="Upload dataset"></p>
+
+        </form>
+        </li>
+        <!-- end -->
       </ul>
     </div>
 

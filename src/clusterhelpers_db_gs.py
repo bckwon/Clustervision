@@ -72,10 +72,12 @@ def davies_bouldin(data_matrix, clusters):
  				numerator_dist = dist_x_mean + dist_y_mean
  				# compute the distance between two centroids.
  				dist_xy = cdist(centroid_x, centroid_y)
- 				# DB entry for x-y pair.
- 				db_xy = float(numerator_dist) / float(dist_xy)
- 				# add x-y pair score to the x-list.
- 				db_x.append(db_xy)
+				if dist_xy == 0:
+					dist_xy = 1e-12
+				# DB entry for x-y pair.
+				db_xy = float(numerator_dist) / float(dist_xy)
+				# add x-y pair score to the x-list.
+				db_x.append(db_xy)
  		# The max distance from x-y pairs for all y is the contribution of x cluster.
  		david_bouldin_score += max(db_x)
  	# normalize by number of clusters.

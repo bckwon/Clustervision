@@ -24,12 +24,65 @@ from flask import Flask, request, render_template
 from multiprocessing import Pool
 from src import cluster, config, constraints, permute_clustering, superpoints, cluster_membership_count
 from src.stability_analysis import Stability
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+#make upload attempt
+UPLOAD_FOLDER = 'data/uploaded_data/'
+ALLOWED_EXTENSIONS = set(['txt', 'csv'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     return render_template('index.html', data=[])
+
+
+#attempt to make upload possible
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+@app.route('/upload', methods=['POST', 'GET'])
+def upload():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        print("Here")
+        if 'file' not in request.files:
+            print("Oh no no file")
+            return render_template('index.html', data = [])
+        print("Well I got up to here")
+        file = request.files['file']
+
+        # if user does not select file, browser also
+        # submit a empty part without filename
+        if file.filename == '':
+            return render_template('index.html', data=[])
+        if file and allowed_file(file.filename):
+            print("I want to save a file lol")
+            file.filename = "upload.csv"
+            #TODO: This is giving me problems - can't seem to find corrcet folder
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            #file.save("data/uploaded_data/", file.filename) --> "IS A DIRECTORY ERROR"
+            #maybe should change this to load with data automatically?
+            print("I saved it ... I think...?")
+            return render_template('index.html', data = [])
+    return render_template('index.html', data=[])
+
+
+
+    '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Upload>
+    </form>
+    '''
+
 
 @app.route('/new_session', methods=['POST', 'GET'])
 def new_session():

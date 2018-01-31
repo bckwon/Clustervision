@@ -442,6 +442,84 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions.append(d)
 
         return (pdata, descriptions)
+
+    #Helen testing
+    elif dataset_name == 'test':
+        pdata = pd.read_csv('data/Helen_test/test.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+        return (pdata, descriptions)
+
+    elif dataset_name == 'time_appearance':
+        pdata = pd.read_csv('data/Helen_test/time_appearance_test.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+        return (pdata, descriptions)
+
+    elif dataset_name == 'binned_times':
+        pdata = pd.read_csv('data/Helen_test/binned_times_test.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+        return (pdata, descriptions)
+
+    elif dataset_name == 'differences':
+        pdata = pd.read_csv('data/Helen_test/differences_test.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+        return (pdata, descriptions)
+
+    elif dataset_name == 'subtracted':
+        pdata = pd.read_csv('data/Helen_test/subtracted_test.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+        return (pdata, descriptions)
+
+    elif dataset_name == 'uploaded':
+        pdata = pd.read_csv('data/uploaded_data/upload.csv')
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+        return (pdata, descriptions)
+    #Helen testing end
+
+
+
+
     elif dataset_name == 'sutter-binary':
         pdata = pd.read_csv('data/sutter_binary_data/sutter3-23-2017-all-binary.csv')
         data = pdata.as_matrix()
