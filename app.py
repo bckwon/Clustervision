@@ -55,8 +55,8 @@ def new_session():
 def get_clustering():
     same_cluster = constraints.parse_constraint(str(request.json['constraints']['same_cluster']))
     diff_cluster = constraints.parse_constraint(str(request.json['constraints']['diff_cluster']))
-    print 'Same cluster:', same_cluster
-    print 'Diff cluster:', diff_cluster
+    print('Same cluster:', same_cluster)
+    print('Diff cluster:', diff_cluster)
 
     # with env.begin(write=True) as txn:
     session_id = int(request.json['session_id'])
@@ -76,7 +76,7 @@ def get_clustering():
     if 'choices' in session.keys():
         prev_choices = session['choices'][-1]
     else:
-        print 'ERROR: no choices'
+        print('ERROR: no choices')
         prev_choices = []
 
     compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
@@ -104,7 +104,7 @@ def get_clustering():
         query_params = prev_choices[user_choice]
         query_clustering = cluster.load_clustering(query_params)
         if not constraints.satisfies_constraints(query_clustering, same_cluster, diff_cluster):
-            print 'Does not satisfy constraints'
+            print('Does not satisfy constraints')
             query_params = None
             query_clustering = None
 
@@ -135,7 +135,7 @@ def get_clustering():
         query_clustering = cluster.load_clustering(query_params)
 
     if query_params is None or query_clustering is None:
-        print 'Error: no clustering satisfied these constraints'
+        print('Error: no clustering satisfied these constraints')
         return json.dumps([])
 
     # Step 2a: Run MMR to choose clusterings to show the user.
@@ -339,7 +339,7 @@ def clmnetwork():
     cluster_membership = cluster_membership_count.count_cluster_membership(network_array)
     return json.dumps(cluster_membership)
 
-port = os.getenv('PORT', '5000')
+port = os.getenv('PORT', '3000')
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(port),debug=True)
 # if __name__ == '__main__':

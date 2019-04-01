@@ -73,6 +73,8 @@ def davies_bouldin(data_matrix, clusters):
  				# compute the distance between two centroids.
  				dist_xy = cdist(centroid_x, centroid_y)
  				# DB entry for x-y pair.
+ 				if dist_xy == 0:
+ 					dist_xy = 1e-12
  				db_xy = float(numerator_dist) / float(dist_xy)
  				# add x-y pair score to the x-list.
  				db_x.append(db_xy)

@@ -10,7 +10,7 @@ Documentation: https://ibm.ent.box.com/notes/123647604541
 Created on 01/17/2017
 """
 
-import config
+import src.config as config
 import clusterhelpers_db_gs
 import json
 import lmdb
@@ -32,13 +32,16 @@ from sklearn.feature_selection import chi2
 
 from tqdm import tqdm
 from multiprocessing import Pool
+import math
 
 def compute_all_clusterings(dataset_name, k_range):
     param_vec = []
     if k_range is None:
         k_range = [2, 20]
 
-    cluster_range = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+    cluster_range = [2,3,4]
+    # cluster_range = [2,3,4,5,6]
+    # cluster_range = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
 
     for n_clusters in cluster_range:
         # KMeans
@@ -51,7 +54,7 @@ def compute_all_clusterings(dataset_name, k_range):
         }
         param_vec.append(params)
 
-        # SpectralClustering
+        ### SpectralClustering
         params = {
             'alg_name': 'SpectralClustering',
             'n_clusters': n_clusters,
@@ -59,7 +62,7 @@ def compute_all_clusterings(dataset_name, k_range):
         }
         param_vec.append(params)
 
-        # DBSCAN
+        ### DBSCAN
         # params = {
         #     'alg_name': 'dbscan',
         # }
@@ -249,8 +252,8 @@ def build_clustering_object(pd_dataset, labels, params, clustering_key):
         'clustering_id': clustering_key,
          'feature_selection': {
              'names': list(pd_dataset.columns.values),
-             'scores': select.scores_.tolist(),
-             'pvalues': select.pvalues_.tolist(),
+             'scores': [0 if math.isnan(x) or math.isinf(x) else x for x in select.scores_.tolist()],
+             'pvalues': [1 if math.isnan(x) or math.isinf(x) else x for x in select.pvalues_.tolist()],
              },
     }
     return clustering
@@ -429,6 +432,50 @@ def dataset_from_name(dataset_name, include_description=False):
             descriptions.append(d)
 
         return (pdata, descriptions)
+    elif dataset_name == 'chdi-mean':
+        pdata = pd.read_csv('data/chdi_data/_timeseries_output.csv')
+        pdata.drop(['subjid'], axis=1, inplace=True)
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        return (pdata, descriptions)
+    elif dataset_name == 'jdrf-collapsed-features':
+        pdata = pd.read_csv('data/jdrf_data/mean_DD_visits_GTE_2Ab.csv')
+        pdata.sort_values(by=['subjid'], ascending=[True])
+        # print()
+        # pdata = pdata.fillna(0.0)
+        # pdata = pdata.groupby(['subjid']).mean().reset_index()
+        # pdata = pdata.sample(3000)
+        
+        # pdata = pdata[pdata['RG'].notnull()]
+        # pdata = pdata[pdata['A1C'].notnull()]
+
+        # GAA_O,IA2_O,IAA_O,ZnT8_O,ABcount_n,DOB_Month
+        varnames = ['GAA_O','IA2_O','IAA_O','ABcount_n','DOB_Month', 'RG', 'A1C']
+        for varname in varnames:
+            pdata = pdata[pdata[varname].notnull()]
+        # pdata.drop(['subjid', 'T1DFamHis', 'Glucose_0', 'Glucose_120', 'DS', 'HEIGHT', 'WEIGHT', 'RG', 'A1C', 'DOB_Month'], axis=1, inplace=True)
+        pdata.drop(['subjid', 'DS', 'DOB_Month', 'Glucose_0','Glucose_120', 'HEIGHT', 'WEIGHT'], axis=1, inplace=True)
+        pdata = pdata.fillna(0.0)
+        pdata = pdata[:3000]
+        data = pdata.as_matrix()
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in data:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        return (pdata, descriptions)
     elif dataset_name == 'sutter-temporal':
         pdata = pd.read_csv('data/sutter_temporal_data/sutter3-16-2017-all.csv')
         data = pdata.as_matrix()
@@ -474,6 +521,29 @@ def dataset_from_name(dataset_name, include_description=False):
         pdata = pd.read_csv('data/bobross_data/elements-by-episode-filtered.csv')
 
         pdata.drop(pdata.columns[[0,1]], axis=1, inplace=True)
+
+        pdata = pdata.loc[:, (pdata.sum() >= 5)] #remove columns that have been tagged less than 5 times
+
+        # convert to numpy matrix
+        matrix = pdata.as_matrix()
+
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in matrix:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        # normalize according to stddev
+        # data = whiten(matrix)
+        data = matrix
+        return (pdata, descriptions)
+    elif dataset_name == 'visual-element-survey':
+        pdata = pd.read_csv('data/visual_element_survey_data/visual-element-survey.csv')
+
+        pdata.drop(pdata.columns[[0]], axis=1, inplace=True)
 
         pdata = pdata.loc[:, (pdata.sum() >= 5)] #remove columns that have been tagged less than 5 times
 
@@ -564,8 +634,8 @@ def feature_selection_labels(pd_dataset, labels):
         fs = {}
         fs["cluster_label"] = str(l)
         fs["names"] = list(pd_dataset.columns.values)
-        fs["scores"] = select.scores_.tolist()
-        fs["pvalues"] = select.pvalues_.tolist()
+        fs["scores"] = [0 if math.isnan(x) or math.isinf(x) else x for x in select.scores_.tolist()]
+        fs["pvalues"] = [1 if math.isnan(x) or math.isinf(x) else x for x in select.pvalues_.tolist()]
 
         feature_selected_labels.append(fs)
 

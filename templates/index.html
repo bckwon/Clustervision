@@ -54,7 +54,9 @@
 
 	var screen_width = window.screen.availWidth;
 	var screen_height = window.screen.availHeight;
-    var chosen_dataset = "blobs";
+    // var chosen_dataset = "blobs";
+    // var chosen_dataset = "jdrf-collapsed-features";
+    var chosen_dataset = "visual-element-survey";
     var chosen_session_id = 0;
     var chosen_user_choice = 0;
     var chosen_lambda = 0.5;
@@ -150,9 +152,14 @@
 	        type: "POST",
 	        url: $SCRIPT_ROOT + "/clustering",
 	        contentType: "application/json; charset=utf-8",
+            // dataType: "json",
             data: myData,
 	        success: function(data) {
+                console.log(data);
+                data = data.replace(/[\u0000-\u0019]+/g,"");
+                console.log(data);
                 var data = JSON.parse(data);
+                // console.log(data);
 	            var parsed_data = data[0];
                 session["cluster_membership"] = data[1];
 	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
@@ -171,7 +178,7 @@
                     for (var i = 0; i < session['clustering'].length; i++) {
                         clustering = session['clustering'][i];
                     }
-                    console.log(session["clustering"]);
+                    // console.log(session["clustering"]);
                     fetch_dataset();
                 }else{
                     initialize_values();
@@ -218,7 +225,7 @@
     }
 
     function fetch_dataset() {
-        console.log('Fetching dataset:', chosen_dataset);
+        // console.log('Fetching dataset:', chosen_dataset);
 	    $.ajax({
 	        type: "GET",
 	        url: $SCRIPT_ROOT + "/dataset?dataset="+chosen_dataset+"&method="+chosen_dr_method,

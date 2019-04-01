@@ -3,6 +3,8 @@ import sklearn.metrics
 import clusterhelpers_db_gs
 import SDbw
 
+infinity_value_list = [-999999999, 99999999999]
+
 def silhouette_score(X, labels):
     n_labels = len(set(labels))
     n_samples = X.shape[0]
@@ -29,6 +31,8 @@ def neg_davies_bouldin(X, labels):
 
 def neg_gap_statistic(X, labels):
     u,v = clusterhelpers_db_gs.gap_statistic(X, labels)
+    if v == float('inf') or v== float('-inf'):
+        v = infinity_value_list[1]
     return -1.0 * v
 
 def neg_s_Dbw(X, labels):
@@ -40,7 +44,8 @@ def calinski_harabaz_score(X, labels):
     if 2 <= n_labels  and n_labels <= n_samples - 1:
         return sklearn.metrics.calinski_harabaz_score(X, labels)
     else:
-        return float('-inf')
+        # return float('-inf')
+        return float(infinity_value_list[0])
 
 def neg_cohesion(X, labels):
     le = sklearn.preprocessing.LabelEncoder()
@@ -111,7 +116,8 @@ def min_max_dist(X, labels):
             max_vec.append(values[0])
         n = X_subset.shape[0]
         # Handle the zeros on the diagonal
-        pdist[range(n), range(n)] = float('inf')
+        # pdist[range(n), range(n)] = float('inf')
+        pdist[range(n), range(n)] = float(infinity_value_list[1])
         min_vec.append(pdist.min())
     return (min(min_vec), max(max_vec))
 
@@ -128,8 +134,10 @@ def normalize_clustering_vec(clustering_vec):
             except TypeError:
                 min_score = quality_score
                 max_score = quality_score
-            min_value = min([min_dict.get(quality_metric_name, float('inf')), min_score])
-            max_value = max([max_dict.get(quality_metric_name, float('-inf')), max_score])
+            # min_value = min([min_dict.get(quality_metric_name, float('inf')), min_score])
+            # max_value = max([max_dict.get(quality_metric_name, float('-inf')), max_score])
+            min_value = min([min_dict.get(quality_metric_name, infinity_value_list[1]), min_score])
+            max_value = max([max_dict.get(quality_metric_name, infinity_value_list[0]), max_score])
             min_dict[quality_metric_name] = min_value
             max_dict[quality_metric_name] = max_value
 
