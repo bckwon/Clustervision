@@ -1,7 +1,8 @@
 #!/bin/python
 import numpy as np
 import networkx as nx
-from scipy.optimize import linear_sum_assignment
+import scipy
+#from scipy.optimize import linear_sum_assignment
 
 def permute_clustering_vec(clustering_vec):
     new_clustering_vec = [clustering_vec[0]]
@@ -34,7 +35,7 @@ def compute_cost_matrix(a, b):
 
 def permute_clustering(a, b, sorted_labels=None):
     cost = compute_cost_matrix(a, b)
-    (row_indices, col_indices) = linear_sum_assignment(cost)
+    (row_indices, col_indices) = scipy.optimize.linear_sum_assignment(cost)
     permutation = dict(zip(row_indices, col_indices))
 
     # Some labels may not be included if A has fewer clusters than B

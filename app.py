@@ -24,12 +24,65 @@ from flask import Flask, request, render_template
 from multiprocessing import Pool
 from src import cluster, config, constraints, permute_clustering, superpoints, cluster_membership_count
 from src.stability_analysis import Stability
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+#make upload attempt
+UPLOAD_FOLDER = 'data/uploaded_data/'
+ALLOWED_EXTENSIONS = set(['txt', 'csv'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     return render_template('index.html', data=[])
+
+
+#attempt to make upload possible
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+@app.route('/upload', methods=['POST', 'GET'])
+def upload():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        print("Here")
+        if 'file' not in request.files:
+            print("Oh no no file")
+            return render_template('index.html', data = [])
+        print("Well I got up to here")
+        file = request.files['file']
+
+        # if user does not select file, browser also
+        # submit a empty part without filename
+        if file.filename == '':
+            return render_template('index.html', data=[])
+        if file and allowed_file(file.filename):
+            print("I want to save a file lol")
+            file.filename = "upload.csv"
+            #TODO: This is giving me problems - can't seem to find corrcet folder
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            #file.save("data/uploaded_data/", file.filename) --> "IS A DIRECTORY ERROR"
+            #maybe should change this to load with data automatically?
+            print("I saved it ... I think...?")
+            return render_template('index.html', data = [])
+    return render_template('index.html', data=[])
+
+
+
+    '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Upload>
+    </form>
+    '''
+
 
 @app.route('/new_session', methods=['POST', 'GET'])
 def new_session():
@@ -218,11 +271,10 @@ def get_clustering():
     array_data = dataset.as_matrix()
     print(array_data.shape)
 
-    for x in clustering_choices:
-        print(x['clustering_parameters']['chosen_by'])
+    # for x in clustering_choices:
+    #     print(x['clustering_parameters']['chosen_by'])
     # # consensus clustering code (jverma)
     # for qm in quality_metrics:
-    # # qm = 'sdbw'
     #     clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
     #     n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
     #     n_labels = int((np.mean(n_labels_arr)))
@@ -233,38 +285,24 @@ def get_clustering():
     #         cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
     #     cluster_info = cluster_info[1:]
     #     print(cluster_info.shape)
-
+    #
     #     consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
     #     consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
     #     # print(consensus_clustering)
     #     consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
     #     clustering_choices.append(consensus_clustering)
+    #
+    #     # prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
+    #     # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
+    #     # clustering_choices.append(prob_consensus_clustering)
+    #
+    # # jverma results writeup
+    # file_name = dataset_name + '_consensus_results.json'
+    # with open(file_name, 'wb') as f:
+    #     # result_contents = list(map(lambda x: {x['chosen_by', x['quality_metrics']]}, clustering_choices))
+    #     f.write(json.dumps(clustering_choices))
+    #     f.close()
 
-    #     prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
-    #     prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
-    #     clustering_choices.append(prob_consensus_clustering)
-
-    # qm = 'gap_statistic'
-    # clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
-    # n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
-    # n_labels = int((np.mean(n_labels_arr)))
-    # cluster_info = np.arange(len(clustering_choices_qm[0]['labels']))
-    # print("number of clusters considered...")
-    # print(cluster_info.shape)
-    # for clustering_run in clustering_choices_qm:
-    #     cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
-    # cluster_info = cluster_info[1:]
-    # print(cluster_info.shape)
-
-    # consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
-    # consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
-    # # print(consensus_clustering)
-    # consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
-    # clustering_choices.append(consensus_clustering)
-
-    # prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
-    # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
-    # clustering_choices.append(prob_consensus_clustering)
 
     # @bumchul.kwon cluster membership count
     cluster_membership = cluster_membership_count.count_cluster_membership(clustering_choices)
@@ -328,6 +366,7 @@ def superpoint():
     clustering_id = request.args.get('clustering_id')
     clustering_id = int(clustering_id)
     max_dist = request.args.get('max_dist', None)
+    print(request.args)
     if max_dist is not None:
         max_dist = float(max_dist)
     d = superpoints.find_superpoints(clustering_id, max_dist=max_dist)

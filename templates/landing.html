@@ -1,0 +1,71 @@
+
+<!doctype html>
+<head>
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/bootstrap-theme.min.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cluster_view.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/d3-context-menu.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/nouislider.min.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/jquery-ui.min.css')}}">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Ropa+Sans" rel="stylesheet">
+
+<script src="{{ url_for('static', filename='javascript/d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/jquery-2.2.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/d3-context-menu.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/nouislider.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/jquery-ui.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/underscore-min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/visual_parameters.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/colors.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/shorty.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/radar.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/parallel_coordinates.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/table.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/clustering_result.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/clustering_stripes.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/quality_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/cluster_list.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/cluster_view.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/projection.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/aster.js') }}"></script>
+<title>Clustervision</title>
+</head>
+
+{% include "partials/navigation.html" ignore missing %}
+
+<div class="main_page">
+
+    <form action="upload" method="post" enctype="multipart/form-data" id = "upload">
+        <div class ="left">
+        <h3><span class="label label-default">Run Visualization</span></h3>
+        <div class ="left_half_first">
+        <div>
+            <label for = "output_file">Output file: <u>filename.csv</u></label>
+            <p><input type="file" name="output_file" id ="output_file"></p>
+            <label for = "static_variable">Static Variables: <br><u>var1,var2,...</u><br><u>var1[tab]var2[tab]...</u></label>
+            <p><input type="text" name="static_variable" id ="static_variable"></p>
+            <label for = "state_desc">State Descriptors: <br><u>var1,var2,...</u><br><u>var1[tab]var2[tab]...</u></label>
+            <p><input type="text" name="state_desc" id ="state_desc"></p>
+            <label for = "state_variable">Column Header for 'State': <br><u>state</u></label>
+            <p><input type="text" name="state_variable" id ="state_variable"></p>
+            <label for = "gt_variable">Column Header for 'Ground Truth': <br><u>gtruth</u></label>
+            <p><input type="text" name="gt_variable" id ="gt_variable"></p>
+            <label for = "age_variable">Column Header for 'Age': <br><u>age</u></label>
+            <p><input type="text" name="age_variable" id ="age_variable"></p>
+        </div>
+        </div>
+        </div>
+        <div class ="right">
+        <h3><span class="label label-success">What-if Analysis</span></h3>
+        <div>
+            <label for = "regress_pickle">Pickled Regression Model</label>
+            <p><input type="file" name="regress_pickle" id ="regress_pickle"></p>
+        </div>
+        </div>
+        <div class ="upload_bottom">
+            <p><input type="submit" name="btn" class="btn btn-primary btn-block" value="Compute Patterns and Launch Visualization"></p>
+        </div>
+    </form>
+</div>
