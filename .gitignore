@@ -1,5 +1,5 @@
 *.pyc
-db.lmdb/*
+# db.lmdb/*
 .DS_Store
 data/enron_data/maildir/*
-data/uploads/*
+# data/uploads/*
