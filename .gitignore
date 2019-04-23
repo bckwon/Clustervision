@@ -2,5 +2,4 @@
 db.lmdb/*
 .DS_Store
 data/enron_data/maildir/*
-*.yml
 data/uploads/*
