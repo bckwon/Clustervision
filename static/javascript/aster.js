@@ -15,16 +15,6 @@ Aster = function(gname, width, height, data, keys, extent, labelvalue){
       .sort(null)
       .value(function(d) { return 1; });
   
-  // Do this calculation before
-  // var extent = [];
-  // _self.keys = keys;
-  
-  // keys.forEach(function(elem, ind, arr){
-  //   extent.push(d3.extent(data, function(d){return parseFloat(d[elem]);}));
-  // });
-  // var mean_obj = _self.get_mean(datum);
-  // _self.extent = extent;
-
   var extent = extent || [];
   _self.keys = keys;
   _self.extent = extent;
@@ -65,12 +55,6 @@ Aster.prototype.draw = function(obj){
       .data(_self.pie(obj_array))
     .enter().append("g")
       .attr("class", "outlineArc_g");
-
-  // _self.circle = _self.outerPath_g
-  //   .append("circle")
-  //     .attr("r", _self.radius)
-  //     .style("stroke", "none")
-  //     .style("fill", "white");
 
   _self.outerPath = _self.outerPath_g.append("path")
                 .attr("fill", "white")
@@ -124,9 +108,6 @@ Aster.prototype.draw = function(obj){
         }
       });
   }
-
-
-
 }
 
 Aster.prototype.labelPosition = function(d, arg) {
@@ -140,40 +121,20 @@ Aster.prototype.highlight_circles = function(highglight_bool) {
 
   _self.path.style("stroke", function(d,i){
     if(highglight_bool){
-      // return CLUSTERING_RESULT_SELECTED_COLOR;
-      // return COLOR_DARKGRAY;
       return "gray";
     }else{
-      // return COLOR_DARKGRAY;
       return "gray";
     }
   })
-  // .style("stroke-width", function(d,i){
-  //   if(highglight_bool){
-  //     return CLUSTERING_RESULT_SELECTED_STROKE_WIDTH;
-  //   }else{
-  //     return 1;
-  //   }
-  // });
 
   _self.outerPath.style("stroke", function(d,i){
     if(highglight_bool){
-      // return CLUSTERING_RESULT_SELECTED_COLOR;
       return "gray";
     }else{
       return "gray";
     }
   })
-  // .style("stroke-width", function(d,i){
-  //   if(highglight_bool){
-  //     return CLUSTERING_RESULT_SELECTED_STROKE_WIDTH;
-  //   }else{
-  //     return 1;
-  //   }
-  // });
-
 };
-
 
 Aster.prototype.highlight_wedge = function(argument) {
   var _self = this;

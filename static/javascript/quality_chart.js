@@ -1,3 +1,10 @@
+/**
+ *
+ * @author Bum Chul Kwon <bumchul.kwon@us.ibm.com>
+ * Twitter, Github: @bckwon
+ * Website: https://bckwon.com
+ *
+ */
 function QualityChart(canvas, data, screen_width, screen_height){
 	var _self = this;
 	_self.canvas = canvas;
@@ -81,8 +88,6 @@ function QualityChart(canvas, data, screen_width, screen_height){
 					.attr("r", _self.radius)
 					.style("cursor", "pointer")
 					.style("fill", "steelblue");
-
-
 
 	_self.circle_text = _self.circle_g.append("text")
 							.style("text-anchor", "middle")

@@ -134,8 +134,6 @@ def normalize_clustering_vec(clustering_vec):
             except TypeError:
                 min_score = quality_score
                 max_score = quality_score
-            # min_value = min([min_dict.get(quality_metric_name, float('inf')), min_score])
-            # max_value = max([max_dict.get(quality_metric_name, float('-inf')), max_score])
             min_value = min([min_dict.get(quality_metric_name, infinity_value_list[1]), min_score])
             max_value = max([max_dict.get(quality_metric_name, infinity_value_list[0]), max_score])
             min_dict[quality_metric_name] = min_value

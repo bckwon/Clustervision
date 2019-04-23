@@ -234,7 +234,6 @@ ParallelCoordinates.prototype.highlight_by_cluster = function(argument) {
 };
 
 ParallelCoordinates.prototype.redraw = function() {
-  // body...
   var _self = this;
   _self.svg.selectAll("*").remove();
   _self.prev_extents = {};
@@ -249,7 +248,6 @@ ParallelCoordinates.prototype.redraw = function() {
     _self.extent[d] = d3.extent(datum, function(p){return +p[d];});
   });
 
-  // 25% extent
   var keys = d3.keys(_self.extent);
   _self.extent_25 = {};
   keys.forEach(function(d){
@@ -317,12 +315,6 @@ ParallelCoordinates.prototype.redraw = function() {
             .style("opacity", 0)
             .on("click", function(){
               _self.to_reset_views();
-              // _self.selected_cluster_indices = [];
-              // _self.highlight_by_cluster([]);
-              // _s.listenerMap['projection_listener_for_data_point'].fire([]);
-              // // pc_listener_for_cluster_selection
-              // _s.listenerMap['pc_listener_for_cluster_selection'].fire([]);
-              // _self.clean_brush();
             }).on("contextmenu", d3.contextMenu(_self.context_menu));
 
   _self.title_text = foreground_g.append("text")
@@ -331,7 +323,6 @@ ParallelCoordinates.prototype.redraw = function() {
                 .attr("x", _self.w/2)
                 .attr("y", -32);
 
-  // Add blue foreground lines for focus.
   foreground = foreground_g
     .selectAll("path")
       .data(datum)
@@ -347,7 +338,7 @@ ParallelCoordinates.prototype.redraw = function() {
       .attr("fill", "none")
       .attr("d", path)
       .style("cursor", "pointer")
-      .style("visibility", "hidden") // bckwon added for testing
+      .style("visibility", "hidden")
       .on("mouseover", function(d,i){
         foreground.style("stroke", function(e,g){return _self.color(_self.labels[g]);});
         d3.select(this).style("stroke", "red").style("stroke-width", 2).style("opacity", 1);
@@ -356,23 +347,17 @@ ParallelCoordinates.prototype.redraw = function() {
       .on("mouseout", function(d, i){
         d3.select(this).style("stroke", function(e,g){return _self.color(_self.labels[i]);}).style("stroke-width", 1).style("opacity", 1)
         _s.listenerMap['pc_listener_for_data_point'].fire();
-      })
-      .on("click", function(d,i){
-        // _self.highlight_by_cluster(_self.labels[i]);
-        // _s.listenerMap['pc_listener_for_cluster_selection'].fire(_self.labels[i]);
-      })
+      });
 
   _self.foreground = foreground;
 
   var on_label = false;
 
-  // hover to make the element on top
   $('.pc_path').hover(function(){
     var g = $('g.foreground');
     g.append($(this));
   });
 
-  // Add a group element for each dimension.
   var g = _self.svg.selectAll(".dimension")
       .data(_self.dimensions)
     .enter().append("svg:g")
@@ -392,10 +377,8 @@ ParallelCoordinates.prototype.redraw = function() {
             _self.area_path.attr("d", function(d){return _self.compute_area_path(d);});
             _self.line_path.attr("d", function(d){return _self.compute_line_path(d);});
 
-            // 
             var prev_dimensions = _self.dimensions.slice();
 
-            // 
             _self.dimensions.sort(function(a, b) { return _self.position(a) - _self.position(b); });
 
             var array = _self.dimensions.map(function(d){return 0});
@@ -404,12 +387,6 @@ ParallelCoordinates.prototype.redraw = function() {
               array[_self.dimensions.indexOf(d)] = element;
             });
             _self.sortarray = array.slice();
-
-            // for (var i = 0; i < original_dimensions.length; i++) {
-            //   _self.temparray[_self.dimensions.indexOf(original_dimensions[i])] = _self.sortarray[original_dimensions.indexOf(original_dimensions[i])];
-            // };
-            // _self.sortarray = _self.temparray.slice();
-            // original_dimensions = _self.dimensions.slice();
             _self.x.domain(_self.dimensions);
             g.attr("transform", function(d) { return "translate(" + _self.position(d) + ")"; })}
         })
@@ -430,10 +407,8 @@ ParallelCoordinates.prototype.redraw = function() {
             d3.selectAll(".line_label").attr("transform", function(d){
               return "translate(" + (position(_self.dimensions[_self.dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[_self.dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
             });
-            // fire dimensions to table so that table can be sorted:
         }));
 
-  // Add an axis and title.
   var g_axis = g.append("svg:g")
       .attr("class", "axis")
       .attr("g_axis_id", function(d){
@@ -450,11 +425,6 @@ ParallelCoordinates.prototype.redraw = function() {
   .attr("id", function(d, i){
     return "Axis-" + (i+1);
   })
-  // .attr("y", -9)
-  // .style("text-anchor", "middle")
-  // .text(function(d, i){
-  //       return d.charAt(0);
-  //   })
   .attr("y", -9)
   .attr("transform", "rotate(-45)")
   .style("text-anchor", "start")
@@ -463,7 +433,6 @@ ParallelCoordinates.prototype.redraw = function() {
     })
   .style("font-size", "75%")
   .on("mouseenter", function(d,i){
-    // d3.select(this).style("font-size", "150%").style("text-anchor", "end").text(d);
     d3.select(this.parentNode).append("rect").attr("class", "rect_for_highlight")
       .style("fill", ATTRIBUTE_HIGHLIGHT_COLOR).attr("x", -8).attr("width", 16)
       .attr("y", -24).attr("height", _self.h+48).moveToBack();
@@ -472,7 +441,6 @@ ParallelCoordinates.prototype.redraw = function() {
     _self.title_text.text(d);
   })
   .on("mouseleave", function(d,i){
-    // d3.select(this).style("font-size", "75%").style("text-anchor", "middle").text(d.charAt(0));
     d3.selectAll("rect.rect_for_highlight").remove();
     d3.select(this).style("font-size", "75%");
     _s.listenerMap['pc_listener_for_table'].fire(null);
@@ -487,8 +455,7 @@ ParallelCoordinates.prototype.redraw = function() {
 
       g_axis.append("svg:image")
         .attr("x", function(d, i){
-          // var x = parseFloat(d3.select("#Axis-" + (i+1))[0][0].getBBox().width * 0.4);
-          var x = 10; //hard-fix position of sorting icon
+          var x = 10;
           return x;
         })
         .attr("y", -20).attr("width", 10).attr("height", 10)
@@ -509,8 +476,6 @@ ParallelCoordinates.prototype.redraw = function() {
           }
         }).style("cursor", "pointer");
 
-
-  // Add and store a brush for each axis.
   g.append("svg:g")
       .attr("class", "brush")
       .each(function(d) {
@@ -532,7 +497,6 @@ ParallelCoordinates.prototype.redraw = function() {
 
   d3.selectAll("rect.extent").attr("id", function(d,i){return "extent-" + i;})
 
-  // Remove Filter Button
     g_axis.append("svg:image")
     .attr("class", "remove_filter")
     .attr("id", function(d, i){
@@ -550,7 +514,6 @@ ParallelCoordinates.prototype.redraw = function() {
     })
     .style("font-size", "75%")
     .style("cursor", "pointer")
-    // .text("Remove Filter")
     .on("click", function(d, i){
       if(_self.y[d].brush.extent()[0] != _self.y[d].brush.extent()[1]){
       }
@@ -619,12 +582,10 @@ ParallelCoordinates.prototype.redraw = function() {
 
       transition(_self.foreground).delay(delay).duration(duration)
           .attr("d", _self.path);
-      // Sort Action for Areas
       transition(_self.area_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_area_path(d);});
       transition(_self.line_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_line_path(d);});
-      //
       var line_label = d3.selectAll(".line_label");
       transition(line_label).delay(delay).duration(duration).attr("transform", function(d){
               return "translate(" + (position(dimensions[dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
@@ -686,12 +647,10 @@ ParallelCoordinates.prototype.redraw = function() {
 
       transition(_self.foreground).delay(delay).duration(duration)
           .attr("d", _self.path);
-      // Sort Action for Areas
       transition(_self.area_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_area_path(d);});
       transition(_self.line_path).delay(delay).duration(duration)
           .attr("d", function(d){return _self.compute_line_path(d);});
-      //
       var line_label = d3.selectAll(".line_label");
       transition(line_label).delay(delay).duration(duration).attr("transform", function(d){
               return "translate(" + (position(_self.dimensions[_self.dimensions.length-1]) + 5) + "," + _self.y[_self.dimensions[_self.dimensions.length-1]](d[_self.dimensions[_self.dimensions.length-1]]) + ")"
@@ -707,12 +666,10 @@ ParallelCoordinates.prototype.redraw = function() {
     return g.transition().duration(500);
   }
 
-  // Returns the path for a given data point.
   function path(d) {
     return _self.line(_self.dimensions.map(function(p) { return [position(p), _self.y[p](d[p])]; }));
   }
 
-  // Handles a brush event, toggling the display of foreground lines.
   function brush() {
     var actives = _self.dimensions.filter(function(p) { return !_self.y[p].brush.empty(); }),
         extents = actives.map(function(p) { return _self.y[p].brush.extent(); });
@@ -726,11 +683,6 @@ ParallelCoordinates.prototype.redraw = function() {
       });
     }else{
       foreground
-      // .style("display", function(d) {
-      //   return actives.every(function(p, i) {
-      //     return extents[i][0] <= d[p] && d[p] <= extents[i][1];
-      //   }) ? null : "none";
-      // })
       .style("visibility", function(d) {
         return actives.every(function(p, i) {
           return extents[i][0] <= d[p] && d[p] <= extents[i][1];
@@ -748,28 +700,22 @@ ParallelCoordinates.prototype.redraw = function() {
         array.push(i);
       }
     })
-    // fire to embedding
     _s.listenerMap['pc_listener_for_group'].fire(array);
   }
 
   Array.prototype.equals = function (array) {
-      // if the other array is a falsy value, return
       if (!array)
           return false;
 
-      // compare lengths - can save a lot of time
       if (this.length != array.length)
           return false;
 
       for (var i = 0, l=this.length; i < l; i++) {
-          // Check if we have nested arrays
           if (this[i] instanceof Array && array[i] instanceof Array) {
-              // recurse into the nested arrays
               if (!this[i].equals(array[i]))
                   return false;
           }
           else if (this[i] != array[i]) {
-              // Warning - two different object instances will never be equal: {x:20} != {x:20}
               return false;
           }
       }
@@ -811,7 +757,6 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
   var temp_id = _self.dimensions.indexOf(d) + 1;
   d3.select(this).attr("id", function(){return "dim-" +temp_id;}).call(_self.axis.scale(_self.y[d])); });
 
-  // Add and store a brush for each axis.
   _self.g.selectAll(".brush")
       .each(function(d) {
         d3.select(this).call(_self.y[d].brush = d3.svg.brush().y(_self.y[d]).on("brush", _self.brush));
@@ -837,7 +782,6 @@ ParallelCoordinates.prototype.rescale_axes = function(argument) {
 
 ParallelCoordinates.prototype.checkboxHandler = function(argument) {
   var _self = this;
-  // redraw with new dimension
   _self.dimensions = argument;
   _self.x.domain(_self.dimensions);  
   _self.redraw();
@@ -873,24 +817,13 @@ ParallelCoordinates.prototype.tableHandler = function(argument){
       return "75%";
     }
   }).style("text-anchor", function(d,i){
-    // if(argument == d){
-    //   return "end";
-    // }else{
-    //   return "middle";
-    // }
     return "start";
   }).text(function(d,i){
-    // if(argument == d){
-    //   return d.charAt(0);
-    // }else{
-    //   return d.charAt(0);
-    // }
     return d;
   });
   d3.selectAll("rect.rect_for_highlight").remove();
 
   if(argument!=null){
-    // var g_axis_id = "g_axis_"+argument;
     var g_axis_id = "g_axis_"+_self.original_dimensions.indexOf(argument);
     d3.select('[g_axis_id='+ g_axis_id +']').append("rect").attr("class", "rect_for_highlight")
     .style("fill", ATTRIBUTE_HIGHLIGHT_COLOR).attr("x", -8).attr("width", 16)
@@ -911,7 +844,6 @@ ParallelCoordinates.prototype.shuffleHandler = function(argument) {
     array[_self.dimensions.indexOf(d)] = element;
   });
   _self.sortarray = array.slice();
-  // check if axes are flipped?
   _self.shuffle_dimension();
 };
 
@@ -943,8 +875,6 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
 
   _self.cls_argument = argument[0];
   _self.cls_index = argument[1];
-  // _self.color = d3.scale.ordinal()
-  //   .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return parseInt(i);}).sort());
 
   _self.labels = _self.cls_argument["labels"];
   _self.svg.style("display", null);
@@ -965,11 +895,9 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
     }else{
         obj["Score"] = obj["Score"].toString();
     }
-    // obj["P-Value"] = Math.round(feature_selection["pvalues"][feature_index],-2);
     table_data.push(obj);
   });
 
-  // _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
   _self.dimensions = _self.original_dimensions;
 
 
@@ -982,10 +910,6 @@ ParallelCoordinates.prototype.qualityChartHandler = function(argument) {
 
   _self.get_cluster_extent();
   _self.redraw();
-  // _self.rescale_axes("Fit to Cluster");
-  // _self.mean_and_95();
-  // d3.selectAll("g.foreground").moveToFront();
-  // d3.selectAll("path.line_path").moveToFront();
 
   _self.dimensions = table_data.sort(function(a,b){return parseFloat(b["Score"])-parseFloat(a["Score"]);}).filter(function(d,i){return i < NUM_OF_ATTRS_TO_BEGIN;}).map(function(d){return d["Name"]});
 
@@ -1014,11 +938,10 @@ ParallelCoordinates.prototype.get_cluster_extent = function(){
       obj["dimension"] = dim;
       obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
       var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
-      // var int95 = se95(d.length, deviation);
       if(deviation==undefined){
         deviation = 0;
       }
-      var int95 = deviation; // bckwon: currently set as standard deviation
+      var int95 = deviation;
       if(_self.sortarray[dim_index]==1){
         int95 = -int95;
       }
@@ -1040,31 +963,12 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
 
   d3.selectAll(".area_svg").remove();
 
-  // Divide up data items into clusters:
   var clusters = _.groupBy(_self.session["data_description"], function(d,i){
     return _self.labels[i];
   });
 
   var clusters = Object.values(clusters);
 
-  // Get Means and 95% Intervals per Each Cluster:
-  // var mean_and_95 = Object.values(clusters).map(function(d){
-  //   var array = [];
-  //   _self.dimensions.forEach(function(dim){
-  //     var obj = {};
-  //     obj["dimension"] = dim;
-  //     obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
-  //     var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
-  //     // var int95 = se95(d.length, deviation);
-  //     var int95 = deviation; // bckwon: currently set as standard deviation
-  //     obj["upper_bound"] = obj["mean"] + int95;
-  //     obj["lower_bound"] = obj["mean"] - int95;
-  //     array.push(obj);
-  //   })
-  //   return array;
-  // });
-
-  // Area Coputation
   _self.area_computation = d3.svg.area()
       .x(function(d) { return _self.position(d["dimension"]); })
       .y0(function(d) { return _self.y[d["dimension"]](d["upper_bound"]); })
@@ -1074,7 +978,6 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
       .x(function(d) { return _self.position(d["dimension"]);})
       .y(function(d) { return _self.y[d["dimension"]](d["mean"]);});
 
-  // Draw:
   _self.area_svg = _self.svg.append("g")
                       .attr("class", "area_svg");
 
@@ -1099,7 +1002,6 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
         d3.select("#line_path_"+i).moveToFront();
         d3.selectAll("g.dimension").moveToFront();
         if(d3.event.metaKey || d3.event.ctrlKey){
-          // add a cluster to the list
           if(_self.selected_cluster_indices.indexOf(i)==-1){
             _self.selected_cluster_indices.push(i);            
           }
@@ -1130,7 +1032,6 @@ ParallelCoordinates.prototype.mean_and_95 = function() {
         d3.select(this).moveToFront();
         d3.selectAll("g.dimension").moveToFront();
         if(d3.event.metaKey || d3.event.ctrlKey){
-          // add a cluster to the list
           if(_self.selected_cluster_indices.indexOf(i)==-1){
             _self.selected_cluster_indices.push(i);            
           }
@@ -1151,8 +1052,7 @@ ParallelCoordinates.prototype.compute_area_path = function(d) {
     obj["dimension"] = dim;
     obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
     var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
-    // var int95 = se95(d.length, deviation);
-    var int95 = deviation; // bckwon: currently set as standard deviation
+    var int95 = deviation;
     if(_self.sortarray[_self.dimensions.indexOf(dim)] == 1){
       int95 = -int95;
     }
@@ -1171,8 +1071,7 @@ ParallelCoordinates.prototype.compute_line_path = function(d) {
     obj["dimension"] = dim;
     obj["mean"] = d3.mean(d, function(value){return parseFloat(value[dim])});
     var deviation = d3.deviation(d, function(value){return parseFloat(value[dim])});
-    // var int95 = se95(d.length, deviation);
-    var int95 = deviation; // bckwon: currently set as standard deviation
+    var int95 = deviation;
     if(_self.sortarray[_self.dimensions.indexOf(dim)] == 1){
       int95 = -int95;
     }
@@ -1203,21 +1102,18 @@ ParallelCoordinates.prototype.to_reset_views = function() {
   _s.listenerMap['pc_listener_for_cluster_selection'].fire([]);
 };
 
-
 function se95(sample_size, deviation){
   return 1.96*deviation/Math.sqrt(sample_size);
 }
 
 function ColorLuminance(hex, lum) {
 
-  // validate hex string
   hex = String(hex).replace(/[^0-9a-f]/gi, '');
   if (hex.length < 6) {
     hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
   }
   lum = lum || 0;
 
-  // convert to decimal and change luminosity
   var rgb = "#", c, i;
   for (i = 0; i < 3; i++) {
     c = parseInt(hex.substr(i*2,2), 16);

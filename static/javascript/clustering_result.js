@@ -14,7 +14,6 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 	_self.width = screen_width-2*_self.margin;
 	_self.height = screen_height-2*_self.margin;
 
-	//  Context Menu
     _self.context_menu = [
         {
             title: 'Choose it as a seeder',
@@ -65,11 +64,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 					.style("fill", "none")
 					.style("stroke", "black")
 					.style("stroke-width", "2.5px")
-					.style("cursor", "pointer")
-					// .on("click", function(d,i){
-					// 	_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
-					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-					// });
+					.style("cursor", "pointer");
 
 	_self.circ_g = _self.list_space.append("g")
 					.attr("transform", "translate("+(-_self.rect_size)+","+(-_self.rect_size)+")");
@@ -80,12 +75,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 					.style("fill", "white")
 					.style("stroke", "black")
 					.style("stroke-width", "2.5px")
-					.style("cursor", "pointer")
-					// .on("click", function(d,i){
-					// 	_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
-					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-					// });
-
+					.style("cursor", "pointer");
 
 	_self.circ_label = _self.circ_g.append("text")
 						.style("text-anchor", "middle")
@@ -133,11 +123,7 @@ function ClusteringResult(canvas, data, screen_width, screen_height){
 					.style("opacity", 0)
 					.style("fill", "black")
 					.style("stroke", "black")
-					.style("cursor", "pointer")
-					// .on("click", function(d,i){
-					// 	_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
-					// 	_s.listenerMap['quality_chart_listener_for_embedding'].fire([d,i]);
-					// });
+					.style("cursor", "pointer");
 
 }
 

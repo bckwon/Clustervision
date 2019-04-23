@@ -52,11 +52,33 @@
 
 <script type="text/javascript">
 
+    var uploadedFiles;
+    $(document).ready(function(){
+        $('input#customFile').change(function(event){
+            uploadedFiles = event.target.files;
+        });
+
+        $('button#upload_custom_file').on("click", function(){
+            var form_data = new FormData($('#upload_custom_file_form')[0]);
+            $.ajax({
+                type: 'POST',
+                url: '/upload',
+                data: form_data,
+                contentType: false,
+                cache: false,
+                processData: false,
+                async: false,
+                success: function(data) {
+                    chosen_dataset = data;
+                    fetch_session();
+                },
+            });
+        })
+    });
+
 	var screen_width = window.screen.availWidth;
 	var screen_height = window.screen.availHeight;
     var chosen_dataset = "blobs";
-    // var chosen_dataset = "jdrf-collapsed-features";
-    // var chosen_dataset = "visual-element-survey";
     var chosen_session_id = 0;
     var chosen_user_choice = 0;
     var chosen_lambda = 0.5;
@@ -65,8 +87,6 @@
     var chosen_constraints = {same_cluster: [], diff_cluster: []};
     var max_k = [2, 100];
     var chosen_k = [2, 20];
-    // chosen_constraints["same_cluster"] = [];
-    // chosen_constraints["diff_cluster"] = [];
     var sort_asc = "{{url_for('static', filename='images/sort_asc.svg')}}";
     var sort_desc = "{{url_for('static', filename='images/sort_desc.svg')}}";
 	var remove_svg = "{{url_for('static', filename='images/remove.svg')}}";
@@ -110,7 +130,6 @@
     function remove_all(){
     	d3.select(".canvas_left").selectAll("*").remove();
     	d3.select(".canvas_middle_top").selectAll("*").remove();
-        // d3.select(".canvas_middle_bottom").selectAll("*").remove();
         d3.select(".canvas_middle_bottom_left").selectAll("*").remove();
         d3.select(".canvas_middle_bottom_right").selectAll("*").remove();
     	d3.select(".canvas_right").selectAll("*").remove();
@@ -118,7 +137,6 @@
 
     start(true);
 
-    // Quality Chart listener
     var quality_chart_listener = new _s.Listener("quality_chart_listener_for_updating_list_table");
     quality_chart_listener.subscribe(qualityChartHandler);
 
@@ -152,25 +170,16 @@
 	        type: "POST",
 	        url: $SCRIPT_ROOT + "/clustering",
 	        contentType: "application/json; charset=utf-8",
-            // dataType: "json",
             data: myData,
 	        success: function(data) {
-                console.log(data);
                 data = data.replace(/[\u0000-\u0019]+/g,"");
-                console.log(data);
                 var data = JSON.parse(data);
-                // console.log(data);
 	            var parsed_data = data[0];
                 session["cluster_membership"] = data[1];
-	            // var CL = new ClusterView(".canvas_left", parsed_data, screen_width/3, (screen_height-200));
-	            // var QC = new QualityChart(".canvas_top", parsed_data, screen_width*.9, (screen_height/4.5));
-	            // var CR = new ClusteringResult(".canvas_left", parsed_data, screen_width/4.5, (screen_height/4.5));
 
-                // sort by quality metrics
                 parsed_data = sort_by_normalized_quality_metrics(parsed_data);
 
                 if(parsed_data.length > 0){
-                    // parsed_data.splice(3, 1); // dropping the 4th item to generate top 15
                     var CR = new ClusteringStripes(".canvas_left", parsed_data, screen_width/4.5, (screen_height*8/10));
     	            var CL = new ClusterList(".canvas_right", parsed_data, screen_width/4.5, (screen_height*.8));
     	            session["clustering"] = parsed_data;
@@ -178,7 +187,6 @@
                     for (var i = 0; i < session['clustering'].length; i++) {
                         clustering = session['clustering'][i];
                     }
-                    // console.log(session["clustering"]);
                     fetch_dataset();
                 }else{
                     initialize_values();
@@ -225,7 +233,6 @@
     }
 
     function fetch_dataset() {
-        // console.log('Fetching dataset:', chosen_dataset);
 	    $.ajax({
 	        type: "GET",
 	        url: $SCRIPT_ROOT + "/dataset?dataset="+chosen_dataset+"&method="+chosen_dr_method,
@@ -276,7 +283,6 @@
     }
 
     function initialize_values(){
-        // initialize values:
         chosen_constraints = {same_cluster: [], diff_cluster: []};
         chosen_user_choice = 0;
     }
@@ -288,7 +294,6 @@
     	} else {
             fetch_clustering();
         }
-        // fetch_dataset();
     }
 
     function remove_by_value(arr) {
@@ -390,7 +395,6 @@
                 }else{
                     obj["Score"] = obj["Score"].toString();
                 }
-                // obj["P-Value"] = Math.round(feature_selection["pvalues"][feature_index],-2);
                 table_data.push(obj);
             }else{
                 table_data.push({"Name": d});
@@ -449,13 +453,6 @@
                 }
             });
 
-            // var array = $('input.feature_checkbox:checked').map(function(){
-            //     return $(this).val();
-            // })
-            // var table_array = table.rows.data().map(function(row_data){return row_data["Name"];});
-            // array = _.intersection(table_array, array);
-            // _s.listenerMap['checkbox_listener_for_parallel_coordinates'].fire(array);
-
             table.selected_item = [];
         }
     }
@@ -510,20 +507,12 @@
 
     function setup_slider(){
 
-        // var btn_group = d3.select(".canvas_left").append("div").attr("class", "lambda_scale").style("position", "fixed").style("background", "white").style("width", "100%");
-
-        // addInputButton(".lambda_scale", "Diversity-Quality ", "left", "lambda_input_slider", "lambda_input",true);
-
         var btn_group_k = d3.select(".canvas_left").append("div").attr("class", "k_slider").style("position", "absolute").style("top", "20px").style("background", "white").style("width", "100%");
 
         btn_group_k.append("div")
                     .text("Number of Clusters: ").style("position", "absolute").style("left", "2.5%").style("width", "25%").style("top", "-50%");
         btn_group_k.append("div").attr("id", "k_slider").style("position", "absolute").style("left", "25%").style("width", "50%").style("top", "4px");
         btn_group_k.append("div").attr("id", "k_slider_title").style("position", "absolute").style("left", "77.5%").style("width", "15%").style("color", "blue").text(chosen_k[0] + " - " + chosen_k[1]);
-
-        // d3.select("span.lambda_input_slider_text#lambda_input_text")
-        // .style("color", "blue")
-        // .text(chosen_lambda);
 
         $( "#k_slider" ).slider({
             range: true,
@@ -532,27 +521,13 @@
             step: 2,
             values: chosen_k,
             slide: function( event, ui ) {
-                // $( "#amount" ).val( "$" + ui.values[ 0 ] + " - $" + ui.values[ 1 ] );
                 d3.select('#k_slider_title').text(ui.values[0] + " - " + ui.values[1]);
                 chosen_k = ui.values;
             }
         });
 
-        // Added this line to add the button
         addButton(".k_slider", "Rerun", "btn btn-default btn-xs", "right");
 
-        // var lambda_input_slider = d3.select("input.lambda_input_slider#lambda_input")
-        //                             .attr("value", chosen_lambda)
-        //                             .attr("min", 0)
-        //                             .attr("max", 1)
-        //                             .attr("step", .05)
-        //                             .on("input", function(d){
-        //                                 chosen_lambda = parseFloat(d3.select(this).property("value"));
-        //                                 d3.select("span.lambda_input_slider_text#lambda_input_text")
-        //                                 .text(chosen_lambda);
-        //                             });
-
-        // $('#lambda_input').val(chosen_lambda);
     }
 
     Array.prototype.move = function (old_index, new_index) {
@@ -563,7 +538,7 @@
             }
         }
         this.splice(new_index, 0, this.splice(old_index, 1)[0]);
-        return this; // for testing purposes
+        return this;
     };
 
 </script>

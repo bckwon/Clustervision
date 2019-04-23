@@ -1,5 +1,9 @@
 /**
- * @author Bum Chul Kwon <bkwon@us.ibm.com>
+ *
+ * @author Bum Chul Kwon <bumchul.kwon@us.ibm.com>
+ * Twitter, Github: @bckwon
+ * Website: https://bckwon.com
+ *
  */
 function Projection(canvas, data, screen_width, screen_height){
 	var _self = this;
@@ -8,7 +12,7 @@ function Projection(canvas, data, screen_width, screen_height){
 	var margin = {x:20, y:80};
 	_self.halfcircle_indices = [];
 	_self.dblclicked = false;
-	_self.cls_index = 0; // default
+	_self.cls_index = 0;
 	_self.selected_cluster_indices = [];
 	_self.items_for_highlights = [];
 	_self.margin = margin;
@@ -68,29 +72,22 @@ function Projection(canvas, data, screen_width, screen_height){
 				.style("stroke", "white")
 				.style("fill", "white");
 
-	// new listener
     _self.quality_chart_listener = new _s.Listener("quality_chart_listener_for_embedding");
     _self.quality_chart_listener.subscribe($.proxy(_self.qualityChartHandler, _self));
 
-    // new listener
     _self.cluster_list_listener_for_data_point = new _s.Listener("cluster_list_listener_for_data_point");
     _self.cluster_list_listener_for_data_point.subscribe($.proxy(_self.clusterListHandler, _self));
 
-    // new listener
     _self.pc_listener_for_data_point = new _s.Listener("pc_listener_for_data_point");
     _self.pc_listener_for_data_point.subscribe($.proxy(_self.pcDataPointHandler, _self));
 
-    // new listener
     _self.pc_listener_for_group = new _s.Listener("pc_listener_for_group");
     _self.pc_listener_for_group.subscribe($.proxy(_self.pcGroupHandler, _self));
 
-    // new listener
     _self.pc_listener_for_cluster_selection = new _s.Listener("pc_listener_for_cluster_selection");
     _self.pc_listener_for_cluster_selection.subscribe($.proxy(_self.pcClusterSelectionHandler, _self));
 
-    // network listener
     _self.cluster_list_listener_for_network_view = new _s.Listener("cluster_list_listener_for_network_view");
-    // _self.cluster_list_listener_for_network_view.subscribe($.proxy(_self.network_handler, _self));
     _self.cluster_list_listener_for_network_view.subscribe($.proxy(_self.clustering_comparison_handler, _self));
 }
 
@@ -118,10 +115,7 @@ Projection.prototype.clustering_comparison_handler = function(network_array){
 		}
 		_self.items_for_highlights = items_for_highlights;
 		_self.highlight_outlier_items();
-		// Draw Radar Charts for Quality Metrics on Top:
-		// _self.draw_radar_chart();
 	}else{
-		// reset drawing
 		d3.selectAll("g.arc").remove();
 		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
 					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH,
@@ -186,13 +180,10 @@ Projection.prototype.network_handler = function(network_array) {
 		    dataType: 'json',
 		    success: function(data) {
 		        _self.cluster_membership = data;
-		        // _self.draw_network();
-		        // _self.draw_reverse_network();
 		        _self.draw_outliers();
 		    }
 		});
 	}else{
-		// reset drawing
 		_self.circ.style({"stroke": DESELECTED_CIRCLE_STROKE_COLOR,
 					"stroke-width": DESELECTED_CIRCLE_STROKE_WIDTH});
 	}
@@ -203,13 +194,11 @@ Projection.prototype.draw_network = function() {
 
 	d3.selectAll("line.cluster_membership_network").remove();
 
-	// Edge Representation
 	_self.network_edge_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, _self.radius]);
 	_self.network_edge_opacity_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, .25]);
 
 	for (var i = 0; i < _self.data_embedding.length; i++) {
 		for (var j = _self.data_embedding.length - 1; j >= i; j--) {
-			// draw path from i to j
 			if(parseFloat(_self.cluster_membership[i][j]) >= (_self.network_array.length)*CLUSTERING_NETWORK_COOCCURRENCE_PARAMETER){
 				_self.svg.append("line")
 					.attr("class", "cluster_membership_network")
@@ -224,10 +213,7 @@ Projection.prototype.draw_network = function() {
 						"opacity": _self.network_edge_opacity_scale(_self.cluster_membership[i][j])
 					});
 			}
-			// _self.data_embedding[i]
-
 		}
-		// _self.data_embedding[i]
 	}
 	_self.update_g.style("opacity", 1).transition().delay(2000).duration(500).style("opacity", 0);
 	_self.svg.selectAll("line.cluster_membership_network").each(function(){
@@ -240,13 +226,11 @@ Projection.prototype.draw_reverse_network = function() {
 
 	d3.selectAll("line.cluster_membership_network").remove();
 
-	// Edge Representation
 	_self.network_edge_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, _self.radius]);
 	_self.network_edge_opacity_scale = d3.scale.linear().domain([0, _self.network_array.length]).range([0, .25]);
 
 	for (var i = 0; i < _self.data_embedding.length; i++) {
 		for (var j = _self.data_embedding.length - 1; j >= i; j--) {
-			// draw path from i to j
 			if(parseFloat(_self.cluster_membership[i][j]) > 0 && parseFloat(_self.cluster_membership[i][j]) < _self.network_array.length){
 				_self.svg.append("line")
 					.attr("class", "cluster_membership_network")
@@ -261,10 +245,7 @@ Projection.prototype.draw_reverse_network = function() {
 						"opacity": .25
 					});
 			}
-			// _self.data_embedding[i]
-
 		}
-		// _self.data_embedding[i]
 	}
 	_self.update_g.style("opacity", 1).transition().delay(2000).duration(500).style("opacity", 0);
 	_self.svg.selectAll("line.cluster_membership_network").each(function(){
@@ -295,11 +276,6 @@ Projection.prototype.highlight_outlier_items = function() {
 		if(index_array[index]==1){
 			_self.halfcircle_indices.push(index);
 
-			// d3.select(this).style({"stroke-width": OUTLIER_CIRCLE_STROKE_WIDTH,
-			// 						"stroke": _self.color(clustering_array_for_clustering_comparison[0][index])});
-			// d3.select(this).moveToFront();
-			// draw half circles
-
 			var cla = _self.clustering_array_for_clustering_comparison.map(function(d){return d[index];});
 			cla = cla.move(current_index, 0);
 			var pie = _self.pie(cla);
@@ -320,8 +296,6 @@ Projection.prototype.highlight_outlier_items = function() {
 
 			d3.select(this).style("opacity", 0);
 			d3.select(this).moveToFront();
-			// d3.select(this).remove();
-			// _self.circ.splice(index, 1, arc);
 
 			if(_self.halfcircle_indices.indexOf(index) > -1 && _self.superpoints["superpoint"].indexOf(index) > -1){
 				var id = _self.superpoints["superpoint"].indexOf(index);
@@ -350,7 +324,7 @@ Projection.prototype.draw_outliers = function() {
 
 	_self.circ.each(function(element, index){
 		var sum = _self.cluster_membership[index].filter(function(d){return d==1;}).reduce(function(a,b){return a+b;}, 0);
-		if(sum > 20){ // what is the best way to come up with this threshold?
+		if(sum > 20){
 			d3.select(this).style({"stroke-width": 5,
 									"stroke": "black"});
 			d3.select(this).moveToFront();
@@ -417,8 +391,6 @@ Projection.prototype.qualityChartHandler = function(argument) {
 	var _self = this;
 	_self.cls_argument = argument[0];
 	_self.cls_index = argument[1];
-	// _self.color = d3.scale.ordinal()
- //    .range(COLOR_RANGE.slice()).domain(_self.cls_argument["sorted_labels"].map(function(d,i){return parseInt(i);}).sort());
 	_self.labels = _self.cls_argument["labels"];
 
 	var distance = $('#zoom_input').val();
@@ -497,7 +469,6 @@ Projection.prototype.pcClusterSelectionHandler = function(argument) {
 		_self.selected_cluster_indices = [];
 		_self.draw_superpoints();
 	}else{
-		// fire to cluster_list
 		_self.selected_cluster_indices = argument.slice();
 		_s.listenerMap['projection_listener_for_cluster'].fire([-1, _self.cls_index, argument[argument.length-1], _self.data, _self.selected_cluster_indices]);
 		_self.circ
@@ -563,9 +534,6 @@ Projection.prototype.draw = function(){
 						.attr("height", _self.height)
 						.style("opacity", 0)
 						.on("click", function(){
-							// _self.circ.style("fill", function(d,i){
-							// 	return _self.color(_self.clustering[_self.cls_index]["labels"][i]);
-							// }).style("opacity", SELECTED_CIRCLE_OPACITY).style("stroke", SELECTED_CIRCLE_STROKE_WIDTH);
 							d3.selectAll("circle.data_item_circ").style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 
 							_self.circ.style("opacity", function(d,i){
@@ -584,7 +552,6 @@ Projection.prototype.draw = function(){
 								}
 							});
 							
-							// _s.listenerMap['projection_listener_for_cluster'].fire([]);
 							_s.listenerMap['projection_listener_for_data_point'].fire([]);
 							_s.listenerMap['projection_listener_for_parallel_coordinates'].fire([]);
 							_self.selected_cluster_indices = [];
@@ -632,8 +599,6 @@ Projection.prototype.draw = function(){
 						.style("font-size", "150%")
 						.style("fill", "#43a2ca");
 
-	// _self.draw_network();
-
 	_self.circ_g = _self.svg.selectAll("g").data(_self.data_embedding).enter()
 						.append("g").attr("class", "circ_g")
 						.attr({transform: function(d){
@@ -645,7 +610,6 @@ Projection.prototype.draw = function(){
 	_self.together = [];
 	_self.separate = [];
 
-	//  Context Menu
     _self.context_menu = [
         {
             title: 'IN a same cluster',
@@ -709,10 +673,8 @@ Projection.prototype.draw = function(){
 						})
 						.on("click", function(d,i){
 							d3.select(this).moveToFront();
-							// d3.selectAll("circle.data_item_circ").style("stroke", "none").style("stroke-width", 1);
 							var cluster_label = _self.data["clustering"][_self.cls_index]["labels"][i];
 							if(d3.event.metaKey || d3.event.ctrlKey){
-								// add a cluster to the list
 								if(_self.selected_cluster_indices.indexOf(cluster_label)==-1){
 									_self.selected_cluster_indices.push(cluster_label);
 								}
@@ -723,8 +685,6 @@ Projection.prototype.draw = function(){
 							_s.listenerMap['projection_listener_for_cluster'].fire([i, _self.cls_index, cluster_label, _self.data, _self.selected_cluster_indices]);
 
 							_s.listenerMap['projection_cluster_listener_for_parallel_coordinates'].fire(_self.selected_cluster_indices);
-
-							// d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", "none");
 
 							d3.selectAll("circle.data_item_circ").style("opacity", DESELECTED_CIRCLE_OPACITY).style("stroke", DESELECTED_CIRCLE_STROKE_COLOR).style("stroke", DESELECTED_CIRCLE_STROKE_WIDTH);
 
@@ -739,7 +699,6 @@ Projection.prototype.draw = function(){
 									return DESELECTED_CIRCLE_OPACITY;
 								}
 							});
-
 						})
 						.on("contextmenu", d3.contextMenu(_self.context_menu))
 						.on("dblclick", function(d,i){

@@ -18,17 +18,14 @@ function Table(div_name, canvassize, datum) {
 		attributes = d3.keys(data[0]).sort();
 		width = canvassize[0]/(attributes.length*3);
 
-		// put the table in a div
 		var wrapDiv = d3.select(div_name)
 			.append("div")
 			.classed("wrap", true);
 
-		// right_click to open menu
 		_self.context_menu = [
 	        {
 	            title: 'Check',
 	            action: function(elm, d, i) {
-					// $('input.feature_checkbox').prop("checked", false);
 					_self.selected_item.forEach(function(item, item_index){
 						$('input.feature_checkbox[value="'+item+'"]').prop("checked", true);
 					})
@@ -63,12 +60,9 @@ function Table(div_name, canvassize, datum) {
 	    ];
 
 	    _self.score_scale = d3.scale.linear().domain(d3.extent(data, function(d){return parseFloat(d["Score"]);})).range([1, 100]);
-		// create the table
 		_self.table = wrapDiv.append("table").attr("id", "feature_checkbox_table");
-
 		_self.table.on("contextmenu", d3.contextMenu(_self.context_menu));
 
-		// create the table header
 		_self.table.append("tr")
 			.attr("class", "table_header")
 			.selectAll("th")
@@ -94,7 +88,6 @@ function Table(div_name, canvassize, datum) {
 				.duration(1000)
 				.delay(function(d, i) { return i * 25; })
 				.attr("transform", function(d, i) { return "translate(0," + (height + (i * height)) + ")"; });
-				// Send only 'checked' ones
 				var array = $('input.feature_checkbox:checked').map(function(){
 	                return $(this).val();
 	            });
@@ -108,7 +101,6 @@ function Table(div_name, canvassize, datum) {
 				d3.select(this).classed("hover", false);
 			});
 
-		// create the rows
 		_self.rows = _self.table.selectAll("tr.table_element")
 			.data(data)
 			.enter()
@@ -145,7 +137,6 @@ function Table(div_name, canvassize, datum) {
 				d3.select(this).classed("hover", true);
 				_self.highlight_rows_by_name(_self.selected_item);
 				d3.select(this).style("background-color", ATTRIBUTE_HIGHLIGHT_COLOR);
-				// Color by selected item
 				_s.listenerMap['table_listener_for_parallel_coordinates'].fire(k["Name"]);
 			})
 			.on("mouseout", function(k) {
@@ -184,7 +175,6 @@ function Table(div_name, canvassize, datum) {
 			    _self.highlight_rows_by_name(_self.selected_item);
 			})
 
-		// create the cells
 		_self.tableCells = _self.rows
 			.selectAll("td")
 		.data(function(d) { 
@@ -224,11 +214,9 @@ function Table(div_name, canvassize, datum) {
 	}
 	_self.add_checkbox();
 
-	// PC listener
 	_self.pc_listener = new _s.Listener("pc_listener_for_table");
 	_self.pc_listener.subscribe($.proxy(_self.pcHandler, _self));
 
-	// PC Shuffle listener
 	_self.pc_shuffle_listener = new _s.Listener("pc_shuffle_listener_for_table");
 	_self.pc_shuffle_listener.subscribe($.proxy(_self.pcShuffleHandler, _self));
 }
@@ -269,7 +257,6 @@ Table.prototype.pcHandler = function(argument) {
 };
 
 Table.prototype.add_checkbox = function(first_argument) {
-	// body...
 	var _self = this;
 	d3.selectAll("tr").insert("td",":first-child")
 		.append("td")
@@ -291,8 +278,6 @@ Table.prototype.add_checkbox = function(first_argument) {
 		});
 };
 
-// highlight rows that match objects of the input array
-// unhighlight everything if the input array is empty or undefined
 Table.prototype.highlight_rows = function(obj_array) {
 	var _self = this;
 	if (obj_array == undefined || obj_array.length == 0) {
@@ -321,9 +306,6 @@ Table.prototype.highlight_rows_by_name = function(obj_array) {
 	}
 }
 
-// bring the rows contained in obj_array to the top of the table, 
-// sorting the remaining objects by the first attribute
-// sort by the first attribute if input array is undefined or empty
 Table.prototype.bring_rows_to_the_top = function(obj_array) {
 	var _self = this;
 	var attr = _self.attributes;
@@ -363,7 +345,6 @@ Table.prototype.bring_rows_to_the_top = function(obj_array) {
 	}
 }
 
-// determine if obj is contained within arr
 Table.prototype.array_contains = function(arr, obj) {
 	var _self = this; 
 	var _attr = _self.attributes;

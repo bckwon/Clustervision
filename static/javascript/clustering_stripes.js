@@ -5,7 +5,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.margin = 60;
 	_self.rect_size = 30;
 	_self.network_array = [];
-	_self.cls_index = 0; // default
+	_self.cls_index = 0;
 
 	_self.parameters = ["n_clusters", "alg_name", "chosen_by"];
 	_self.quality_metrics = _.without(Object.keys(_self.data[0]["quality_metrics"]), "silhouette_clusters", "silhouette_samples", "separation_clusters", "cohesion_clusters","min_max_dist", "separation", "cohesion");
@@ -46,7 +46,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 			.append("g")
 				.attr("transform", "translate("+_self.margin+","+_self.margin+")");
 
-		//  Context Menu
     _self.context_menu = [
         {
             title: 'Choose it as a seeder',
@@ -70,13 +69,11 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
         		var index = _self.network_array.indexOf(i);
         		if(index>=0){
         			_self.network_array.splice(index, 1);
-        			// remove dotted box:
         			d3.select(elm).selectAll("rect.network_box").remove();
 
         		}else{
         			_self.network_array.push(i);
         			_self.network_array = _self.network_array.sort(d3.ascending);
-        			// draw dotted box:
             		d3.select(elm)
 	        			.append("rect")
 		            		.attr("class", "network_box")
@@ -88,9 +85,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 		            		.style("stroke-dasharray", "5, 5")
 		            		.style("stroke-width", 2.5);
         		}
-        		// redraw radar chart based on selection:
         		_self.redraw_radar_chart();
-	            // fire event to projection.js for network view:
 	            _s.listenerMap['cluster_list_listener_for_network_view'].fire(_self.network_array);
         	}
         },
@@ -100,7 +95,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
         		_self.network_array = [];
         		d3.selectAll("rect.network_box").remove();
         		_self.redraw_radar_chart();
-	            // fire event to projection.js for network view:
 	            _s.listenerMap['cluster_list_listener_for_network_view'].fire(_self.network_array);
         	}
         }
@@ -118,8 +112,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 							})
 							.style("cursor", "pointer")
 							.on("click", function(d,i){
-								// d3.selectAll(".clustering_container").style("stroke", "black").style("stroke-width", 1);
-								// d3.select(this).selectAll(".clustering_container").style("stroke", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke-width", CLUSTERING_RESULT_SELECTED_STROKE_WIDTH);
 								d3.selectAll("rect.clustering_background").style("fill", "none").style("stroke","none");
 								d3.select(this).select("rect.clustering_background").style("fill", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke", CLUSTERING_RESULT_SELECTED_COLOR).style("stroke-width", CLUSTERING_RESULT_SELECTED_STROKE_WIDTH);
 								_s.listenerMap['quality_chart_listener_for_cluster_list'].fire([d,i]);
@@ -128,14 +120,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 								_s.listenerMap['quality_chart_listener_for_updating_list_table'].fire(i);
 								_self.cls_index = i;
 								_self.redraw_radar_chart();
-								// @bckwon: we do not highlight circles
-								// _self.asterplots.forEach(function(ap,j){
-								// 	if(i == j){
-								// 		ap.highlight_circles(true);
-								// 	}else{
-								// 		ap.highlight_circles(false);
-								// 	}
-								// })
 							})
 							.on("mouseenter", function(d,i){
 								_self.popup(i);
@@ -164,9 +148,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 
 	_self.cluster_rect = _self.list_space.selectAll("rect.cluster_rect")
 							.data(function(d,i){
-								// x: x_position
-								// size: rect_size
-								// array: sorted_labels
 								var array = [];
 								array = d["sorted_labels"].map(function(e,j){
 									var obj = {};
@@ -234,8 +215,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 						});
 						var keys = Object.keys(obj);
 						var classname = "." + d3.select(this).attr("class");
-						// @bckwon: here we change the aster plots to the radar charts.
-						// _self.asterplots.push(new Aster(classname, _self.rect_size, _self.rect_size, obj, keys, _self.extent));
 						if(GLYPH_REPRESENTATION == "RADAR"){
 							_self.asterplots.push(new Radar(classname, _self.rect_size, _self.rect_size, [obj], keys, _self.extent));
 						}else{
@@ -243,13 +222,6 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 						}
 					});
 
-	// highlight_wedge
-	// @bckwon: here we need to create function and unhighlight this back
-	// _self.asterplots.forEach(function(d,i){
-	// 	d.highlight_wedge(_self.data[i]["clustering_parameters"]["chosen_by"]);
-	// });
-
-	// _self.key_stroke_on();
 }
 
 ClusteringStripes.prototype.redraw_radar_chart = function() {
@@ -335,23 +307,6 @@ ClusteringStripes.prototype.popup = function(list_index){
 					.style("stroke-width", "2.5px")
 					.style("cursor", "pointer");
 
-	// var circle_space = pop_space.append("g")
-	// 				.attr("transform", "translate("+(-_self.rect_size)+","+(-_self.rect_size)+")");
-
-	// var circle = circle_space.append("circle")
-	// 				.attr("class", "clustering")
-	// 				.attr("r", _self.rect_size*.75)
-	// 				.style("fill", "white")
-	// 				.style("stroke", "black")
-	// 				.style("stroke-width", "2.5px")
-	// 				.style("cursor", "pointer");
-
-	// var circle_label = circle_space.append("text")
-	// 					.style("text-anchor", "middle")
-	// 		            .style("font-size", "100%")
-	// 		            .style("alignment-baseline", "central")
-	// 					.text(function(d,i){return i;});
-
 	var list_desc = pop_space.selectAll("g.list_desc")
 							.data(function(d){
 								var cluster_param = d;
@@ -362,7 +317,7 @@ ClusteringStripes.prototype.popup = function(list_index){
 										value = d[e];
 									} else if(isFloat(d[e])){
 										value = parseFloat(d[e]).toFixed(3);
-									} else { // else a string parameter (like alg_name)
+									} else { 
 										return {"name": e, "value": d.clustering_parameters[e]};
 									}
 									return {"name": e, "value": value};});
@@ -387,15 +342,5 @@ ClusteringStripes.prototype.popup = function(list_index){
 							.attr("dx", -_self.rect_size/2)
 							.style("font-size", "100%")
 							.text(function(d){return d["name"] + ": " + d["value"];});
-
-	// var rect = list_desc.append("rect")
-	// 				.attr("width", (_self.width+_self.rect_size))
-	// 				.attr("height", (_self.rect_size*(_self.num_params+.5)+_self.rect_size))
-	// 				.attr("x", -_self.rect_size*2)
-	// 				.attr("y", -_self.rect_size*2)
-	// 				.style("opacity", 0)
-	// 				.style("fill", "black")
-	// 				.style("stroke", "black")
-	// 				.style("cursor", "pointer")
 
   }

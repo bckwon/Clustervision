@@ -91,12 +91,3 @@ var category_adam = d3.scale.ordinal()
 "#62EDA8",
 "#72F0C5",
 "#BDD1D7"]);
-
-// COLOR_RANGE = ["#5392ff",
-// "#ffb000",
-// "#71cddd",
-// "#fe8500",
-// "#34bc6e",
-// "#ff509e",
-// "#95d13c",
-// "#9b82f3"];

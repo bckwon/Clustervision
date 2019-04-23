@@ -27,62 +27,26 @@ from src.stability_analysis import Stability
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-#make upload attempt
-UPLOAD_FOLDER = 'data/uploaded_data/'
+
+UPLOAD_FOLDER = 'data/uploads/'
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-#
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     return render_template('index.html', data=[])
 
-
-#attempt to make upload possible
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-
 @app.route('/upload', methods=['POST', 'GET'])
 def upload():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        print("Here")
-        if 'file' not in request.files:
-            print("Oh no no file")
-            return render_template('index.html', data = [])
-        print("Well I got up to here")
-        file = request.files['file']
-
-        # if user does not select file, browser also
-        # submit a empty part without filename
-        if file.filename == '':
-            return render_template('index.html', data=[])
-        if file and allowed_file(file.filename):
-            print("I want to save a file lol")
-            file.filename = "upload.csv"
-            #TODO: This is giving me problems - can't seem to find corrcet folder
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-            #file.save("data/uploaded_data/", file.filename) --> "IS A DIRECTORY ERROR"
-            #maybe should change this to load with data automatically?
-            print("I saved it ... I think...?")
-            return render_template('index.html', data = [])
-    return render_template('index.html', data=[])
-
-
-
-    '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <p><input type=file name=file>
-         <input type=submit value=Upload>
-    </form>
-    '''
-
+    file=request.files['upload']
+    filename=file.filename
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+    print(filename)
+    return json.dumps(filename)
 
 @app.route('/new_session', methods=['POST', 'GET'])
 def new_session():
@@ -111,7 +75,6 @@ def get_clustering():
     print('Same cluster:', same_cluster)
     print('Diff cluster:', diff_cluster)
 
-    # with env.begin(write=True) as txn:
     session_id = int(request.json['session_id'])
     user_choice = request.json['user_choice']
     chosen_k = request.json['k']
@@ -120,8 +83,6 @@ def get_clustering():
 
     param_vec = session['param_vec']
     dataset_name = session['dataset']
-    # If L is given in the request, use that value.
-    # Otherwise, use the value stored in the session
     L = float(request.json['lambda'])
     if L is None:
         L = float(session['L'])
@@ -137,11 +98,6 @@ def get_clustering():
         param_vec = param_vec
     else:
         param_vec = cluster.compute_all_clusterings(dataset_name, chosen_k)
-        # session['param_vec'] = param_vec
-        # cluster.save_session(session_id, session)
-        # session = cluster.load_session(session_id)
-
-    ### Filter clustering results with chosen_k
 
     # Step 1: Find the query
     query_params = None
@@ -250,9 +206,7 @@ def get_clustering():
 
                 if best_score == float('-inf'):
                     break
-                # print str(qm) + " " + str(best_params)
                 best_clustering['clustering_parameters']['chosen_by'] = qm
-                # best_params['quality_metric_responsible'] = qm
                 qm_choices.append(best_params)
                 param_choices.append(best_params)
                 clustering_choices.append(best_clustering)
@@ -271,44 +225,9 @@ def get_clustering():
     array_data = dataset.as_matrix()
     print(array_data.shape)
 
-    # for x in clustering_choices:
-    #     print(x['clustering_parameters']['chosen_by'])
-    # # consensus clustering code (jverma)
-    # for qm in quality_metrics:
-    #     clustering_choices_qm = list(filter(lambda x: x['clustering_parameters']['chosen_by'] == qm, clustering_choices))
-    #     n_labels_arr = [x['n_clusters'] for x in clustering_choices_qm]
-    #     n_labels = int((np.mean(n_labels_arr)))
-    #     cluster_info = np.arange(len(clustering_choices_qm[0]['labels']))
-    #     print("number of clusters considered...")
-    #     print(cluster_info.shape)
-    #     for clustering_run in clustering_choices_qm:
-    #         cluster_info = np.vstack((cluster_info, np.array(clustering_run['labels'])))
-    #     cluster_info = cluster_info[1:]
-    #     print(cluster_info.shape)
-    #
-    #     consensus_clust = Stability(cluster_info, data=dataset, cluster_centers=None)
-    #     consensus_clustering = consensus_clust.consensus_clustering(meta_clusters=n_labels)
-    #     # print(consensus_clustering)
-    #     consensus_clustering['clustering_parameters']['chosen_by'] =  qm + '_consensus clustering: Count'
-    #     clustering_choices.append(consensus_clustering)
-    #
-    #     # prob_consensus_clustering = consensus_clust.consensus_clustering(sim='prob', meta_clusters=n_labels)
-    #     # prob_consensus_clustering['clustering_parameters']['chosen_by'] = qm + '_consensus clustering: KL Divergence'
-    #     # clustering_choices.append(prob_consensus_clustering)
-    #
-    # # jverma results writeup
-    # file_name = dataset_name + '_consensus_results.json'
-    # with open(file_name, 'wb') as f:
-    #     # result_contents = list(map(lambda x: {x['chosen_by', x['quality_metrics']]}, clustering_choices))
-    #     f.write(json.dumps(clustering_choices))
-    #     f.close()
-
-
-    # @bumchul.kwon cluster membership count
     cluster_membership = cluster_membership_count.count_cluster_membership(clustering_choices)
     clsobject = {'0': clustering_choices, '1': cluster_membership}
 
-    # return json.dumps(clustering_choices)
     return json.dumps(clsobject)
 
 
@@ -381,5 +300,3 @@ def clmnetwork():
 port = os.getenv('PORT', '3000')
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(port),debug=True)
-# if __name__ == '__main__':
-#     app.run(debug=True)

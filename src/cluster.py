@@ -29,6 +29,7 @@ from sklearn.feature_selection import SelectPercentile
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import chi2
+import os
 
 from tqdm import tqdm
 from multiprocessing import Pool
@@ -39,13 +40,12 @@ def compute_all_clusterings(dataset_name, k_range):
     if k_range is None:
         k_range = [2, 20]
 
-    # cluster_range = [2,3,4]
-    # cluster_range = [2,3,4,5,6]
-    cluster_range = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] 
-    # [2,4,6,8,10,12,14,16,18,20]: #[2, 3, 5, 8, 13]:
+    cluster_range = []
+    for x in xrange(k_range[0],k_range[1]+1):
+        cluster_range.append(x)
 
     for n_clusters in cluster_range:
-        # KMeans
+        ### KMeans
         if (n_clusters < k_range[0]) or (n_clusters > k_range[1]):
             continue
 
@@ -63,7 +63,7 @@ def compute_all_clusterings(dataset_name, k_range):
         }
         param_vec.append(params)
 
-        ### DBSCAN
+        ### DBSCAN ### DBSCAN takes longer
         # params = {
         #     'alg_name': 'dbscan',
         # }
@@ -86,14 +86,6 @@ def compute_all_clusterings(dataset_name, k_range):
                 new_param['random_seed'] = random_seed
                 new_param_vec.append(new_param)
     param_vec = param_vec + new_param_vec
-
-    # for param in param_vec:
-    #     print param
-    #     start = time.time()
-    #     compute_clustering(param)
-    #     end = time.time()
-    #     print 'Duration: %.3f' % (end - start)
-    #     print
 
     if config.PARALLEL:
         pool = Pool()
@@ -129,71 +121,7 @@ def compute_clustering(params):
         else:
             labels = model.fit_predict(dataset)
 
-        # print labels
-        # print description[0].keys()
-
-        # X_train, X_test, y_train, y_test = train_test_split(dataset, labels,random_state=0,test_size=1)
-
-        # select = SelectPercentile(f_classif, percentile=50)
-        # select.fit(X_train,y_train)
-        # # X_train_selected = select.transform(X_train)
-
-        # sorted_labels = sort_labels(dataset, labels)
-        # feature_selected_labels = feature_selection_labels(pd_dataset, labels)
-
-        # quality_silhouette = quality_metrics.silhouette_score(dataset, labels)
-        # quality_silhouette_clusters = quality_metrics.silhouette_clusters(dataset, labels)
-        # quality_silhouette_samples = quality_metrics.silhouette_samples(dataset, labels)
-
-        # quality_calinski_harabaz = quality_metrics.calinski_harabaz_score(dataset, labels)
-
-        # quality_neg_davies_bouldin = quality_metrics.neg_davies_bouldin(dataset, labels)
-
-        # quality_neg_gap_statistic = quality_metrics.neg_gap_statistic(dataset, labels)
-
-        # quality_neg_cohesion = quality_metrics.neg_cohesion(dataset, labels)
-        # quality_neg_cohesion_clusters = quality_metrics.neg_cohesion_clusters(dataset, labels)
-
-        # quality_separation = quality_metrics.separation_score(dataset, labels)
-        # quality_separation_clusters = quality_metrics.separation_clusters(dataset, labels)
-
-        # quality_min_max_dist = quality_metrics.min_max_dist(dataset, labels)
-
-        # quality_sdbw = quality_metrics.neg_s_Dbw(dataset,labels)
-
-        # n_clusters = n_clusters_from_labels(labels)
-        # clustering = {
-        #     'quality': quality_sdbw, # quality_silhouette, # backward compatability
-        #     'quality_metrics': {
-
-        #         'sdbw': quality_sdbw,
-        #         'silhouette_score': quality_silhouette,
-        #         'silhouette_clusters': quality_silhouette_clusters,
-        #         'silhouette_samples': quality_silhouette_samples,
-        #         'calinski_harabaz': quality_calinski_harabaz,
-        #         'davies_bouldin': quality_neg_davies_bouldin,
-        #         'gap_statistic': quality_neg_gap_statistic,
-        #         'cohesion': quality_neg_cohesion,
-        #         'cohesion_clusters': quality_neg_cohesion_clusters,
-        #         'separation': quality_separation,
-        #         'separation_clusters': quality_separation_clusters,
-        #         'min_max_dist': quality_min_max_dist,
-        #     },
-        #     'labels': labels.tolist(),
-        #     'n_clusters': n_clusters,
-        #     'clustering_parameters': params,
-        #     'sorted_labels': sorted_labels,
-        #     'cluster_feature_selection': feature_selected_labels,
-        #     'clustering_id': clustering_key,
-        #     'feature_selection': {
-        #         'names': list(pd_dataset.columns.values),
-        #         'scores': select.scores_.tolist(),
-        #         'pvalues': select.pvalues_.tolist(),
-        #     },
-        # }
         clustering = build_clustering_object(pd_dataset, labels, params, clustering_key)
-        # print(clustering)
-
         txn.put('clusterings/%d' % clustering_key, json.dumps(clustering))
     return clustering
 
@@ -317,14 +245,6 @@ def dataset_from_name(dataset_name, include_description=False):
         pd_dataset = pd.DataFrame(data=dataset)
 
         return (pd_dataset, descriptions)
-    # elif dataset_name == 'sequence':
-    #     dataset = np.load('data/sequence_data/sequence_data.npy')
-    #     if include_description:
-    #         with open('data/sequence_data/patient_vec.json') as f:
-    #             descriptions = json.load(f)
-    #     else:
-    #         descriptions = None
-    #     return (dataset, descriptions)
     elif dataset_name == 'cars':
         data = np.genfromtxt('data/cars_data/cars.data')
         # Remove rows with nan values
@@ -349,35 +269,7 @@ def dataset_from_name(dataset_name, include_description=False):
         pd_dataset = pd.DataFrame(data=data,columns=col_names)
 
         return (pd_dataset, descriptions)
-
-    elif dataset_name == 'cameras':
-        data = np.genfromtxt('data/cameras_data/camera.csv', skip_header=2,
-                             delimiter=';', usecols=range(1, 13))
-        # Remove rows with nan values
-        good_rows = np.all(np.logical_not(np.isnan(data)), axis=1)
-        data = data[good_rows]
-        col_names = ['Model', 'Release date', 'Max resolution', 'Low resolution',
-                     'Effective pixels', 'Zoom wide (W)', 'Zoom tele (T)',
-                     'Normal focus range', 'Macro focus range', 'Storage included',
-                     'Weight (inc. batteries)', 'Dimensions', 'Price']
-        if include_description:
-            descriptions = []
-            for row in data:
-                d = {}
-                for (key, value) in zip(col_names, row):
-                    d[key] = value
-                descriptions.append(d)
-        else:
-            descriptions = None
-
-        data -= data.mean(axis=0)[None, :]
-        data /= data.std(axis=0)[None, :]
-
-        pd_dataset = pd.DataFrame(data=data,columns=col_names)
-
-        return (pd_dataset, descriptions)
     elif dataset_name == 'universities':
-        # data = np.genfromtxt('data/universities_data/college_rank_2013.csv', dtype=None, skip_header=1, delimiter=',')
         with open('data/universities_data/college_rank_2013.csv') as f:
             line_vec = f.readlines()
         header = line_vec[0].strip().split(',')
@@ -404,198 +296,8 @@ def dataset_from_name(dataset_name, include_description=False):
         data -= data.mean(axis=0)[None, :]
         data /= data.std(axis=0)[None, :]
 
-        # pd_dataset = pd.DataFrame(data=data,columns=header[1:])
         pd_dataset = pd.DataFrame(data)
         return (pd_dataset, descriptions)
-
-    elif dataset_name == 'enron':
-        with open('data/enron_data/enron.json') as f:
-            descriptions = json.load(f)
-        data = np.load('data/enron_data/enron.npy').astype(float)
-        std = data.std(axis=0)
-        data = data[:, std != 0]
-
-        data -= data.mean(axis=0)[None, :]
-        data /= data.std(axis=0)[None, :]
-
-        pd_dataset = pd.DataFrame(data=data)
-        return (data, descriptions)
-    elif dataset_name == 'sutter':
-        pdata = pd.read_csv('data/sutter_data/sutter3-15-2017-all.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-
-        return (pdata, descriptions)
-    elif dataset_name == 'chdi-mean':
-        pdata = pd.read_csv('data/chdi_data/_timeseries_output.csv')
-        pdata.drop(['subjid'], axis=1, inplace=True)
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-
-        return (pdata, descriptions)
-    elif dataset_name == 'jdrf-collapsed-features':
-        pdata = pd.read_csv('data/jdrf_data/mean_DD_visits_GTE_2Ab.csv')
-        pdata.sort_values(by=['subjid'], ascending=[True])
-        # print()
-        # pdata = pdata.fillna(0.0)
-        # pdata = pdata.groupby(['subjid']).mean().reset_index()
-        # pdata = pdata.sample(3000)
-        
-        # pdata = pdata[pdata['RG'].notnull()]
-        # pdata = pdata[pdata['A1C'].notnull()]
-
-        # GAA_O,IA2_O,IAA_O,ZnT8_O,ABcount_n,DOB_Month
-        varnames = ['GAA_O','IA2_O','IAA_O','ABcount_n','DOB_Month', 'RG', 'A1C']
-        for varname in varnames:
-            pdata = pdata[pdata[varname].notnull()]
-        # pdata.drop(['subjid', 'T1DFamHis', 'Glucose_0', 'Glucose_120', 'DS', 'HEIGHT', 'WEIGHT', 'RG', 'A1C', 'DOB_Month'], axis=1, inplace=True)
-        pdata.drop(['subjid', 'DS', 'DOB_Month', 'Glucose_0','Glucose_120', 'HEIGHT', 'WEIGHT'], axis=1, inplace=True)
-        pdata = pdata.fillna(0.0)
-        pdata = pdata[:3000]
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-
-        return (pdata, descriptions)
-    elif dataset_name == 'sutter-temporal':
-        pdata = pd.read_csv('data/sutter_temporal_data/sutter3-16-2017-all.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-
-        return (pdata, descriptions)
-
-    #Helen testing
-    elif dataset_name == 'test':
-        pdata = pd.read_csv('data/Helen_test/test.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-        return (pdata, descriptions)
-
-    elif dataset_name == 'time_appearance':
-        pdata = pd.read_csv('data/Helen_test/time_appearance_test.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-        return (pdata, descriptions)
-
-    elif dataset_name == 'binned_times':
-        pdata = pd.read_csv('data/Helen_test/binned_times_test.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-        return (pdata, descriptions)
-
-    elif dataset_name == 'differences':
-        pdata = pd.read_csv('data/Helen_test/differences_test.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-        return (pdata, descriptions)
-
-    elif dataset_name == 'subtracted':
-        pdata = pd.read_csv('data/Helen_test/subtracted_test.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-        return (pdata, descriptions)
-
-    elif dataset_name == 'uploaded':
-        pdata = pd.read_csv('data/uploaded_data/upload.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-        return (pdata, descriptions)
-    #Helen testing end
-
-
-
-
-    elif dataset_name == 'sutter-binary':
-        pdata = pd.read_csv('data/sutter_binary_data/sutter3-23-2017-all-binary.csv')
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-
-        return (pdata, descriptions)
-    elif dataset_name == 'sutter-kenney':
-        pdata = pd.read_csv('data/sutter_kenney_data/sutter-kenney6-8-2017-all.csv')
-        pdata.drop(pdata.columns[[0,1]], axis=1, inplace=True)
-
-        data = pdata.as_matrix()
-        descriptions = []
-        col_names = list(pdata)
-
-        for row in data:
-            d = {}
-            for (key, value) in zip(col_names, row):
-                d[key] = value
-            descriptions.append(d)
-
-        return (pdata, descriptions)
     elif dataset_name == 'bobross':
         pdata = pd.read_csv('data/bobross_data/elements-by-episode-filtered.csv')
 
@@ -603,7 +305,6 @@ def dataset_from_name(dataset_name, include_description=False):
 
         pdata = pdata.loc[:, (pdata.sum() >= 5)] #remove columns that have been tagged less than 5 times
 
-        # convert to numpy matrix
         matrix = pdata.as_matrix()
 
         descriptions = []
@@ -615,15 +316,23 @@ def dataset_from_name(dataset_name, include_description=False):
                 d[key] = value
             descriptions.append(d)
 
-        # normalize according to stddev
-        # data = whiten(matrix)
         data = matrix
         return (pdata, descriptions)
-    elif dataset_name == 'visual-element-survey':
-        pdata = pd.read_csv('data/visual_element_survey_data/visual-element-survey.csv')
+    else:
+        dataset_name = eval(dataset_name)
+        pdata = pd.read_csv('data/uploads/' + dataset_name)
+        cat_columns = pdata.select_dtypes(['category']).columns
+        cols = pdata.columns
+        num_cols = pdata._get_numeric_data().columns
+        cat_cols = list(set(cols) - set(num_cols))
+        for col in cat_cols:
+            pdata[col] = pdata[col].astype('category')
+        cat_columns = pdata.select_dtypes(['category']).columns
+        pdata[cat_columns] = pdata[cat_columns].apply(lambda x: x.cat.codes)
 
         pdata.drop(pdata.columns[[0]], axis=1, inplace=True)
-
+        for col in pdata.columns:
+            pdata[col].fillna(0, inplace = True) 
         pdata = pdata.loc[:, (pdata.sum() >= 5)] #remove columns that have been tagged less than 5 times
 
         # convert to numpy matrix
@@ -638,12 +347,8 @@ def dataset_from_name(dataset_name, include_description=False):
                 d[key] = value
             descriptions.append(d)
 
-        # normalize according to stddev
-        # data = whiten(matrix)
         data = matrix
         return (pdata, descriptions)
-    else:
-        assert False, 'Unknown dataset name'
 
 def clustering_key_from_params(params):
     key_str = ','.join(['%s=%s' % (key, value) for (key, value) in sorted(params.items())])
@@ -734,7 +439,6 @@ def save_session(session_id, session):
     env = get_env()
     with env.begin(write=True) as txn:
         txn.put('sessions/%d' % session_id, json.dumps(session))
-    # env.sync()
 
 def load_num_sessions():
     env = get_env()

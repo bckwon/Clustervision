@@ -1,3 +1,4 @@
+<link rel="shortcut icon" href="{{ url_for('static', filename='images/clustervision-eye.ico') }}">
 <nav class="navbar navbar-default">
   <div class="container-fluid">
     <div class="navbar-header">
@@ -10,12 +11,6 @@
           <ul class="dropdown-menu">
             <li><a href="#" class="dataset_item" name="blobs">blobs</a></li>
             <li><a href="#" class="dataset_item" name="digits">digits</a></li>
-<!--             <li><a href="#" class="dataset_item" name="sutter">sutter</a></li>
-            <li><a href="#" class="dataset_item" name="sutter-kenney">sutter-kenney</a></li> -->
-            <!-- <li><a href="#" class="dataset_item" name="sutter-binary">sutter-binary</a></li> -->
-<!--             <li><a href="#" class="dataset_item" name="sutter-temporal">sutter-temporal</a></li> -->
-            <!-- <li><a href="#" class="dataset_item" name="enron">enron</a></li> -->
-            <!-- <li><a href="#" class="dataset_item" name="cameras">cameras</a></li> -->
             <li><a href="#" class="dataset_item" name="cars">cars</a></li>
             <li><a href="#" class="dataset_item" name="universities">universities</a></li>
             <li><a href="#" class="dataset_item" name="bobross">bobross</a></li>
@@ -30,13 +25,30 @@
             <li><a href="#" class="drt_item" name="spectral">Spectral</a></li>
           </ul>
         </li>
+        <li>
+          <div class="custom-file" style="margin:auto; padding: 5px; color: #777">
+            File: .csv only
+          </div>
+        </li>
+        <li>
+          <form id="upload_custom_file_form" method="post" enctype="multipart/form-data">
+            <div class="custom-file">
+              <input type="file" name="upload" class="custom-file-input" id="customFile">
+            </div>
+          </form>
+        </li>
+        <li>
+          <div class="custom-file">
+            <button type="button" class="btn btn-sm" id = "upload_custom_file" style="border-color:#245580; color: #245580">Run with File</button>
+          </div>
+        </li>
       </ul>
     </div>
 
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-<!--       <ul class="nav navbar-nav navbar-right">
-          <li class = "active"><a href="#" style="font-size: 80%">Health Analytics Research Group</a></li>
-      </ul> -->
+      <ul class="nav navbar-nav navbar-right">
+          <li class = "active"><a target="_blank" href="https://bckwon.com/publication/clustervision" style="font-size: 80%">Go to Publication</a></li>
+      </ul>
     </div>
   </div>
 </nav>
