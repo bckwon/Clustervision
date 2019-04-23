@@ -1,3 +1,10 @@
+/**
+ *
+ * @author Bum Chul Kwon <bumchul.kwon@us.ibm.com>
+ * Twitter, LinkedIn, Github: @bckwon
+ * Website: https://bckwon.com
+ *
+ */
 function ClusterView(canvas, data, screen_width, screen_height){
 	var _self = this;
 	_self.canvas = canvas;

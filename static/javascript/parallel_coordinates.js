@@ -1,3 +1,10 @@
+/**
+ *
+ * @author Bum Chul Kwon <bumchul.kwon@us.ibm.com>
+ * Twitter, LinkedIn, Github: @bckwon
+ * Website: https://bckwon.com
+ *
+ */
 function ParallelCoordinates(div_name, data, screen_width, screen_height, sort_asc, sort_desc, remove_svg){
   var _self = this;
   var dimensions_shuffle = dimensions_shuffle || {};

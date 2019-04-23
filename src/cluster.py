@@ -5,7 +5,7 @@ Cluster Analysis
 Desription: This tool helps users find a good clustering of their data.
 Clustering can be helpful for summarizing data and making it more interpretable.
 Contributers: BC Kwon, Ben Eysenbach
-Documentation: https://ibm.ent.box.com/notes/123647604541
+Documentation: https://bckwon.com/publication/clustervision
 
 Created on 01/17/2017
 """

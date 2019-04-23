@@ -1,3 +1,10 @@
+/**
+ *
+ * @author Bum Chul Kwon <bumchul.kwon@us.ibm.com>
+ * Twitter, LinkedIn, Github: @bckwon
+ * Website: https://bckwon.com
+ *
+ */
 Aster = function(gname, width, height, data, keys, extent, labelvalue){
   var _self = this;
   console.log(data);

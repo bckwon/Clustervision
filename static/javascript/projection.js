@@ -1,7 +1,7 @@
 /**
  *
  * @author Bum Chul Kwon <bumchul.kwon@us.ibm.com>
- * Twitter, Github: @bckwon
+ * Twitter, LinkedIn, Github: @bckwon
  * Website: https://bckwon.com
  *
  */
