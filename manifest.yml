@@ -1,5 +1,5 @@
 applications:
 - path: .
-  memory: 2000M
+  memory: 8000M
   instances: 1
   disk_quota: 2000M

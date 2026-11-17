@@ -65,7 +65,7 @@ def new_session():
     session['param_vec'] = param_vec
     cluster.save_session(session_id, session)
     cluster.save_num_sessions(num_sessions)
-
+    
     return json.dumps(session_id)
 
 @app.route('/clustering', methods=['POST', 'GET'])
@@ -299,4 +299,4 @@ def clmnetwork():
 
 port = os.getenv('PORT', '3000')
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(port),debug=True)
+    app.run(host='0.0.0.0', port=int(port), debug=True)

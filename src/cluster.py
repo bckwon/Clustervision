@@ -318,6 +318,36 @@ def dataset_from_name(dataset_name, include_description=False):
 
         data = matrix
         return (pdata, descriptions)
+    elif dataset_name == 'iris':
+        pdata = pd.read_csv('data/iris_data/Iris.csv')
+        cat_columns = pdata.select_dtypes(['category']).columns
+        cols = pdata.columns
+        num_cols = pdata._get_numeric_data().columns
+        cat_cols = list(set(cols) - set(num_cols))
+        for col in cat_cols:
+            pdata[col] = pdata[col].astype('category')
+        cat_columns = pdata.select_dtypes(['category']).columns
+        pdata[cat_columns] = pdata[cat_columns].apply(lambda x: x.cat.codes)
+
+        pdata.drop(pdata.columns[[0]], axis=1, inplace=True)
+        for col in pdata.columns:
+            pdata[col].fillna(0, inplace = True) 
+        pdata = pdata.loc[:, (pdata.sum() >= 5)] #remove columns that have been tagged less than 5 times
+
+        # convert to numpy matrix
+        matrix = pdata.as_matrix()
+
+        descriptions = []
+        col_names = list(pdata)
+
+        for row in matrix:
+            d = {}
+            for (key, value) in zip(col_names, row):
+                d[key] = value
+            descriptions.append(d)
+
+        data = matrix
+        return (pdata, descriptions)
     else:
         dataset_name = eval(dataset_name)
         pdata = pd.read_csv('data/uploads/' + dataset_name)

@@ -198,7 +198,7 @@ function ClusteringStripes(canvas, data, screen_width, screen_height){
 	_self.circ_label = _self.circ_g.append("text")
 					.style("text-anchor", "middle")
 		            .style("font-size", "100%")
-		            .style("alignment-baseline", "central")
+		            .style("dominant-baseline", "middle")
 					.text(function(d,i){return (i+1);});
 
 	_self.aster_g = _self.list_space.append("g")
